@@ -267,6 +267,19 @@ approved date-effective intervals. The source screenshot remains local-only.
 This limited approval does not cover other personal activity records,
 databases, export archives, or secrets.
 
+**Explicit Elevate-reference exception (2026-10-09):** The Owner authorized
+committing the unchanged single file
+`data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv`
+(496,966 bytes; SHA-256
+`407cc7ac2105d5d0c5c8ce4c90775adcb7733957157c2dad6aaa0af05f1ebfb1`)
+as a permanent external benchmark, with an origin/limitations README. Its final
+14 days are Elevate projections. This exact-file exception supersedes the prior
+P4-02 prohibition for this CSV only. It is not production training data, athlete
+state authority, a model seed, or permission to commit other exports, screenshots,
+activity files, local databases, credentials, or detailed QA artifacts. RideWorks
+continues to use the approved dated FTP source. All JIT execution gates remain.
+
+
 Prefer committing compact derived inventories, summaries, test fixtures, and reports that contain only the information needed for the research task.
 
 Analysis tools should accept local paths as inputs rather than assuming Ken's directory layout.

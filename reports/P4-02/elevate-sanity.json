@@ -1,0 +1,54 @@
+{
+  "reference_bytes": 496966,
+  "reference_sha256": "407cc7ac2105d5d0c5c8ce4c90775adcb7733957157c2dad6aaa0af05f1ebfb1",
+  "completed_reference_rows": 5911,
+  "projected_rows_excluded": 14,
+  "overlap_days": 3053,
+  "exported_arithmetic_reproduction": {
+    "ctl": {
+      "n": 5911,
+      "mean_signed_difference": 0.0032617629720557598,
+      "mean_absolute_difference": 0.003427068466453164,
+      "max_absolute_difference": 0.009987937121577917
+    },
+    "atl": {
+      "n": 5911,
+      "mean_signed_difference": 0.0024121151393214297,
+      "mean_absolute_difference": 0.0026299231647676034,
+      "max_absolute_difference": 0.009981662979502056
+    },
+    "tsb": {
+      "n": 5911,
+      "mean_signed_difference": 0.004223165371171041,
+      "mean_absolute_difference": 0.004234604312416669,
+      "max_absolute_difference": 0.011806922433333256
+    }
+  },
+  "rideworks_minus_elevate": {
+    "stress": {
+      "n": 3053,
+      "mean_signed_difference": -5.164653338338329,
+      "mean_absolute_difference": 7.264717567707934,
+      "max_absolute_difference": 475.7
+    },
+    "fitness": {
+      "n": 3053,
+      "mean_signed_difference": -5.5617371116739,
+      "mean_absolute_difference": 6.418686950026064,
+      "max_absolute_difference": 45.386125509922046
+    },
+    "fatigue": {
+      "n": 3053,
+      "mean_signed_difference": -5.214234222133485,
+      "mean_absolute_difference": 6.595168487303956,
+      "max_absolute_difference": 88.45751402322809
+    },
+    "form": {
+      "n": 3053,
+      "mean_signed_difference": -0.3441014900457149,
+      "mean_absolute_difference": 3.2130690106569775,
+      "max_absolute_difference": 43.081388513306045
+    }
+  },
+  "interpretation": "Arithmetic sanity and external disagreement, not source truth, calibration or physiological validation"
+}

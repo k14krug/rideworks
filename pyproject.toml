@@ -16,4 +16,4 @@ rideworks = "rideworks.__main__:main"
 packages = ["rideworks"]
 
 [tool.setuptools.package-data]
-rideworks = ["static/*"]
+rideworks = ["static/*", "data/*.csv"]

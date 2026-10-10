@@ -316,7 +316,7 @@ class StravaTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='strava_api_sources'").fetchone()[0],0)
         with Store(root) as migrated:
             self.assertEqual(migrated.get_source(native['source_id']),before)
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],7)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],8)
 
 
 if __name__=='__main__':unittest.main()

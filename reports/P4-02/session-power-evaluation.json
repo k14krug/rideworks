@@ -1,0 +1,187 @@
+{
+  "after_coverage": {
+    "before_model_start": 118,
+    "days": 3053,
+    "rides": 1418,
+    "scored": 1150,
+    "scored_days": 1025,
+    "selected_classes": {
+      "calculated": 642,
+      "corrected_estimate": 150,
+      "hr_estimate": 210,
+      "partial": 148,
+      "unavailable": 268
+    }
+  },
+  "all_hr_candidates_preserved": true,
+  "all_prior_power_scores_preserved": true,
+  "before_coverage": {
+    "before_model_start": 118,
+    "days": 3053,
+    "rides": 1418,
+    "scored": 1102,
+    "scored_days": 999,
+    "selected_classes": {
+      "calculated": 589,
+      "corrected_estimate": 131,
+      "hr_estimate": 268,
+      "partial": 114,
+      "unavailable": 316
+    }
+  },
+  "case_roles": {
+    "independent_corrected_fit": 1,
+    "independent_intense_interval_workout": 1,
+    "independent_known_pause_fit": 1,
+    "independent_ordinary_workout": 1,
+    "independent_sparse_fit": 1,
+    "independent_threshold_workout": 2,
+    "independent_unresolved_timer_fit": 1,
+    "mandatory_short_interval_workout": 1,
+    "retained_low_ordinary_comparison": 3,
+    "retained_mandatory_outdoor_hr": 1
+  },
+  "diagnostic_117_outcomes": {
+    "calculated": {
+      "after_selected": {
+        "calculated": 53
+      },
+      "before_selected": {
+        "hr_estimate": 43,
+        "unavailable": 10
+      },
+      "rides": 53
+    },
+    "corrected_estimate": {
+      "after_selected": {
+        "corrected_estimate": 19
+      },
+      "before_selected": {
+        "hr_estimate": 15,
+        "unavailable": 4
+      },
+      "rides": 19
+    },
+    "partial": {
+      "after_selected": {
+        "hr_estimate": 11,
+        "partial": 34
+      },
+      "before_selected": {
+        "hr_estimate": 11,
+        "unavailable": 34
+      },
+      "rides": 45
+    }
+  },
+  "diagnostic_database_and_cache_unchanged": true,
+  "diagnostic_scenario_endpoint_minus_decoupling": {
+    "fatigue": 2.9688415055635815,
+    "fitness": 0.9713275135667558,
+    "form": -2.4300197593472532
+  },
+  "diagnostic_scenario_selected_substitutions": 3,
+  "endpoint_after_decoupling_minus_before": {
+    "fatigue": 0.002691399060971378,
+    "fitness": 0.361874158901081,
+    "form": 0.3674888975325601
+  },
+  "estimator_method": "diagnostic-elevate-time-buffer-session-pss-v1",
+  "estimator_production_enabled": false,
+  "power_source_policy": "virtual-recorded-stress-evidence-v1",
+  "production_version": "training-state-v3",
+  "reference_commit": "df9e2cebf5055d28b652628c8654a701845935cc",
+  "reference_np_oracle_checks": 18,
+  "reference_source_sha256": "8fd699848e597a307b1d1adaffe19f5b99a149412d39bcd35a5e4e87806dd909",
+  "selected_changes": 106,
+  "selection_transitions": {
+    "hr_estimate -> calculated": 43,
+    "hr_estimate -> corrected_estimate": 15,
+    "unavailable -> calculated": 10,
+    "unavailable -> corrected_estimate": 4,
+    "unavailable -> partial": 34
+  },
+  "session_candidate_reasons": {
+    "diagnostic_candidate": 7,
+    "no_unambiguous_trusted_power_source": 2,
+    "timer_reported_duration_conflict": 3,
+    "unsupported_or_implausible_duration": 1
+  },
+  "synthetic": [
+    {
+      "case": "complete",
+      "known_missing_hard_interval": false,
+      "observed_fraction": 1.0,
+      "reason": null,
+      "relative_error_against_complete": 0.0
+    },
+    {
+      "case": "missing_hard",
+      "known_missing_hard_interval": true,
+      "observed_fraction": 0.975,
+      "reason": "known_omitted_workout_effort",
+      "relative_error_against_complete": -0.11422238639284177
+    },
+    {
+      "case": "missing_recovery",
+      "known_missing_hard_interval": false,
+      "observed_fraction": 0.975,
+      "reason": null,
+      "relative_error_against_complete": 0.012006317768636698
+    },
+    {
+      "case": "high_density_missing_hard",
+      "known_missing_hard_interval": true,
+      "observed_fraction": 0.9916666666666667,
+      "reason": "known_omitted_workout_effort",
+      "relative_error_against_complete": -0.03842799663431984
+    },
+    {
+      "case": "uniform_sparse",
+      "known_missing_hard_interval": false,
+      "observed_fraction": 0.1,
+      "reason": "no_accepted_600_second_observed_segment",
+      "relative_error_against_complete": -0.0729711680318329
+    },
+    {
+      "case": "clustered_sparse",
+      "known_missing_hard_interval": true,
+      "observed_fraction": 0.3333333333333333,
+      "reason": "known_omitted_workout_effort",
+      "relative_error_against_complete": -0.7432168980258542
+    },
+    {
+      "case": "verified_pause_with_nonzero_samples",
+      "known_missing_hard_interval": false,
+      "observed_fraction": 1.0,
+      "reason": null,
+      "relative_error_against_complete": null
+    }
+  ],
+  "windows": {
+    "365": {
+      "after_decoupling_stress": 8289.614067961134,
+      "before_stress": 8083.876447358981,
+      "changed_rides": 15,
+      "diagnostic_scenario_stress": 8337.279556352876
+    },
+    "42": {
+      "after_decoupling_stress": 1747.9731869383988,
+      "before_stress": 1747.9731869383988,
+      "changed_rides": 0,
+      "diagnostic_scenario_stress": 1795.6386753301401
+    },
+    "7": {
+      "after_decoupling_stress": 170.86415648510197,
+      "before_stress": 170.86415648510197,
+      "changed_rides": 0,
+      "diagnostic_scenario_stress": 190.0723826136885
+    },
+    "90": {
+      "after_decoupling_stress": 3034.252148720357,
+      "before_stress": 3000.7850724766795,
+      "changed_rides": 3,
+      "diagnostic_scenario_stress": 3081.917637112099
+    }
+  }
+}

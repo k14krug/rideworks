@@ -343,7 +343,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Follow-up work
 
-Phase 1, Phase 2, STRAVA-004 and Phase 3 are accepted and complete. No implementation task is currently active.
+Phase 1, Phase 2, STRAVA-004 and Phase 3 are accepted and complete. P4-02 is the current implementation task.
 
 Manual pairwise ride-to-ride comparison is not a Phase 2 requirement. It remains an optional future interaction if a concrete use case emerges.
 
@@ -402,7 +402,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ## Phase 4 — Training state
 
-**Status:** active — P4-01 research/design accepted; P4-02 design and implementation authorization pending.
+**Status:** active — P4-01 research/design accepted; P4-02 implementation and review follow-up ready for Analyst review.
 
 **Acceptance contract:** `docs/PHASE_4_ACCEPTANCE.md`
 
@@ -442,15 +442,15 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### P4-02 — Longitudinal training-state experience
 
-**Status:** pending — screen and HR/model policy Owner-approved; Analyst-finalized JIT committed; awaiting explicit `/TASK P4-02` authorization
+**Status:** in_progress — 2026-10-10 direction updated to **Elevate-first estimated power-stress selection** and **taller interactive chart**. HARD — Analyst method/implementation review pending; Owner Gate 2 did not accept the previous version. No merge or task/phase acceptance.
 
 **Purpose:** Produce a useful, repeatable Fitness/Fatigue/Form view for this recreational rider, grounded in qualified measured-power stress, a practical approximate HR-based fallback, the approved dated FTP history, and explicit source quality.
 
 **Owner-confirmed design context:** [P4-02 training-state direction](docs/design/P4-02-training-state-direction.md), read together with accepted [DESIGN-003](docs/design/DESIGN-003-training-state-model.md) and the [Phase 4 acceptance contract](docs/PHASE_4_ACCEPTANCE.md). The October 9 follow-on conversation supports HRSS-style outdoor fallback and a 42-/7-day interactive longitudinal chart. The Owner subsequently approved the **pragmatic Elevate-style unscored-ride numerical contribution of zero** (retain original missing-stress evidence), **prior-day Form**, a **zero initial seed**, and **no v1 projections/fixed training zones**. The Owner approved using **58 bpm resting / approximately 158 bpm max** and modeled **143 bpm threshold** as **explicit retrospective assumptions** for older rides without dated HR evidence, plus prioritizing adequately covering HR stress over materially partial power. The JIT specifies a simple versioned fixed-coefficient HRSS recipe; these inputs are assumptions, not historical measurements. This is **not** an implementation authorization.
 
-**Next gate:** The [screen design](docs/design/P4-02-training-state-screen.md) is Owner-approved and the [final P4-02 JIT](docs/tasks/P4-02.md) resolves its HR decision gate. Dex may start **only on a new explicit `/TASK P4-02` invocation**; after implementation, stop at HARD — Analyst and HARD — Owner review gates. Do not start automatically.
+**Next gate:** The [§13 distribution-screen diagnosis](reports/P4-02/distribution-screen-followup.md) is accepted as a bounded practical training-model guardrail. [JIT §14](docs/tasks/P4-02.md) **authorizes implementing** a versioned Elevate-style estimated whole-session power score from trusted recorded watts, traceable moving duration and dated FTP, with ≥80% total observed timeline / ≥50% every 300 seconds / ≥600 seconds contiguous observations, documented exclusions and uncertainty. This must supersede automatic HR preference when eligible session-power estimate exists. **Mandatory Oct 7 regression must select and display independently derived power stress** instead of the previous 38.45 HR stress; September 16 HR remains covered. Dex implements/tests/reports changed sources, model series, cache/versioning, browser and preserved originals, then returns to HARD — Analyst implementation Gate 1. Owner Gate 2 remains unaccepted. Keep PR #24 draft, no merge or Phase 4 acceptance.
 
-**Dependency:** P4-01 accepted; P4-02 design and JIT finalized; explicit implementation invocation pending.
+**Dependency:** P4-01 accepted; P4-02 design/JIT finalized and explicit implementation invocation received. Analyst and final Owner review outstanding.
 
 ### Phase 5 — Workout intent, outcome, and initial planning
 

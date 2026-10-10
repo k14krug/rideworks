@@ -778,3 +778,50 @@ neutral calendar pace and accepted best-20 comparisons, with inspectable rules.
 No FTP, Fitness/Training Load, readiness, workout planning, arbitrary-duration
 power curve or AI surfaces are added. Owner approval and Analyst acceptance of
 P3-01 remain separate from passing local verification.
+
+
+## Training State (P4-02)
+
+`/training-state` adds exact daily Fitness (42-day), Fatigue (7-day) and prior-day
+Form. The browser-local calendar and selected date drive all three values,
+7-day changes, daily rides and trailing 7-/42-day workload. Choose 6 weeks,
+3 months, 12 months or all history; toggle lines independently. Click/touch the
+chart or focus it and use arrows/Home/End; the date input inspects exact days.
+The page includes rider-facing method help and per-ride source/calculation detail.
+Home retains its existing content and adds a subordinate Training State link.
+
+`rideworks.training_state.training_state(store, timezone_name, as_of=...)` reads
+accepted source evidence. Qualified Performance-v2 power eligibility is consumed
+without changing that policy. It selects calculated recorded power, FIT-only
+small-gap estimates, adequately covering HR estimates ahead of partial power,
+partial observed power, or unavailable. Dated FTP comes from the byte-identical
+packaged copy of the approved 66-entry CSV; `data/athlete/` remains the authority.
+Future source updates must update the packaged copy and preserve provenance.
+Pre-2019-07-18 FTP remains unknown. Historical settings use the accepted
+America/Los_Angeles athlete calendar, independently of browser display timezone. Optional accepted dated HR contexts may be
+passed as `hr_history`; otherwise the approved 58/158/143 retrospective assumptions
+apply, with the fixed 1.92 coefficient. No generic athlete profile engine is added.
+
+Schema 8 adds a replaceable per-ride calculation cache only. Source/extraction,
+API stream, FTP source and parameter signatures automatically invalidate it after
+imports, sync, re-extraction or accepted settings changes. Daily models recompute
+from unrounded per-ride results. The initial uncached full-history calculation can
+take several seconds; later reads load cached results. No source rows/originals or
+Performance results are changed. Unscored evidence remains unavailable even though
+its numerical model contribution is zero; no-record days are not asserted rest.
+
+Observed kJ uses valid native one-second power bins only. Power NP resets at timer
+restarts and uses unpadded complete 30-second means. FIT correction uses the arriving
+sample backward for eligible interior gaps <=15 seconds and total missing <=1%;
+API gaps are never corrected. Whole-session labels require exact boundary/timer
+proof and verified calculation coverage. Missing interior and verified boundary
+time are distinguished; unverified timer envelopes are not claimed missing active
+effort. HR streams need >=99% time coverage, adjacent measured intervals <=15 seconds,
+and alignment to a traceable source duration within max(1 second, 1%). The native
+endpoint time-weighted mean is an estimate; no samples are manufactured. Source
+summaries may supply measured HR with compatible same-source active duration when
+no HR stream exists. Defective HR streams are not bypassed using their summary.
+
+Verification tools accept private store paths; see `reports/P4-02/verification.md`.
+The Owner-approved Elevate reference is used only by the external comparison tool,
+never by the application, as calculation inputs, or as an initial seed.

@@ -1,0 +1,4297 @@
+{
+  "as_of": "2026-10-09",
+  "by_source_signature": {
+    "API JSON": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 1,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 5122.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 2,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 2,
+          "recovered_source_duration_seconds": 5006.0,
+          "recovered_unknown_timer_scope_rides": 2,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 2,
+        "hr_stream_present": 2,
+        "hr_summary_present": 2,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 2,
+        "source_active_duration": 2,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 0
+      },
+      "ride_level_rejections": {
+        "hr_duration_span_mismatch": 2
+      },
+      "rides": 2,
+      "scored": 0
+    },
+    "API JSON+CSV+GPX": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 5,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 7,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 2,
+        "hr_any": 7,
+        "hr_stream_present": 7,
+        "hr_summary_present": 7,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 6,
+        "source_active_duration": 8,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 8
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 1,
+        "scored": 7
+      },
+      "rides": 8,
+      "scored": 7
+    },
+    "CSV": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 0,
+        "hr_stream_present": 0,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 0,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 0
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 10
+      },
+      "rides": 10,
+      "scored": 0
+    },
+    "CSV+FIT": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 0,
+        "hr_stream_present": 0,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 1,
+        "source_active_duration": 1,
+        "timer_boundaries_verified": 0,
+        "timer_events": 1,
+        "valid_absolute_timestamps": 1
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 1
+      },
+      "rides": 1,
+      "scored": 0
+    },
+    "CSV+GPX": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 26,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 45743.0,
+          "recovered_rides": 26,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 26,
+          "recovered_unrepresented_recording_seconds": 382899.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 33,
+        "hr_any": 31,
+        "hr_stream_present": 31,
+        "hr_summary_present": 28,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 48,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 81
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 22,
+        "invalid_hr_timing": 9,
+        "no_hr_evidence": 50
+      },
+      "rides": 81,
+      "scored": 0
+    },
+    "CSV+TCX": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 7,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 8350.295973777771,
+          "recovered_rides": 7,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 7,
+          "recovered_unrepresented_recording_seconds": 14315.704026222229
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 1,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 8280.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 45,
+        "hr_any": 45,
+        "hr_stream_present": 44,
+        "hr_summary_present": 45,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 1,
+        "source_active_duration": 2,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 46
+      },
+      "ride_level_rejections": {
+        "insufficient_hr_coverage": 1,
+        "invalid_hr_summary + invalid_hr_timing": 1,
+        "invalid_hr_timing": 43,
+        "no_hr_evidence": 1
+      },
+      "rides": 46,
+      "scored": 0
+    }
+  },
+  "by_source_type": {
+    "API JSON": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 6,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 5122.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 9,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 2,
+          "recovered_source_duration_seconds": 5006.0,
+          "recovered_unknown_timer_scope_rides": 2,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 2,
+        "hr_any": 9,
+        "hr_stream_present": 9,
+        "hr_summary_present": 9,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 8,
+        "source_active_duration": 10,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 8
+      },
+      "ride_level_rejections": {
+        "hr_duration_span_mismatch": 2,
+        "no_hr_evidence": 1,
+        "scored": 7
+      },
+      "rides": 10,
+      "scored": 7
+    },
+    "CSV": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 38,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 54093.29597377777,
+          "recovered_rides": 33,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 33,
+          "recovered_unrepresented_recording_seconds": 397214.7040262222
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 8,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 8280.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 80,
+        "hr_any": 83,
+        "hr_stream_present": 82,
+        "hr_summary_present": 80,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 56,
+        "source_active_duration": 11,
+        "timer_boundaries_verified": 0,
+        "timer_events": 1,
+        "valid_absolute_timestamps": 136
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 22,
+        "insufficient_hr_coverage": 1,
+        "invalid_hr_summary + invalid_hr_timing": 1,
+        "invalid_hr_timing": 52,
+        "no_hr_evidence": 63,
+        "scored": 7
+      },
+      "rides": 146,
+      "scored": 7
+    },
+    "FIT": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 0,
+        "hr_stream_present": 0,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 1,
+        "source_active_duration": 1,
+        "timer_boundaries_verified": 0,
+        "timer_events": 1,
+        "valid_absolute_timestamps": 1
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 1
+      },
+      "rides": 1,
+      "scored": 0
+    },
+    "GPX": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 31,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 45743.0,
+          "recovered_rides": 26,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 26,
+          "recovered_unrepresented_recording_seconds": 382899.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 7,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 35,
+        "hr_any": 38,
+        "hr_stream_present": 38,
+        "hr_summary_present": 35,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 54,
+        "source_active_duration": 8,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 89
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 22,
+        "invalid_hr_timing": 9,
+        "no_hr_evidence": 51,
+        "scored": 7
+      },
+      "rides": 89,
+      "scored": 7
+    },
+    "TCX": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 7,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 8350.295973777771,
+          "recovered_rides": 7,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 7,
+          "recovered_unrepresented_recording_seconds": 14315.704026222229
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 1,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 8280.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 45,
+        "hr_any": 45,
+        "hr_stream_present": 44,
+        "hr_summary_present": 45,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 1,
+        "source_active_duration": 2,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 46
+      },
+      "ride_level_rejections": {
+        "insufficient_hr_coverage": 1,
+        "invalid_hr_summary + invalid_hr_timing": 1,
+        "invalid_hr_timing": 43,
+        "no_hr_evidence": 1
+      },
+      "rides": 46,
+      "scored": 0
+    }
+  },
+  "by_year": {
+    "2010": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 0,
+        "hr_stream_present": 0,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 0,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 0
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 1
+      },
+      "rides": 1,
+      "scored": 0
+    },
+    "2012": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 5,
+        "hr_any": 0,
+        "hr_stream_present": 0,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 1,
+        "source_active_duration": 1,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 6
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 6
+      },
+      "rides": 6,
+      "scored": 0
+    },
+    "2014": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 1,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 1757.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 1151.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 17,
+        "hr_any": 1,
+        "hr_stream_present": 1,
+        "hr_summary_present": 1,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 13,
+        "source_active_duration": 1,
+        "timer_boundaries_verified": 0,
+        "timer_events": 1,
+        "valid_absolute_timestamps": 30
+      },
+      "ride_level_rejections": {
+        "invalid_hr_timing": 1,
+        "no_hr_evidence": 29
+      },
+      "rides": 30,
+      "scored": 0
+    },
+    "2015": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 11,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 22839.0,
+          "recovered_rides": 11,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 11,
+          "recovered_unrepresented_recording_seconds": 11507.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 12,
+        "hr_stream_present": 12,
+        "hr_summary_present": 12,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 17,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 17
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 12,
+        "no_hr_evidence": 5
+      },
+      "rides": 17,
+      "scored": 0
+    },
+    "2016": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 6,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 9561.0,
+          "recovered_rides": 6,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 6,
+          "recovered_unrepresented_recording_seconds": 361360.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 5,
+        "hr_any": 9,
+        "hr_stream_present": 9,
+        "hr_summary_present": 9,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 9,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 14
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 5,
+        "invalid_hr_timing": 4,
+        "no_hr_evidence": 5
+      },
+      "rides": 14,
+      "scored": 0
+    },
+    "2018": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 10,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 12342.0,
+          "recovered_rides": 10,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 10,
+          "recovered_unrepresented_recording_seconds": 10182.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 48,
+        "hr_any": 48,
+        "hr_stream_present": 47,
+        "hr_summary_present": 48,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 5,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 53
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 2,
+        "invalid_hr_summary + invalid_hr_timing": 1,
+        "invalid_hr_timing": 45,
+        "no_hr_evidence": 5
+      },
+      "rides": 53,
+      "scored": 0
+    },
+    "2019": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 1,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 1044.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 1855.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 1,
+        "hr_any": 1,
+        "hr_stream_present": 1,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 0,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 1
+      },
+      "ride_level_rejections": {
+        "invalid_hr_timing": 1,
+        "no_hr_evidence": 7
+      },
+      "rides": 8,
+      "scored": 0
+    },
+    "2020": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 2,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 2661.0,
+          "recovered_rides": 2,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 2,
+          "recovered_unrepresented_recording_seconds": 5712.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 2,
+        "hr_stream_present": 2,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 3,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 3
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 2,
+        "no_hr_evidence": 2
+      },
+      "rides": 4,
+      "scored": 0
+    },
+    "2021": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 1,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 1056.0,
+          "recovered_rides": 1,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 1,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 1,
+        "hr_stream_present": 1,
+        "hr_summary_present": 1,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 1,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 1
+      },
+      "ride_level_rejections": {
+        "hr_active_duration_unavailable": 1
+      },
+      "rides": 1,
+      "scored": 0
+    },
+    "2022": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 0,
+        "hr_stream_present": 0,
+        "hr_summary_present": 0,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 0,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 0
+      },
+      "ride_level_rejections": {
+        "no_hr_evidence": 1
+      },
+      "rides": 1,
+      "scored": 0
+    },
+    "2025": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 2,
+        "hr_any": 1,
+        "hr_stream_present": 1,
+        "hr_summary_present": 1,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 0,
+        "source_active_duration": 0,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 2
+      },
+      "ride_level_rejections": {
+        "invalid_hr_timing": 1,
+        "no_hr_evidence": 1
+      },
+      "rides": 2,
+      "scored": 0
+    },
+    "2026": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 7,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 7955.295973777771,
+          "recovered_rides": 2,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 2,
+          "recovered_unrepresented_recording_seconds": 5447.704026222229
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 10,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 3,
+          "recovered_source_duration_seconds": 13286.0,
+          "recovered_unknown_timer_scope_rides": 3,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 2,
+        "hr_any": 10,
+        "hr_stream_present": 10,
+        "hr_summary_present": 10,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 9,
+        "source_active_duration": 11,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 9
+      },
+      "ride_level_rejections": {
+        "hr_duration_span_mismatch": 2,
+        "insufficient_hr_coverage": 1,
+        "no_hr_evidence": 1,
+        "scored": 7
+      },
+      "rides": 11,
+      "scored": 7
+    }
+  },
+  "by_year_and_source": {
+    "2010": {
+      "CSV": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 0
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 1
+        },
+        "rides": 1,
+        "scored": 0
+      }
+    },
+    "2012": {
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 4,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 1,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 5
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 5
+        },
+        "rides": 5,
+        "scored": 0
+      },
+      "CSV+TCX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 1,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 1,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 1
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 1
+        },
+        "rides": 1,
+        "scored": 0
+      }
+    },
+    "2014": {
+      "CSV+FIT": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 1,
+          "source_active_duration": 1,
+          "timer_boundaries_verified": 0,
+          "timer_events": 1,
+          "valid_absolute_timestamps": 1
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 1
+        },
+        "rides": 1,
+        "scored": 0
+      },
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 1,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 1757.0,
+            "recovered_rides": 1,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 1,
+            "recovered_unrepresented_recording_seconds": 1151.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 17,
+          "hr_any": 1,
+          "hr_stream_present": 1,
+          "hr_summary_present": 1,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 12,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 29
+        },
+        "ride_level_rejections": {
+          "invalid_hr_timing": 1,
+          "no_hr_evidence": 28
+        },
+        "rides": 29,
+        "scored": 0
+      }
+    },
+    "2015": {
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 11,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 22839.0,
+            "recovered_rides": 11,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 11,
+            "recovered_unrepresented_recording_seconds": 11507.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 12,
+          "hr_stream_present": 12,
+          "hr_summary_present": 12,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 17,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 17
+        },
+        "ride_level_rejections": {
+          "hr_active_duration_unavailable": 12,
+          "no_hr_evidence": 5
+        },
+        "rides": 17,
+        "scored": 0
+      }
+    },
+    "2016": {
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 6,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 9561.0,
+            "recovered_rides": 6,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 6,
+            "recovered_unrepresented_recording_seconds": 361360.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 5,
+          "hr_any": 9,
+          "hr_stream_present": 9,
+          "hr_summary_present": 9,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 9,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 14
+        },
+        "ride_level_rejections": {
+          "hr_active_duration_unavailable": 5,
+          "invalid_hr_timing": 4,
+          "no_hr_evidence": 5
+        },
+        "rides": 14,
+        "scored": 0
+      }
+    },
+    "2018": {
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 4,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 6825.0,
+            "recovered_rides": 4,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 4,
+            "recovered_unrepresented_recording_seconds": 1314.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 4,
+          "hr_any": 4,
+          "hr_stream_present": 4,
+          "hr_summary_present": 4,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 5,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 9
+        },
+        "ride_level_rejections": {
+          "hr_active_duration_unavailable": 2,
+          "invalid_hr_timing": 2,
+          "no_hr_evidence": 5
+        },
+        "rides": 9,
+        "scored": 0
+      },
+      "CSV+TCX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 6,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 5517.0,
+            "recovered_rides": 6,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 6,
+            "recovered_unrepresented_recording_seconds": 8868.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 44,
+          "hr_any": 44,
+          "hr_stream_present": 43,
+          "hr_summary_present": 44,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 44
+        },
+        "ride_level_rejections": {
+          "invalid_hr_summary + invalid_hr_timing": 1,
+          "invalid_hr_timing": 43
+        },
+        "rides": 44,
+        "scored": 0
+      }
+    },
+    "2019": {
+      "CSV": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 0
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 7
+        },
+        "rides": 7,
+        "scored": 0
+      },
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 1,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 1044.0,
+            "recovered_rides": 1,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 1,
+            "recovered_unrepresented_recording_seconds": 1855.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 1,
+          "hr_any": 1,
+          "hr_stream_present": 1,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 1
+        },
+        "ride_level_rejections": {
+          "invalid_hr_timing": 1
+        },
+        "rides": 1,
+        "scored": 0
+      }
+    },
+    "2020": {
+      "CSV": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 0
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 1
+        },
+        "rides": 1,
+        "scored": 0
+      },
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 2,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 2661.0,
+            "recovered_rides": 2,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 2,
+            "recovered_unrepresented_recording_seconds": 5712.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 2,
+          "hr_stream_present": 2,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 3,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 3
+        },
+        "ride_level_rejections": {
+          "hr_active_duration_unavailable": 2,
+          "no_hr_evidence": 1
+        },
+        "rides": 3,
+        "scored": 0
+      }
+    },
+    "2021": {
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 1,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 1056.0,
+            "recovered_rides": 1,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 1,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 1,
+          "hr_stream_present": 1,
+          "hr_summary_present": 1,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 1,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 1
+        },
+        "ride_level_rejections": {
+          "hr_active_duration_unavailable": 1
+        },
+        "rides": 1,
+        "scored": 0
+      }
+    },
+    "2022": {
+      "CSV": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 0,
+          "hr_stream_present": 0,
+          "hr_summary_present": 0,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 0
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 1
+        },
+        "rides": 1,
+        "scored": 0
+      }
+    },
+    "2025": {
+      "CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 2,
+          "hr_any": 1,
+          "hr_stream_present": 1,
+          "hr_summary_present": 1,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 0,
+          "source_active_duration": 0,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 2
+        },
+        "ride_level_rejections": {
+          "invalid_hr_timing": 1,
+          "no_hr_evidence": 1
+        },
+        "rides": 2,
+        "scored": 0
+      }
+    },
+    "2026": {
+      "API JSON": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 1,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 5122.0,
+            "recovered_rides": 1,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 1,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 2,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 2,
+            "recovered_source_duration_seconds": 5006.0,
+            "recovered_unknown_timer_scope_rides": 2,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 2,
+          "hr_stream_present": 2,
+          "hr_summary_present": 2,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 2,
+          "source_active_duration": 2,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 0
+        },
+        "ride_level_rejections": {
+          "hr_duration_span_mismatch": 2
+        },
+        "rides": 2,
+        "scored": 0
+      },
+      "API JSON+CSV+GPX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 5,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 7,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 2,
+          "hr_any": 7,
+          "hr_stream_present": 7,
+          "hr_summary_present": 7,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 6,
+          "source_active_duration": 8,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 8
+        },
+        "ride_level_rejections": {
+          "no_hr_evidence": 1,
+          "scored": 7
+        },
+        "rides": 8,
+        "scored": 7
+      },
+      "CSV+TCX": {
+        "alternatives": {
+          "coverage_0.9": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.95": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.98": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "coverage_0.99": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "partial_hr": {
+            "ambiguous_rides": 0,
+            "available_rides": 1,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 2833.295973777771,
+            "recovered_rides": 1,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 1,
+            "recovered_unrepresented_recording_seconds": 5447.704026222229
+          },
+          "summary_fallback": {
+            "ambiguous_rides": 0,
+            "available_rides": 1,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 1,
+            "recovered_source_duration_seconds": 8280.0,
+            "recovered_unknown_timer_scope_rides": 1,
+            "recovered_unrepresented_recording_seconds": 0.0
+          },
+          "symmetric_1_percent": {
+            "ambiguous_rides": 0,
+            "available_rides": 0,
+            "recovered_known_uncovered_timer_seconds": 0.0,
+            "recovered_represented_seconds": 0.0,
+            "recovered_rides": 0,
+            "recovered_source_duration_seconds": 0.0,
+            "recovered_unknown_timer_scope_rides": 0,
+            "recovered_unrepresented_recording_seconds": 0.0
+          }
+        },
+        "evidence_presence": {
+          "backward_timestamp_pairs": 0,
+          "duplicate_timestamp_records": 0,
+          "hr_any": 1,
+          "hr_stream_present": 1,
+          "hr_summary_present": 1,
+          "missing_absolute_timestamps": 0,
+          "ordered_unique_timestamps": 1,
+          "source_active_duration": 1,
+          "timer_boundaries_verified": 0,
+          "timer_events": 0,
+          "valid_absolute_timestamps": 1
+        },
+        "ride_level_rejections": {
+          "insufficient_hr_coverage": 1
+        },
+        "rides": 1,
+        "scored": 0
+      }
+    }
+  },
+  "current_model_diagnostic_effect": {
+    "coverage_0.9": {
+      "fatigue_delta": 0.0,
+      "fitness_delta": 0.0,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 0,
+      "start_of_day_form_delta": 0.0
+    },
+    "coverage_0.95": {
+      "fatigue_delta": 0.0,
+      "fitness_delta": 0.0,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 0,
+      "start_of_day_form_delta": 0.0
+    },
+    "coverage_0.98": {
+      "fatigue_delta": 0.0,
+      "fitness_delta": 0.0,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 0,
+      "start_of_day_form_delta": 0.0
+    },
+    "coverage_0.99": {
+      "fatigue_delta": 0.0,
+      "fitness_delta": 0.0,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 0,
+      "start_of_day_form_delta": 0.0
+    },
+    "partial_hr": {
+      "fatigue_delta": 3.755487165956122,
+      "fitness_delta": 2.1569740357877345,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 34,
+      "start_of_day_form_delta": -2.1232517044770653
+    },
+    "summary_fallback": {
+      "fatigue_delta": 4.247950143657663,
+      "fitness_delta": 3.667326990611409,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 3,
+      "start_of_day_form_delta": -1.1445944948177913
+    },
+    "symmetric_1_percent": {
+      "fatigue_delta": 0.0,
+      "fitness_delta": 0.0,
+      "interpretation": "Diagnostic additive effect of newly recovered estimates only; existing scores unchanged, no vendor calibration",
+      "recovered_rides": 0,
+      "start_of_day_form_delta": 0.0
+    }
+  },
+  "method_notes": [
+    "Ride-level rejection sets are disjoint categories; candidate counts are not summed as rides.",
+    "Alternative recoveries overlap and must not be added.",
+    "Source-type cohorts overlap on multi-source rides; source-signature cohorts are disjoint.",
+    "HR summary presence includes multi-lap summaries even when no supported single active-duration pair exists.",
+    "Summary fallback remains a diagnostic estimate; mean active-time basis and pause treatment are not independently verified.",
+    "Zero summed known uncovered seconds does not mean none missing: consult unknown-timer-scope ride counts; summary alternatives do not establish observed represented seconds.",
+    "Partial HR uses recorded >=600s segments with <=15s adjacent measured endpoints; elapsed coverage is not moving time.",
+    "Partial HR excludes all records at duplicate timestamps and splits there; it never picks a duplicate value, reorders backward records or claims full coverage.",
+    "Coverage sensitivities retain the 15s interval cap and existing overcoverage rule.",
+    "Symmetric screen changes only overcoverage ceiling to 101%; it does not prove which recording time was active.",
+    "No CSV duration values, vendor scores, API crawl or production eligibility changes."
+  ],
+  "outdoor": {
+    "alternatives": {
+      "coverage_0.9": {
+        "ambiguous_rides": 0,
+        "available_rides": 0,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 0.0,
+        "recovered_rides": 0,
+        "recovered_source_duration_seconds": 0.0,
+        "recovered_unknown_timer_scope_rides": 0,
+        "recovered_unrepresented_recording_seconds": 0.0
+      },
+      "coverage_0.95": {
+        "ambiguous_rides": 0,
+        "available_rides": 0,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 0.0,
+        "recovered_rides": 0,
+        "recovered_source_duration_seconds": 0.0,
+        "recovered_unknown_timer_scope_rides": 0,
+        "recovered_unrepresented_recording_seconds": 0.0
+      },
+      "coverage_0.98": {
+        "ambiguous_rides": 0,
+        "available_rides": 0,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 0.0,
+        "recovered_rides": 0,
+        "recovered_source_duration_seconds": 0.0,
+        "recovered_unknown_timer_scope_rides": 0,
+        "recovered_unrepresented_recording_seconds": 0.0
+      },
+      "coverage_0.99": {
+        "ambiguous_rides": 0,
+        "available_rides": 0,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 0.0,
+        "recovered_rides": 0,
+        "recovered_source_duration_seconds": 0.0,
+        "recovered_unknown_timer_scope_rides": 0,
+        "recovered_unrepresented_recording_seconds": 0.0
+      },
+      "partial_hr": {
+        "ambiguous_rides": 0,
+        "available_rides": 39,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 59215.29597377777,
+        "recovered_rides": 34,
+        "recovered_source_duration_seconds": 0.0,
+        "recovered_unknown_timer_scope_rides": 34,
+        "recovered_unrepresented_recording_seconds": 397214.7040262222
+      },
+      "summary_fallback": {
+        "ambiguous_rides": 0,
+        "available_rides": 10,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 0.0,
+        "recovered_rides": 3,
+        "recovered_source_duration_seconds": 13286.0,
+        "recovered_unknown_timer_scope_rides": 3,
+        "recovered_unrepresented_recording_seconds": 0.0
+      },
+      "symmetric_1_percent": {
+        "ambiguous_rides": 0,
+        "available_rides": 0,
+        "recovered_known_uncovered_timer_seconds": 0.0,
+        "recovered_represented_seconds": 0.0,
+        "recovered_rides": 0,
+        "recovered_source_duration_seconds": 0.0,
+        "recovered_unknown_timer_scope_rides": 0,
+        "recovered_unrepresented_recording_seconds": 0.0
+      }
+    },
+    "evidence_presence": {
+      "backward_timestamp_pairs": 0,
+      "duplicate_timestamp_records": 80,
+      "hr_any": 85,
+      "hr_stream_present": 84,
+      "hr_summary_present": 82,
+      "missing_absolute_timestamps": 0,
+      "ordered_unique_timestamps": 58,
+      "source_active_duration": 13,
+      "timer_boundaries_verified": 0,
+      "timer_events": 1,
+      "valid_absolute_timestamps": 136
+    },
+    "ride_level_rejections": {
+      "hr_active_duration_unavailable": 22,
+      "hr_duration_span_mismatch": 2,
+      "insufficient_hr_coverage": 1,
+      "invalid_hr_summary + invalid_hr_timing": 1,
+      "invalid_hr_timing": 52,
+      "no_hr_evidence": 63,
+      "scored": 7
+    },
+    "rides": 148,
+    "scored": 7
+  },
+  "outdoor_baseline_cache_results_unchanged": 148,
+  "private_database_byte_preserved": true,
+  "recent": {
+    "42": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 5,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 7955.295973777771,
+          "recovered_rides": 2,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 2,
+          "recovered_unrepresented_recording_seconds": 5447.704026222229
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 6,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 3,
+          "recovered_source_duration_seconds": 13286.0,
+          "recovered_unknown_timer_scope_rides": 3,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 0,
+        "hr_any": 6,
+        "hr_stream_present": 6,
+        "hr_summary_present": 6,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 6,
+        "source_active_duration": 6,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 4
+      },
+      "ride_level_rejections": {
+        "hr_duration_span_mismatch": 2,
+        "insufficient_hr_coverage": 1,
+        "scored": 3
+      },
+      "rides": 6,
+      "scored": 3
+    },
+    "90": {
+      "alternatives": {
+        "coverage_0.9": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.95": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.98": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "coverage_0.99": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "partial_hr": {
+          "ambiguous_rides": 0,
+          "available_rides": 7,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 7955.295973777771,
+          "recovered_rides": 2,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 2,
+          "recovered_unrepresented_recording_seconds": 5447.704026222229
+        },
+        "summary_fallback": {
+          "ambiguous_rides": 0,
+          "available_rides": 10,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 3,
+          "recovered_source_duration_seconds": 13286.0,
+          "recovered_unknown_timer_scope_rides": 3,
+          "recovered_unrepresented_recording_seconds": 0.0
+        },
+        "symmetric_1_percent": {
+          "ambiguous_rides": 0,
+          "available_rides": 0,
+          "recovered_known_uncovered_timer_seconds": 0.0,
+          "recovered_represented_seconds": 0.0,
+          "recovered_rides": 0,
+          "recovered_source_duration_seconds": 0.0,
+          "recovered_unknown_timer_scope_rides": 0,
+          "recovered_unrepresented_recording_seconds": 0.0
+        }
+      },
+      "evidence_presence": {
+        "backward_timestamp_pairs": 0,
+        "duplicate_timestamp_records": 2,
+        "hr_any": 10,
+        "hr_stream_present": 10,
+        "hr_summary_present": 10,
+        "missing_absolute_timestamps": 0,
+        "ordered_unique_timestamps": 9,
+        "source_active_duration": 11,
+        "timer_boundaries_verified": 0,
+        "timer_events": 0,
+        "valid_absolute_timestamps": 9
+      },
+      "ride_level_rejections": {
+        "hr_duration_span_mismatch": 2,
+        "insufficient_hr_coverage": 1,
+        "no_hr_evidence": 1,
+        "scored": 7
+      },
+      "rides": 11,
+      "scored": 7
+    }
+  },
+  "version": "p4-02-outdoor-diagnostics-v1"
+}

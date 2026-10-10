@@ -1,0 +1,72 @@
+{
+  "coverage": {
+    "before_model_start": 118,
+    "days": 3053,
+    "rides": 1418,
+    "scored": 1079,
+    "scored_days": 985,
+    "selected_classes": {
+      "calculated": 589,
+      "corrected_estimate": 131,
+      "hr_estimate": 218,
+      "partial": 141,
+      "unavailable": 339
+    }
+  },
+  "coverage_by_activity_type": {
+    "Ride": {
+      "rides": 148,
+      "selected_classes": {
+        "hr_estimate": 7,
+        "unavailable": 141
+      }
+    },
+    "Virtual Ride": {
+      "rides": 1270,
+      "selected_classes": {
+        "calculated": 589,
+        "corrected_estimate": 131,
+        "hr_estimate": 211,
+        "partial": 141,
+        "unavailable": 198
+      }
+    }
+  },
+  "hr_candidate_reasons": {
+    "hr_active_duration_unavailable": 15,
+    "hr_duration_span_mismatch": 84,
+    "insufficient_hr_coverage": 386,
+    "invalid_hr_summary": 8,
+    "invalid_hr_timing": 12,
+    "unresolved_timer_scope": 2,
+    "usable": 803
+  },
+  "known_limitations": [
+    "Recorded interval is not whole session",
+    "HR formula is a retrospective model",
+    "HR threshold/max assumptions can exclude values outside modeled range",
+    "Unscored rides retain unavailable evidence; model contribution is zero",
+    "HR stream coverage >=99%, adjacent measured intervals <=15s, duration alignment <=max(1s,1%)"
+  ],
+  "model_period_rides": 1300,
+  "power_candidate_classes_in_model_period": {
+    "calculated": 589,
+    "corrected_estimate": 131,
+    "partial": 157,
+    "unavailable": 423
+  },
+  "preservation": {
+    "foreign_key_violations": 0,
+    "integrity": "ok",
+    "original_artifacts_preserved": 1422,
+    "tables_preserved": 20
+  },
+  "restart_recompute": "deterministic",
+  "source_digest": "cb990c18e969d0d12f1d524bea22cf8b596746171f179f6241748394b87ad073",
+  "verification": {
+    "exact_daily_models": 3053,
+    "independent_hr_formula_checks": 803,
+    "independent_observed_power_checks": 1022
+  },
+  "version": "training-state-v1"
+}

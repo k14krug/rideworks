@@ -349,14 +349,14 @@ class DashboardTests(TestCase):
     def test_schema6_atomic_migration_preserves_all_existing_tables(self):
         old=self.root/'schema6'
         with Store(old) as store:
-            store.connection.execute('DROP TABLE annual_mileage_goals');store.connection.execute('PRAGMA user_version=6')
+            store.connection.execute('DROP TABLE training_stress_cache');store.connection.execute('DROP TABLE annual_mileage_goals');store.connection.execute('PRAGMA user_version=6')
         broken=store_module.MIGRATION_7.replace('PRAGMA user_version = 7;','INSERT INTO nonexistent VALUES(1);')
         with patch.object(store_module,'MIGRATION_7',broken),self.assertRaises(sqlite3.Error):Store(old)
         with sqlite3.connect(old/'rideworks.sqlite3') as db:
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],6)
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='annual_mileage_goals'").fetchone())
         with Store(old) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],7)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],8)
             self.assertEqual(migrated.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
 
     def test_annual_goal_migration_waits_for_completed_stream_migration(self):
@@ -366,7 +366,7 @@ class DashboardTests(TestCase):
                 self.assertEqual(stopped.connection.execute('PRAGMA user_version').fetchone()[0],5)
                 self.assertIsNone(stopped.connection.execute("SELECT name FROM sqlite_master WHERE name='annual_mileage_goals'").fetchone())
         with Store(old) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],7)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],8)
 
     def test_no_deferred_metrics_and_pending_banner_on_home(self):
         path=self.root/'synthetic.fit';path.write_bytes(make_fit());self.store.import_fit(path)

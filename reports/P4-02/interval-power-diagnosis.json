@@ -1,0 +1,99 @@
+{
+  "all_tables_including_cache_unchanged": true,
+  "broader_best20_coupling": {
+    "affected_rides_in_windows": {
+      "365": 15,
+      "90": 3
+    },
+    "best20_ineligible_virtual_rides": 242,
+    "best20_ineligible_with_stress_candidate": 117,
+    "best20_rejection_reasons_with_stress_candidate": {
+      "activity_shorter_than_required": 84,
+      "no_complete_power_window": 3,
+      "no_complete_timestamp_contiguous_window": 30
+    },
+    "blocked_candidate_calculated": 53,
+    "blocked_candidate_corrected_estimate": 19,
+    "blocked_candidate_partial": 45,
+    "candidate_source_formats": {
+      "FIT": 117
+    },
+    "current_selected_classes": {
+      "hr_estimate": 69,
+      "unavailable": 48
+    },
+    "virtual_rides": 1270
+  },
+  "calculation_version": "training-state-v2",
+  "case_roles": {
+    "independent_intense_interval_workout": 1,
+    "independent_ordinary_workout": 1,
+    "independent_threshold_workout": 2,
+    "mandatory_short_interval_workout": 1,
+    "retained_low_ordinary_comparison": 3,
+    "retained_mandatory_outdoor_hr": 1
+  },
+  "daily_response_cases": 9,
+  "diagnostic_only": true,
+  "ftp_source_sha256": "cb990c18e969d0d12f1d524bea22cf8b596746171f179f6241748394b87ad073",
+  "independent_power_interval_formula_checks": 141,
+  "performance_statuses": {
+    "eligible": 7,
+    "outdoor_ride_excluded": 2
+  },
+  "preservation": {
+    "foreign_key_violations": 0,
+    "integrity": "ok",
+    "original_artifacts_preserved": 1422,
+    "tables_preserved": 20
+  },
+  "production_policy_changed": false,
+  "projected_reference_rows_excluded": 14,
+  "reference_bytes": 496966,
+  "reference_sha256": "407cc7ac2105d5d0c5c8ce4c90775adcb7733957157c2dad6aaa0af05f1ebfb1",
+  "representative_cases": 9,
+  "selected_methods": {
+    "calculated": 5,
+    "hr_estimate": 4
+  },
+  "selection": "Predeclared local dates/source workout descriptions; independent of selected stress ranking",
+  "verification": {
+    "browser_assertions": 218,
+    "browser_case_range_inspections": 16,
+    "browser_distinct_cases": 9,
+    "browser_ranges": [
+      "3 months",
+      "12 months"
+    ],
+    "diagnostic_repeat_identical": true,
+    "focused_diagnostic_tests": 5,
+    "full_python_tests": 353,
+    "prior_hr_summary_behavior_rerun": true
+  },
+  "windows": {
+    "365": {
+      "calendar_days": 365,
+      "no_record_days": 212,
+      "source_classes": {
+        "calculated": 95,
+        "corrected_estimate": 22,
+        "hr_estimate": 31,
+        "partial": 6,
+        "unavailable": 11
+      },
+      "unscored_rides": 11
+    },
+    "90": {
+      "calendar_days": 90,
+      "no_record_days": 35,
+      "source_classes": {
+        "calculated": 35,
+        "corrected_estimate": 3,
+        "hr_estimate": 18,
+        "partial": 2,
+        "unavailable": 1
+      },
+      "unscored_rides": 1
+    }
+  }
+}

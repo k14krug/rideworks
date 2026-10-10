@@ -1,0 +1,136 @@
+{
+  "after_coverage": {
+    "before_model_start": 118,
+    "days": 3053,
+    "rides": 1418,
+    "scored": 1102,
+    "scored_days": 999,
+    "selected_classes": {
+      "calculated": 589,
+      "corrected_estimate": 131,
+      "hr_estimate": 268,
+      "partial": 114,
+      "unavailable": 316
+    }
+  },
+  "all_three_recent_outdoor_summaries_scored": true,
+  "as_of": "2026-10-10T00:30:00+00:00",
+  "before_coverage": {
+    "before_model_start": 118,
+    "days": 3053,
+    "rides": 1418,
+    "scored": 1079,
+    "scored_days": 985,
+    "selected_classes": {
+      "calculated": 589,
+      "corrected_estimate": 131,
+      "hr_estimate": 218,
+      "partial": 141,
+      "unavailable": 339
+    }
+  },
+  "changed_numeric_rides": 50,
+  "changed_summary_source_counts": {
+    "FIT": 44,
+    "Strava API summary": 5,
+    "TCX": 1
+  },
+  "current_model_change": {
+    "fatigue": 2.1121552404600727,
+    "fitness": 2.930130857618238,
+    "form": 0.5642246957943371
+  },
+  "external_direction_checks": {
+    "fatigue_comparisons": 5,
+    "fatigue_same_direction": 5,
+    "fitness_comparisons": 5,
+    "fitness_same_direction": 5
+  },
+  "independent_raw_summary_formula_checks": 57,
+  "limitations": [
+    "Reported summary mean may cover only the recorded portion; active coverage and pause semantics unverified.",
+    "Partial HR is not selected. Unscored historical outdoor rides remain unavailable.",
+    "Representative load labels are relative to the retained window, not physiological classifications.",
+    "Vendor results are a behavioral comparison, never a score target or production input."
+  ],
+  "mandatory_regression_passed": true,
+  "newly_scored_rides": 23,
+  "partial_power_replaced_by_summary": 27,
+  "power_candidates_unchanged": 1418,
+  "recent_windows": {
+    "42": {
+      "after": {
+        "rides": 37,
+        "scored": 37,
+        "unscored": 0
+      },
+      "after_scored_days": 34,
+      "after_stress": 1747.9731869383988,
+      "before": {
+        "rides": 37,
+        "scored": 34,
+        "unscored": 3
+      },
+      "before_scored_days": 32,
+      "before_stress": 1568.1253552449934,
+      "changed_selected_stress_rides": 7,
+      "newly_scored_rides": 3,
+      "outdoor_after": {
+        "rides": 6,
+        "scored": 6,
+        "unscored": 0
+      },
+      "outdoor_before": {
+        "rides": 6,
+        "scored": 3,
+        "unscored": 3
+      }
+    },
+    "90": {
+      "after": {
+        "rides": 59,
+        "scored": 58,
+        "unscored": 1
+      },
+      "after_scored_days": 55,
+      "after_stress": 3000.7850724766795,
+      "before": {
+        "rides": 59,
+        "scored": 54,
+        "unscored": 5
+      },
+      "before_scored_days": 52,
+      "before_stress": 2801.119586948974,
+      "changed_selected_stress_rides": 8,
+      "newly_scored_rides": 4,
+      "outdoor_after": {
+        "rides": 11,
+        "scored": 10,
+        "unscored": 1
+      },
+      "outdoor_before": {
+        "rides": 11,
+        "scored": 7,
+        "unscored": 4
+      }
+    }
+  },
+  "representative_labels": [
+    "42_day_high_load",
+    "42_day_low_load",
+    "42_day_ordinary_load",
+    "90_day_high_load",
+    "90_day_low_load",
+    "90_day_ordinary_load",
+    "mandatory",
+    "recent_outdoor_summary"
+  ],
+  "representative_sessions": 5,
+  "selected_summary_sources": {
+    "FIT": 44,
+    "Strava API summary": 12,
+    "TCX": 1
+  },
+  "source_policy": "same-source-hr-summary-fallback-v2",
+  "version": "training-state-v2"
+}

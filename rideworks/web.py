@@ -18,7 +18,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
 
 
 def duration(seconds):
@@ -92,7 +92,7 @@ def shell(title, content, *, active='activities'):
 <title>{escape(title)} · RideWorks</title><link rel="icon" href="/static/mark.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css"><script src="/static/review.js" defer></script><script src="/static/settings.js" defer></script></head>
 <body><div class="app-header"><a class="brand" href="/" aria-label="RideWorks Home"><img src="/static/mark.svg" alt="" width="44" height="28"><span>RideWorks</span></a></div>
-<aside class="sidebar"><nav aria-label="Main"><a href="/"{nav_state('home')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg>Home</a><a href="/activities"{nav_state('activities')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 15l5-6 4 3 5-6"/></svg>Activities</a><a href="/performance"{nav_state('performance')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 16l4-5 4 2 6-9"/></svg>Performance</a><a href="/settings"{nav_state('settings')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16M2 8h6m1 8h6m1-7h6"/></svg>Settings</a></nav></aside>
+<aside class="sidebar"><nav aria-label="Main"><a href="/"{nav_state('home')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg>Home</a><a href="/activities"{nav_state('activities')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 15l5-6 4 3 5-6"/></svg>Activities</a><a href="/performance"{nav_state('performance')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 16l4-5 4 2 6-9"/></svg>Performance</a><a href="/training-state"{nav_state('training')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 14l4-3 4 5 4-10 4 4"/></svg>Training State</a><a href="/settings"{nav_state('settings')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16M2 8h6m1 8h6m1-7h6"/></svg>Settings</a></nav></aside>
 <main>{content}</main></body></html>'''
 
 
@@ -552,6 +552,9 @@ class Application:
                 return 200, 'text/html', self.page(store, home_page(store,url.query))
             if path == '/activities':
                 return 200, 'text/html', self.page(store, activities_page(store, url.query))
+            if path == '/training-state':
+                from .training_state_page import training_page
+                return 200, 'text/html', self.page(store, training_page(store,url.query))
             if path == '/performance':
                 return 200, 'text/html', self.page(store, performance_page(store))
             if path.startswith('/activities/'):

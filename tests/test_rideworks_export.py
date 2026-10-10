@@ -370,7 +370,7 @@ class MigrationTests(unittest.TestCase):
                               for table in tables}
                     self.assertEqual(old.connection.execute('PRAGMA user_version').fetchone()[0],2)
             with Store(root) as migrated:
-                self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],7)
+                self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],8)
                 self.assertEqual({table:[tuple(r) for r in migrated.connection.execute(f'SELECT * FROM {table}')]
                                   for table in tables},before)
                 self.assertEqual(migrated.get_source(imported['source_id'])['extraction']['mapping_version'],'fit-v1')
@@ -391,7 +391,7 @@ class MigrationTests(unittest.TestCase):
                 self.assertEqual(connection.execute('SELECT activity_id FROM activities').fetchone()[0],'existing')
                 self.assertEqual(connection.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='fit_lap_timestamps'").fetchone()[0],0)
             with Store(root) as recovered:
-                self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],7)
+                self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],8)
 
     def test_real_schema1_fixture_migrates_ids_bytes_extraction_and_review(self):
         from rideworks.analysis import analyze_activity
@@ -413,7 +413,7 @@ class MigrationTests(unittest.TestCase):
                     original_bytes = (root / before['sources'][0][-2]).read_bytes()
                     self.assertEqual(old.connection.execute('PRAGMA user_version').fetchone()[0],1)
             with Store(root) as migrated:
-                self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],7)
+                self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],8)
                 after = {table: [tuple(r) for r in migrated.connection.execute(f'SELECT * FROM {table}')]
                          for table in tables}
                 self.assertEqual(after, before)
@@ -439,7 +439,7 @@ class MigrationTests(unittest.TestCase):
                 self.assertEqual(connection.execute('SELECT activity_id FROM activities').fetchone()[0],'existing')
                 self.assertEqual(connection.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='export_snapshots'").fetchone()[0],0)
             with Store(root) as recovered:
-                self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],7)
+                self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],8)
 
 
 if __name__ == '__main__':

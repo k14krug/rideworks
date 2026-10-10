@@ -1,0 +1,97 @@
+{
+  "browser": {
+    "desktop_plot_pixels": 400,
+    "general_assertions": 305,
+    "phone_plot_pixels": 300,
+    "representative_activities": 13,
+    "representative_assertions": 435,
+    "representative_range_inspections": 32,
+    "small_phone_width_tested": 320
+  },
+  "coverage": {
+    "before_model_start": 118,
+    "days": 3053,
+    "rides": 1418,
+    "scored": 1150,
+    "scored_days": 1025,
+    "selected_classes": {
+      "calculated": 642,
+      "corrected_estimate": 150,
+      "hr_estimate": 210,
+      "partial": 148,
+      "unavailable": 268
+    }
+  },
+  "coverage_by_activity_type": {
+    "Ride": {
+      "rides": 148,
+      "selected_classes": {
+        "hr_estimate": 10,
+        "unavailable": 138
+      }
+    },
+    "Virtual Ride": {
+      "rides": 1270,
+      "selected_classes": {
+        "calculated": 642,
+        "corrected_estimate": 150,
+        "hr_estimate": 200,
+        "partial": 148,
+        "unavailable": 130
+      }
+    }
+  },
+  "diagnostic_repeat_identical": true,
+  "hr_candidate_reasons": {
+    "hr_active_duration_unavailable": 15,
+    "hr_duration_span_mismatch": 84,
+    "incompatible_hr_summary_duration": 398,
+    "insufficient_hr_coverage": 386,
+    "invalid_api_hr_summary": 1,
+    "invalid_hr_summary": 3,
+    "invalid_hr_timing": 12,
+    "unresolved_timer_scope": 2,
+    "unsupported_native_hr_summary": 25,
+    "usable": 876
+  },
+  "known_limitations": [
+    "Recorded interval is not whole session",
+    "HR formula is a retrospective model",
+    "HR threshold/max assumptions can exclude values outside modeled range",
+    "Unscored rides retain unavailable evidence; model contribution is zero",
+    "HR stream coverage >=99%, adjacent measured intervals <=15s, duration alignment <=max(1s,1%); independent same-source summary fallback does not claim stream completeness",
+    "HR summaries use reported moving/timer/lap duration; mean active scope and pause treatment are unverified"
+  ],
+  "model_period_rides": 1300,
+  "power_candidate_classes_in_model_period": {
+    "calculated": 642,
+    "corrected_estimate": 150,
+    "partial": 202,
+    "unavailable": 306
+  },
+  "power_source_policy": "virtual-recorded-stress-evidence-v1",
+  "preservation": {
+    "foreign_key_violations": 0,
+    "integrity": "ok",
+    "original_artifacts_preserved": 1422,
+    "tables_preserved": 20
+  },
+  "restart_recompute": "deterministic",
+  "retained_routes": {
+    "activities_identical": true,
+    "home_same_clock_unchanged": true,
+    "performance_same_clock_unchanged": true
+  },
+  "source_digest": "cb990c18e969d0d12f1d524bea22cf8b596746171f179f6241748394b87ad073",
+  "tests": {
+    "full_python_tests": 368,
+    "new_power_source_tests": 10,
+    "session_experiment_tests": 5
+  },
+  "verification": {
+    "exact_daily_models": 3053,
+    "independent_hr_formula_checks": 874,
+    "independent_observed_power_checks": 1263
+  },
+  "version": "training-state-v3"
+}

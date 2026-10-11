@@ -133,8 +133,8 @@ local server origin substituted in an ignored copy. Screenshots remain in ignore
 
 Running disposable review: `http://127.0.0.1:8791/activities`; open any actual ride.
 Native FIT, retained-stream API and limited-evidence pages are available. The
-accepted original store is untouched. Draft PR and current head are recorded in
-`STATUS.md`. Analyst review must clear Gate 1 before Owner running-page Gate 2.
+accepted original store is untouched. [Draft PR #30](https://github.com/k14krug/rideworks/pull/30) contains implementation commit
+`f708eb2`; branch and current handoff are recorded in `STATUS.md`. Analyst review must clear Gate 1 before Owner running-page Gate 2.
 No merge, done status, next-page redesign or Phase 6 is authorized at this handoff.
 
 ## Computed synthetic production captures

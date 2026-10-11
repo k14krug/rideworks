@@ -343,7 +343,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Follow-up work
 
-Phase 1, Phase 2, STRAVA-004 and Phase 3 and Phase 4 are accepted and complete. P5-01 is the current implementation task.
+Phases 1–5 v1 and STRAVA-004 are accepted and complete. Adaptive Phase 6 is deferred by Owner choice. **PC-01 power-duration curves** are the next pending follow-up; no implementation invocation has occurred.
 
 Manual pairwise ride-to-ride comparison is not a Phase 2 requirement. It remains an optional future interaction if a concrete use case emerges.
 
@@ -472,4 +472,14 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### Phase 6 — Adaptive planning
 
-**Status:** deferred at Owner direction (2026-10-10) — adaptive planning remains a possible future phase, but the Owner wishes to skip it for now. No Phase 6 task/JIT/invocation; the next development priority is not yet selected.
+**Status:** deferred at Owner direction (2026-10-10) — adaptive planning remains a possible future phase, but the Owner wishes to skip it for now. No Phase 6 task/JIT/invocation.
+
+### PC-01 — Power-duration curves (Performance + Activity Review)
+
+**Status:** **pending implementation** — Owner chose **Previous 6 weeks before the selected ride** as the default Activity Review comparison on 2026-10-11. New bounded Performance follow-up, not Phase 6. [Issue #27](https://github.com/k14krug/rideworks/issues/27).
+
+**Purpose:** Extend currently accepted 20-minute Performance to source-qualified maximal mean-power bests over short and long durations, with a Performance Power Curve mode comparing two independently selectable periods and a single-activity curve versus historical prior-six-week bests. Preserve first-class existing 20-minute history and Activity Review.
+
+**Controlling artifacts:** [PC-01 design](docs/design/PC-01-power-duration-curves.md); [PC-01 acceptance](docs/POWER_CURVE_ACCEPTANCE.md); [editable visual reference](docs/mockups/power-curve-v1.html); [Analyst JIT PC-01](docs/tasks/PC-01.md). Owner's default is historic [ride start − 42 × 24h, ride start), excluding the selected ride and later rides. Mockup values are synthetic, not evidence.
+
+**Execution:** `/TASK PC-01` or `/AUTOTASK PC-01` after Dex refreshes the repository. Preserve existing trusted Virtual Ride source precedence, 1,200-second result parity, original FIT/TCX/GPX/API evidence, Training State and Plan. Implement bounded per-ride derived profiles and period envelopes; validate usability and real workload. Stop at **HARD — Analyst Gate 1**, then **HARD — Owner Gate 2** on running charts. No merge or done status before acceptance. No Phase 6 start.

@@ -1,0 +1,32 @@
+{
+  "private_browser": {
+    "checks": 1331,
+    "source": "private",
+    "desktop": 1440,
+    "mobile": [
+      390,
+      320
+    ],
+    "period_combinations": 25,
+    "errors": []
+  },
+  "synthetic_browser": {
+    "checks": 614,
+    "source": "synthetic",
+    "desktop": 1440,
+    "mobile": [
+      390,
+      320
+    ],
+    "period_combinations": 25,
+    "errors": []
+  },
+  "regression_browser": {
+    "checks": 14,
+    "touchscreen": true,
+    "accepted_pages": true,
+    "native_review": true
+  },
+  "python_full_tests": 440,
+  "python_power_curve_tests": 24
+}

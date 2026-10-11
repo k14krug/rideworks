@@ -852,3 +852,38 @@ a suggestion or assigns intent retrospectively.
 Schema 9 planning records remain local. No Training State, Performance, FTP or
 Strava access policy changes. See `reports/P5-01/review-followup.md` for JIT §10
 verification, limitations, source-neutral screenshots and reproducibility.
+
+## Power-duration curves (PC-01; pending acceptance)
+
+Performance keeps **20-Minute History** as its default and adds **Power Curve**
+with independent comparison periods. Activity Review has a Power Curve section
+and jump link, defaulting to the selected ride's preceding 42 days, excluding
+the ride itself and every activity at or after its start. Prior 12 months and
+all earlier history are alternatives. These are observed maximal mean-power
+curves in watts, with exact evaluated durations and contributing activity links.
+
+Build the new, replaceable schema-10 profiles once from retained sources:
+
+```bash
+.venv/bin/python -m rideworks --data-dir /path/to/local/store rebuild-power-curves
+```
+
+Normal successful Strava sync updates changed profiles automatically without
+additional API requests. After manual imports/reextraction, choose **Update power
+curves** on Performance or rerun the command. Unchanged profiles are reused;
+`--force` explicitly recomputes all profiles. Stale results remain unavailable.
+Computation uses short per-ride read snapshots and an atomic publication step,
+so it does not hold an archive-long SQLite write lock.
+
+Hover, tap or focus the chart and use arrow keys to inspect exact computed
+anchors. Enter opens the selected contributing activity; each readout also
+has its own focusable link. Provenance includes exact watt sum/sample count,
+window bounds, source identity and timer-quality limitations. Connected lines
+are visual guides between anchors, not interpolated exact results.
+
+The accepted Virtual Ride file/API precedence is retained. Short complete
+windows may qualify without a best-20 value. Verified timer intervals keep
+observed stop endpoints and cannot be stitched; unverified timers do not clip
+valid recorded samples. Outdoor and summary/estimated watts cannot supply
+these curves. Existing Performance, Training State and planning calculations
+are preserved. See `reports/PC-01/implementation.md` for review evidence.

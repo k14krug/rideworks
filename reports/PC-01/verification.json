@@ -1,0 +1,55 @@
+{
+  "method": "observed-mmp-grid-v1",
+  "grid": "seconds-1-30-plus-7-percent-v1",
+  "evaluated": 1443,
+  "profiles": 1271,
+  "pending": 0,
+  "counts": {
+    "independent_duration_windows_verified": 122112,
+    "efforts_with_timer_discrepancy": 175,
+    "native_best20_parity": 1022,
+    "profiles_shorter_than_20min": 242,
+    "profiles_hour_plus": 241,
+    "api_best20_parity": 7,
+    "historical_envelope_anchors_verified": 109,
+    "aggregation_runtime_ms": 710
+  },
+  "source_formats": {
+    "FIT": 1262,
+    "GPX": 2,
+    "Strava API stream": 7
+  },
+  "timer_quality": {
+    "paired_scope_unverified": 1193,
+    "session_verified": 60,
+    "unpaired_or_invalid": 2,
+    "events_absent": 9,
+    "not_available": 7
+  },
+  "shortest_anchor_seconds": 1,
+  "longest_anchor_seconds": 15189,
+  "distinct_anchor_count": 133,
+  "profile_anchor_count": 122112,
+  "longest_observed_run_seconds": 16240,
+  "repeat_incremental_build": {
+    "status": "completed",
+    "method": "observed-mmp-grid-v1",
+    "grid": "seconds-1-30-plus-7-percent-v1",
+    "computed": 0,
+    "reused": 1443,
+    "with_power": 0,
+    "elapsed_seconds": 0.239
+  },
+  "verification_elapsed_seconds": 37.643,
+  "preservation": {
+    "source_tables_preserved": 20,
+    "originals_preserved": 1422,
+    "integrity": "ok",
+    "foreign_key_violations": 0,
+    "approved_reference_hashes": {
+      "data/athlete/strava_ftp_history.csv": "cb990c18e969d0d12f1d524bea22cf8b596746171f179f6241748394b87ad073",
+      "rideworks/data/strava_ftp_history.csv": "cb990c18e969d0d12f1d524bea22cf8b596746171f179f6241748394b87ad073",
+      "data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv": "407cc7ac2105d5d0c5c8ce4c90775adcb7733957157c2dad6aaa0af05f1ebfb1"
+    }
+  }
+}

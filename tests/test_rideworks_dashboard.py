@@ -349,7 +349,7 @@ class DashboardTests(TestCase):
     def test_schema6_atomic_migration_preserves_all_existing_tables(self):
         old=self.root/'schema6'
         with Store(old) as store:
-            for table in ('planning_feedback','planning_classifications','planning_classification_cache','planning_intents'):
+            for table in ('power_curve_profiles','planning_feedback','planning_classifications','planning_classification_cache','planning_intents'):
                 store.connection.execute('DROP TABLE '+table)
             store.connection.execute('DROP TABLE training_stress_cache');store.connection.execute('DROP TABLE annual_mileage_goals');store.connection.execute('PRAGMA user_version=6')
         broken=store_module.MIGRATION_7.replace('PRAGMA user_version = 7;','INSERT INTO nonexistent VALUES(1);')
@@ -358,7 +358,7 @@ class DashboardTests(TestCase):
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],6)
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='annual_mileage_goals'").fetchone())
         with Store(old) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],9)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],10)
             self.assertEqual(migrated.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
 
     def test_annual_goal_migration_waits_for_completed_stream_migration(self):
@@ -368,7 +368,7 @@ class DashboardTests(TestCase):
                 self.assertEqual(stopped.connection.execute('PRAGMA user_version').fetchone()[0],5)
                 self.assertIsNone(stopped.connection.execute("SELECT name FROM sqlite_master WHERE name='annual_mileage_goals'").fetchone())
         with Store(old) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],9)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],10)
 
     def test_no_deferred_metrics_and_pending_banner_on_home(self):
         path=self.root/'synthetic.fit';path.write_bytes(make_fit());self.store.import_fit(path)

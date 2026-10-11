@@ -3,6 +3,59 @@
   --border: #E5E7EB; --muted: #52627c; --surface: #fff;
   --background: #fafcff;
 }
+[hidden] { display: none !important; }
+.performance-modes { display: flex; gap: 8px; margin: 16px 0; }
+.performance-modes button { padding: 8px 13px; border: 1px solid #c3cede; border-radius: 5px; background: #fff; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
+.performance-modes button[aria-pressed="true"] { color: var(--blue); border-color: #a8c3f6; background: #edf3ff; }
+.power-curve-panel { padding: 22px; min-width: 0; }
+.curve-heading { display: flex; justify-content: space-between; gap: 16px; }
+.curve-jump { display: inline-block; margin-top: 8px; font-size: 12px; }
+.curve-heading h2 { font-size: 19px; margin-bottom: 5px; }
+.curve-heading p, .curve-heading > span { font-size: 12px; }
+.curve-series-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; }
+.curve-series { border: 1px solid var(--border); padding: 12px; border-radius: 6px; min-width: 0; }
+.curve-series > div { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.curve-series label { font-weight: 600; }
+.curve-series select { max-width: 100%; padding: 6px; border: 1px solid #c3cede; border-radius: 4px; background: #fafcff; color: var(--navy); font: inherit; }
+.curve-series p { font-size: 11px; margin-top: 8px; overflow-wrap: anywhere; }
+.curve-swatch { display: inline-block; width: 22px; border-top: 3px solid #8e489d; }
+.curve-b-swatch { border-top-style: dashed; border-color: #078577; }
+[data-curve-activity="true"] .curve-a-swatch { border-color: var(--blue); }
+#power-curve-chart { display: block; width: 100%; min-height: 300px; touch-action: pan-y; }
+#power-curve-chart:focus-visible, .curve-series select:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+#power-curve-chart text { font: 11px system-ui,sans-serif; fill: var(--muted); }
+.curve-grid { stroke: #e7edf5; stroke-width: 1; fill: none; }
+.curve-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.curve-line-a { stroke: #8e489d; }
+.curve-line-b { stroke: #078577; stroke-dasharray: 7 4; }
+.curve-anchor-a { fill: #8e489d; }
+.curve-anchor-b { fill: #078577; }
+[data-curve-activity="true"] .curve-line-a { stroke: var(--blue); }
+[data-curve-activity="true"] .curve-anchor-a { fill: var(--blue); }
+.curve-guide { fill: none; stroke: #8394aa; stroke-dasharray: 4 4; }
+.curve-marker { fill: #fff; stroke-width: 2; }
+.curve-marker-a { stroke: #8e489d; }
+[data-curve-activity="true"] .curve-marker-a { stroke: var(--blue); }
+.curve-marker-b { stroke: #078577; }
+.curve-inspection { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 12px; margin: 16px 0; }
+.curve-inspection article { padding: 14px; border: 1px solid var(--border); border-radius: 6px; min-width: 0; }
+.curve-inspection h3 { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.curve-inspection strong { display: block; font-size: 22px; margin-bottom: 5px; }
+.curve-inspection p, .curve-inspection a { font-size: 12px; }
+.curve-inspection details { font-size: 11px; margin-top: 10px; overflow-wrap: anywhere; }
+.curve-inspection dl div { display: block; padding: 5px 0; }
+.curve-inspection dd { margin: 0; }
+.curve-inspection dt { font-weight: 600; }
+#curve-empty, #curve-help, .curve-method { font-size: 12px; margin-top: 12px; }
+.curve-method p { margin-top: 10px; }
+.curve-pending { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 12px; }
+@media (max-width: 740px) {
+  .power-curve-panel { padding: 14px; }
+  .curve-series-controls, .curve-inspection { grid-template-columns: 1fr; }
+  .curve-pending { display: block; }
+  .curve-pending form { margin-top: 10px; }
+  #power-curve-chart text { font-size: 11px; }
+}
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--background); color: var(--navy); font: 14px/1.5 system-ui, sans-serif; }
 a { color: var(--blue); text-decoration: none; }

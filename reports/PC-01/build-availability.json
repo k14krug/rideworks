@@ -1,0 +1,39 @@
+{
+  "build": {
+    "status": "completed",
+    "method": "observed-mmp-grid-v1",
+    "grid": "seconds-1-30-plus-7-percent-v1",
+    "computed": 1443,
+    "reused": 0,
+    "with_power": 1271,
+    "changed_during_build": 0,
+    "publication_seconds": 0.875,
+    "elapsed_seconds": 52.788
+  },
+  "concurrent_page_checks": 18,
+  "routes": 4,
+  "max_page_elapsed_ms": 4845,
+  "page_elapsed_ms": [
+    4516,
+    2381,
+    1836,
+    3040,
+    4557,
+    2427,
+    1894,
+    3095,
+    4845,
+    2276,
+    1751,
+    2726,
+    4582,
+    2344,
+    1766,
+    2689,
+    4605,
+    1675
+  ],
+  "cached_comparison_elapsed_ms": 602,
+  "process_peak_rss_mib": 449.5,
+  "sqlite_lock_failures": 0
+}

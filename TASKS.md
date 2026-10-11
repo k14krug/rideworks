@@ -343,7 +343,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Follow-up work
 
-Phases 1–5 v1 and STRAVA-004 are accepted and complete. Adaptive Phase 6 is deferred by Owner choice. **PC-01 power-duration curves** were invoked under `/AUTOTASK PC-01`; source/timer-contract preflight is blocked for Analyst clarification before feature implementation.
+Phases 1–5 v1 and STRAVA-004 are accepted and complete. Adaptive Phase 6 is deferred by Owner choice. **PC-01 power-duration curves** are implemented and locally verified under `/AUTOTASK PC-01`, ready for HARD — Analyst Gate 1 review on draft PR #28. Not accepted.
 
 Manual pairwise ride-to-ride comparison is not a Phase 2 requirement. It remains an optional future interaction if a concrete use case emerges.
 
@@ -476,7 +476,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### PC-01 — Power-duration curves (Performance + Activity Review)
 
-**Status:** **in_progress — Analyst approved PC-01 timer/source clarification in [JIT §13](docs/tasks/PC-01.md) on 2026-10-11**; preflight blocker resolved, implementation still to be executed on draft [PR #28](https://github.com/k14krug/rideworks/pull/28). Prior [read-only preflight](reports/PC-01/timer-contract-preflight.md) confirmed 1,022 existing native best-20 results; these prior checks are not feature acceptance. [Issue #27](https://github.com/k14krug/rideworks/issues/27).
+**Status:** in_progress — implementation and required local verification complete; ready for **HARD — Analyst Gate 1** on draft [PR #28](https://github.com/k14krug/rideworks/pull/28). [Implementation evidence](reports/PC-01/implementation.md): 440 full / 24 focused tests, exact independent verification of 122,112 duration results, 1,022 native / seven API best-20 parity, actual/synthetic Chromium desktop/mobile/touch, cache/restart/sync and concurrent-build availability. Original 20 source tables / 1,422 artifacts and accepted Performance/Training State/Plan are preserved. Owner Gate 2 and acceptance remain pending. [Issue #27](https://github.com/k14krug/rideworks/issues/27).
 
 **Purpose:** Extend currently accepted 20-minute Performance to source-qualified maximal mean-power bests over short and long durations, with a Performance Power Curve mode comparing two independently selectable periods and a single-activity curve versus historical prior-six-week bests. Preserve first-class existing 20-minute history and Activity Review.
 

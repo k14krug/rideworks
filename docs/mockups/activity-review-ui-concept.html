@@ -143,8 +143,8 @@ ride.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'
 powerCB.addEventListener('change',drawRide);hrCB.addEventListener('change',drawRide);drawRide();
 const curve=document.querySelector('#curve-plot'),period=document.querySelector('#period');
 const durations=[1,2,3,5,8,12,20,30,45,60,90,120,180,300,420,600,900,1200,1800,2400,3200],labels={six:'Previous 6 weeks',year:'Prior 12 months',all:'All earlier history'};
-const rider=d=>{const base=425/(1+.092*Math.log(1+d))+160/(1+Math.pow(d/30,.82));return Math.round(base*(d>=300? .97:1))};
-const baseline=(d,p)=>Math.round((465/(1+.095*Math.log(1+d))+169/(1+Math.pow(d/30,.82)))*(p==='year'?1.025:p==='all'?1.05:1));
+const rider=d=>Math.round(168+380/(1+Math.pow(d/12,.55)));
+const baseline=(d,p)=>rider(d)+Math.round(5+50*Math.exp(-d/30)+(p==='year'?10:p==='all'?18:0));
 let curveIndex=durations.indexOf(1200),curveDraw;
 function fmtDuration(d){return d<60?d+' sec':d<3600?(d/60).toFixed(d%60?1:0)+' min':(d/3600).toFixed(1)+' h'}
 function drawCurve(){curve.replaceChildren();const W=Math.min(900,Math.max(270,Math.floor(curve.getBoundingClientRect().width||curve.parentElement.clientWidth))),H=W<520?310:334,l=W<520?40:52,r=W-(W<520?17:53),top=24,b=H-54,min=1,max=3200,maxY=690,x=d=>l+Math.log(d/min)/Math.log(max/min)*(r-l),y=v=>b-v/maxY*(b-top),value=period.value;curve.setAttribute('viewBox',`0 0 ${W} ${H}`);curve.style.height=H+'px';

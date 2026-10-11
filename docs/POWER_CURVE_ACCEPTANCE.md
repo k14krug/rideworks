@@ -1,6 +1,6 @@
 # PC-01 Acceptance — Power-Duration Curves
 
-**Status:** pending implementation, established 2026-10-11 by Owner direction.
+**Status:** **accepted/complete 2026-10-11** after HARD — Analyst Gate 1 verification and the Owner's positive review of the implemented feature. [PR #28](https://github.com/k14krug/rideworks/pull/28).
 **Scope:** New Performance/Activity Review follow-up. **Phase 6 adaptive planning remains deferred.**
 **Controlling context:** [PC-01 design](design/PC-01-power-duration-curves.md), [product requirements](PRODUCT_REQUIREMENTS.md) (`REV-003`, `REV-004`, `PERF-001`–`PERF-005`), accepted [Phase 2 Performance](PHASE_2_ACCEPTANCE.md), and [editable Power Curve UI reference](mockups/power-curve-v1.html).
 
@@ -39,3 +39,13 @@ This clarification resolves a pre-implementation numerical ambiguity; it is **no
 - **Only independently corroborated/session-verified timer intervals are masking/splitting evidence.** Paired but contradictory/unverified timer reports do not invalidate a valid contiguous watts/timestamps sequence or clip 127 observed post-stop samples; retain source-timer quality details and do not call these timer-verified active efforts.
 - Require exact best-20 value, rounded display and earliest-window parity across current 1,022 native accepted cases and supported API results. Segment verified pauses; if a concrete verified pause conflicts with existing accepted best-20 *maximum* or earliest qualifying maximum, **stop and report that case**. Preserve Phase 2's accepted calculator and source history; don't blanket-exclude the 981 session-unverified paired timer scopes or add generalized diagnostic gates.
 - The four preflight tests and 416 total prior tests were run **before feature implementation**; do not accept PC-01 without complete curve/math/cache/browser and archival verification.
+
+## Final acceptance disposition — 2026-10-11
+
+**PC-01 accepted. HARD — Analyst Gate 1 and HARD — Owner Gate 2 cleared.** The Analyst inspected the pushed source-selection, observed-MMP-window implementation, verified/unverified timer treatment, profile/cache publication and historical period envelope, together with Dex's reported [implementation](../reports/PC-01/implementation.md), [independent numerical verification](../reports/PC-01/verification.json), [test/browser counts](../reports/PC-01/checks.json), [runtime](../reports/PC-01/runtime.json), [concurrent-build checks](../reports/PC-01/build-availability.json) and [accepted-model comparison](../reports/PC-01/accepted-behavior.json). The Owner reviewed the feature and explicitly said **"I'm pleased with this. I think we can close it."**
+
+Performance retains the accepted 20-Minute History by default and adds two selectable period curves. Activity Review defaults to **the selected ride versus its own preceding 42 days**, excludes the selected ride and later rides, and exposes exact duration/source attribution. The documented JIT §13 timer rule and honest unavailable states remain. Dex reported **440 passing Python tests, 1,959 browser checks, 122,112 independently verified curve results, exact 1,022 native and seven API 20-minute parity checks**, stable fixed-clock accepted Performance/Training State/Plan, all 20 original source tables and **1,422 source artifacts preserved**, and no original FIT/TCX/GPX modifications. The Analyst did not rerun the private local store; reviewed committed code and reproducible source-neutral evidence.
+
+**Accepted practical limitation:** forced full-history profile build takes about 23 seconds and may cause CPU contention (reported concurrent-page slowdown), while incremental/cached lookups are faster. Computed anchors are approximately 7% apart beyond 30 seconds, not every duration; between-anchor visual segments are explicitly not exact extra computations. The initial cohort excludes untrusted outdoor power. These limits are documented and acceptable for a private single-rider v1.
+
+This final acceptance **supersedes the preceding pre-implementation-only clarification and pending-gate text**; earlier sections remain as historical requirements. Phase 6 is still deferred and is not authorized by PC-01 closeout.

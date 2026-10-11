@@ -343,7 +343,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Follow-up work
 
-Phases 1–5 v1 and STRAVA-004 are accepted and complete. Adaptive Phase 6 is deferred by Owner choice. **PC-01 power-duration curves** are the next pending follow-up; no implementation invocation has occurred.
+Phases 1–5 v1 and STRAVA-004 are accepted and complete. Adaptive Phase 6 is deferred by Owner choice. **PC-01 power-duration curves** were invoked under `/AUTOTASK PC-01`; source/timer-contract preflight is blocked for Analyst clarification before feature implementation.
 
 Manual pairwise ride-to-ride comparison is not a Phase 2 requirement. It remains an optional future interaction if a concrete use case emerges.
 
@@ -476,7 +476,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### PC-01 — Power-duration curves (Performance + Activity Review)
 
-**Status:** **pending implementation** — Owner chose **Previous 6 weeks before the selected ride** as the default Activity Review comparison on 2026-10-11. New bounded Performance follow-up, not Phase 6. [Issue #27](https://github.com/k14krug/rideworks/issues/27).
+**Status:** blocked — `/AUTOTASK PC-01` invoked 2026-10-11; read-only preflight found a timer/parity contract ambiguity. [Preflight evidence](reports/PC-01/timer-contract-preflight.md). Feature implementation has not begun; Analyst must define terminal stop-sample treatment and contradictory timer/summary handling without silently changing accepted best-20 results. [Issue #27](https://github.com/k14krug/rideworks/issues/27).
 
 **Purpose:** Extend currently accepted 20-minute Performance to source-qualified maximal mean-power bests over short and long durations, with a Performance Power Curve mode comparing two independently selectable periods and a single-activity curve versus historical prior-six-week bests. Preserve first-class existing 20-minute history and Activity Review.
 

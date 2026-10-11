@@ -180,6 +180,8 @@ The product should eventually support:
 - watts/kg where historical weight is known;
 - relationships between training patterns and later performance.
 
+**Owner-directed Power Curve follow-up (2026-10-11):** Add a multi-duration power curve to the existing Performance view with two independently selectable historical comparisons, and a curve in Activity Review comparing the selected ride **by default to its own previous six weeks** (not the six weeks prior to viewing the page). The selected ride and later rides are excluded from that historical baseline. Use eligible source-observed windows with honest source/coverage limitations; preserve accepted 20-minute Performance results. See [PC-01 design](design/PC-01-power-duration-curves.md) and [acceptance criteria](POWER_CURVE_ACCEPTANCE.md). This follow-up does not reactivate deferred Phase 6.
+
 ### 3.4 Training plan
 
 Training planning answers: **What am I supposed to do next?**

@@ -30,3 +30,12 @@
 **HARD — Owner Gate 2:** running Performance Power Curve plus Activity Review comparison assessed for usefulness and clarity. No merge or done status before both gates.
 
 **Deferred:** fitted Critical Power/W′, estimated FTP, outdoor reconstructed power, automatic workout changes, Phase 6, historical weight interpolation/W/kg, custom arbitrary period editor, and a generic ride-vs-ride comparison editor.
+
+## Accepted Analyst timer/source contract clarification — 2026-10-11
+
+This clarification resolves a pre-implementation numerical ambiguity; it is **not PC-01 feature acceptance or Owner Gate 2 clearance**. See [JIT §13](tasks/PC-01.md) and the [read-only diagnostic](../reports/PC-01/timer-contract-preflight.md).
+
+- Treat FIT sample timestamps as observed records; a valid watt observation **at a verified stop timestamp may qualify as an endpoint**, while confirmed distinct active intervals never become one duration window.
+- **Only independently corroborated/session-verified timer intervals are masking/splitting evidence.** Paired but contradictory/unverified timer reports do not invalidate a valid contiguous watts/timestamps sequence or clip 127 observed post-stop samples; retain source-timer quality details and do not call these timer-verified active efforts.
+- Require exact best-20 value, rounded display and earliest-window parity across current 1,022 native accepted cases and supported API results. Segment verified pauses; if a concrete verified pause conflicts with existing accepted best-20 *maximum* or earliest qualifying maximum, **stop and report that case**. Preserve Phase 2's accepted calculator and source history; don't blanket-exclude the 981 session-unverified paired timer scopes or add generalized diagnostic gates.
+- The four preflight tests and 416 total prior tests were run **before feature implementation**; do not accept PC-01 without complete curve/math/cache/browser and archival verification.

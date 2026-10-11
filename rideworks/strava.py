@@ -332,8 +332,10 @@ def sync(store,client,*,now=None):
         stream_result=enrich(store,client,current['access_token'],recent_candidates(store,window))
         from .performance import converge_performance
         performance_result=converge_performance(store)
+        from .power_curve import converge_curves
+        curve_result=converge_curves(store)
     return dict(status='completed',scope=SCOPE,**window,pages_requested=pages,
-                api_activities_observed=len(observations),rate_limits=dict(client.rate),**result,**stream_result,**performance_result)
+                api_activities_observed=len(observations),rate_limits=dict(client.rate),**result,**stream_result,**performance_result,**curve_result)
 
 
 def disconnect(store,client):

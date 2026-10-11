@@ -188,7 +188,7 @@ class Settings:
             return 403, {}, b'Invalid Settings action. Reload Settings and try again.'
         if goal_action and (set(values) not in ({'nonce','tz','target_miles'},{'nonce','tz','clear'}) or any(len(v)!=1 for v in values.values())):
             return 400, {}, b'Invalid annual goal form. Reload Settings and try again.'
-        if path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/annual-goal'):
+        if path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/power-curves/rebuild', '/settings/annual-goal'):
             return 404, {}, b'Unknown Settings action.'
         if not self.operation.acquire(blocking=False):
             return 409, {}, NOTICES['busy'].encode()
@@ -215,6 +215,13 @@ class Settings:
                     self.remember(self.state() | dict(performance_update='updated',performance_eligible=result['eligible']))
                     self.notice = f"Performance updated: {result['evaluated']:,} Activities evaluated · {result['eligible']:,} eligible results."
                     return self.redirect()
+                if path == '/settings/power-curves/rebuild':
+                    from .power_curve import rebuild_curves
+                    result = rebuild_curves(store)
+                    self.notice = ('Power Curve update incomplete: source evidence changed during the build. Retry from Performance.'
+                                   if result['status']=='incomplete' else
+                                   f"Power curves updated: {result['computed']:,} computed · {result['reused']:,} current profiles retained.")
+                    return self.redirect('/performance?curve=1')
                 credentials = self.configured()
                 if path.endswith('/disconnect'):
                     result = disconnect(store, self.client_factory(credentials) if credentials else None)
@@ -241,6 +248,8 @@ class Settings:
                 return 500, {}, b'Annual goal could not be saved. Your previous target is retained; reload Settings and try again.'
             if path == '/settings/performance/rebuild':
                 self.notice = 'Performance update incomplete. Existing results were retained. Check local source availability and retry the Performance update.'
+            elif path == '/settings/power-curves/rebuild':
+                self.notice = 'Power Curve update incomplete. Existing profiles were retained. Check local source availability and retry the update from Performance.'
             else:
                 self.failure(error)
         finally:

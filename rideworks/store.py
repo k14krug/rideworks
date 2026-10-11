@@ -293,6 +293,20 @@ COMMIT;
 """
 
 
+MIGRATION_10 = """
+BEGIN IMMEDIATE;
+CREATE TABLE power_curve_profiles (
+    activity_id TEXT PRIMARY KEY REFERENCES activities(activity_id),
+    method TEXT NOT NULL,
+    input_signature TEXT NOT NULL,
+    calculated_at TEXT NOT NULL,
+    result_json TEXT NOT NULL
+);
+PRAGMA user_version = 10;
+COMMIT;
+"""
+
+
 def resolve_data_dir(data_dir=None) -> Path:
     """Resolve once; default does not depend on the working directory."""
     selected = data_dir if data_dir is not None else os.environ.get("RIDEWORKS_DATA_DIR", "~/.rideworks")
@@ -333,7 +347,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
+        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -363,6 +377,9 @@ class Store:
                 version = 8
             if version == 8:
                 self.connection.executescript(MIGRATION_9)
+                version = self.connection.execute('PRAGMA user_version').fetchone()[0]
+            if version == 9:
+                self.connection.executescript(MIGRATION_10)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

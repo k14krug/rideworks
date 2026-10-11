@@ -21,6 +21,8 @@ def main(argv=None):
     commands.add_parser("analyze", help="Source summary and best 20-minute result; no raw streams").add_argument("activity_id")
     commands.add_parser("reextract", help="Rebuild from the preserved original").add_argument("source_id")
     commands.add_parser("rebuild-performance", help="Rebuild durable trusted Virtual Ride best-20 history")
+    curves = commands.add_parser('rebuild-power-curves', help='Build current observed power-duration profiles from retained sources')
+    curves.add_argument('--force', action='store_true', help='Recalculate unchanged profiles too')
     connect = commands.add_parser('strava-connect', help='Authorize private manual Strava synchronization')
     connect.add_argument('--callback-port', type=int, default=8772, help='Temporary loopback OAuth callback port (default: 8772)')
     commands.add_parser('sync-strava', help='Manually sync recent/new Strava activity metadata')
@@ -76,6 +78,9 @@ def main(argv=None):
             elif args.command == "rebuild-performance":
                 from .performance import rebuild_performance
                 result = rebuild_performance(store)
+            elif args.command == 'rebuild-power-curves':
+                from .power_curve import rebuild_curves
+                result = rebuild_curves(store, force=args.force)
             else:
                 result = store.reextract(args.source_id)
         print(json.dumps(result, indent=2, ensure_ascii=True))

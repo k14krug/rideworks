@@ -19,7 +19,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
 
 
 def duration(seconds):
@@ -466,9 +466,10 @@ def thin_review_page(row, streams=None, stream_reason=None, recent=None):
 <section class="thin-sources" aria-label="Associated source evidence">{''.join(sources)}</section>''')
 
 
-def performance_page(store):
+def performance_page(store, nonce='', query=''):
     from .performance import performance_history
     from .performance_view import performance_view
+    from .power_curve_page import panel as curve_panel
     history = performance_history(store)
     points = history['points']
     view = performance_view(points)
@@ -516,7 +517,8 @@ def performance_page(store):
         notices.append(f"{history['missing_dates']:,} eligible results lack a supported Activity date and are not plotted.")
     if view['unknown_timezones']:
         notices.append(f"{view['unknown_timezones']:,} results have source dates with unknown timezones: available in period views, unavailable for exact timed-window summaries.")
-    return shell('Performance', f'''<header><h1>Performance</h1><p class="performance-count">20-minute power · {len(points):,} eligible ride results · Virtual Ride power evidence</p></header>{chart}
+    return shell('Performance', f'''<header><h1>Performance</h1><p class="performance-count">20-minute power · {len(points):,} eligible ride results · Virtual Ride power evidence</p></header>
+<div class="performance-modes" role="group" aria-label="Performance mode"><button type="button" data-curve-mode="history" aria-pressed="true">20-Minute History</button><button type="button" data-curve-mode="curve" aria-pressed="false">Power Curve</button></div><div id="performance-history-mode">{chart}
 <p class="performance-notice">{escape(' '.join(notices))}</p>
 <details class="panel performance-policy"><summary>Eligibility &amp; method</summary>
 <p>Virtual Ride file-backed power has precedence. When no file-backed power evidence exists, current Strava API time/watts streams may qualify if device watts are confirmed, both streams are high resolution and full length, and valid timing/power supports a complete window. Power presence alone does not establish measured origin. Outdoor Ride power remains excluded.</p>
@@ -524,7 +526,7 @@ def performance_page(store):
 <p>The trend retains the strongest qualifying result in the trailing 42 days, changing when a ride enters or leaves the window. A result expires exactly 42 days after its Activity start. Gaps mean there is no qualifying result; the line is demonstrated evidence rather than an estimated daily performance series. Time ranges end at the page's current time; monthly and yearly bests use displayed calendar periods and only rides within the selected range. Period-best lines connect consecutive calendar periods at the contributing ride dates, with point markers. Missing periods have no mark and break the line. Raw values choose the best; exact ties retain the earliest Activity.</p>
 <p>Method: best-average-power-v1 · Policy: {POLICY}. One eligible file Source controls each file-backed Activity result; multiple eligible file Sources are ambiguous and excluded. API evidence cannot bypass ineligible file-backed power. API results retain stream/summary provenance and returned-offset window bounds. CSV and summary averages never substitute for sample power. Ineligible or missing results are not plotted as zero.</p>
 </details>
-<details class="panel performance-future"><summary>Future Performance candidates</summary><p>Possible future direction includes additional performance durations and broader power history, FTP and historical athlete context, richer recent-versus-historical comparisons, and explainable performance or training-state signals. These are candidates, not implemented features or delivery commitments.</p></details>
+<details class="panel performance-future"><summary>Future Performance candidates</summary><p>Possible future direction includes FTP and historical athlete context and explainable performance or training-state signals. These are candidates, not implemented features or delivery commitments.</p></details></div>{curve_panel(store,nonce,query=query)}
 <script id="performance-points" type="application/json">{safe_json(points)}</script><script id="performance-view" type="application/json">{safe_json(view)}</script><script src="/static/performance.js" defer></script>''', active='performance')
 
 
@@ -560,7 +562,7 @@ class Application:
                 from .training_state_page import training_page
                 return 200, 'text/html', self.page(store, training_page(store,url.query))
             if path == '/performance':
-                return 200, 'text/html', self.page(store, performance_page(store))
+                return 200, 'text/html', self.page(store, performance_page(store,self.settings.nonce,url.query))
             if path.startswith('/activities/'):
                 activity_id = path.removeprefix('/activities/')
                 try:
@@ -591,11 +593,18 @@ class Application:
 
     def activity_page(self,store,html,activity_id,query=""):
         from .planning_page import activity_panel
+        from .power_curve_page import panel as curve_panel
         panel=activity_panel(store,activity_id,self.settings.nonce,query)
         if '<div class="review-layout">' in html:
             html=html.replace('<div class="review-layout">',panel+'<div class="review-layout">',1)
         else:
             html=html.replace('</header>','</header>'+panel,1)
+        curve=curve_panel(store,self.settings.nonce,activity_id=activity_id,query=query)
+        if '<section class="panel best-panel' in html:
+            html=html.replace('<section class="panel best-panel',curve+'<section class="panel best-panel',1)
+        else:
+            html=html.replace('</main>',curve+'</main>',1)
+        html=html.replace('</header>','<a class="curve-jump" href="#power-curve-panel">Power Curve ↓</a></header>',1)
         return self.page(store,html)
 
     def post(self,path,body,origin):

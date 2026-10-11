@@ -277,7 +277,7 @@ class StorePlanningTests(TestCase):
     def test_persistence_and_atomic_migration(self):
         set_feedback(self.store,'UTC','heavy',as_of=NOW);set_classification(self.store,self.identity,'Race')
         with Store(self.store.data_dir) as reopened:
-            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],9)
+            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],10)
             self.assertEqual(plan(reopened,'UTC',as_of=NOW)['legs'],'heavy')
         import rideworks.store as module
         root=self.root/'broken';root.mkdir()

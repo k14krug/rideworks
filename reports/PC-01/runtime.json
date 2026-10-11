@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "method": "observed-mmp-grid-v1",
+  "grid": "seconds-1-30-plus-7-percent-v1",
+  "computed": 1443,
+  "reused": 0,
+  "with_power": 1271,
+  "changed_during_build": 0,
+  "publication_seconds": 0.693,
+  "elapsed_seconds": 22.81,
+  "forced_rebuild_repeatable": true,
+  "build_peak_rss_mib": 140.6,
+  "unchanged_incremental_build": {
+    "status": "completed",
+    "method": "observed-mmp-grid-v1",
+    "grid": "seconds-1-30-plus-7-percent-v1",
+    "computed": 0,
+    "reused": 1443,
+    "with_power": 0,
+    "changed_during_build": 0,
+    "publication_seconds": 0.0,
+    "elapsed_seconds": 0.368
+  },
+  "cached_comparison_elapsed_ms": [
+    690,
+    671,
+    611
+  ],
+  "build_and_comparison_peak_rss_mib": 340.2,
+  "profile_json_mib": 76.56
+}

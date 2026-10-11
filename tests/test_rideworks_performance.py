@@ -217,7 +217,9 @@ class PerformanceTests(unittest.TestCase):
         self.assertIn('Yearly best',html)
         self.assertIn('Future Performance candidates',html)
         self.assertNotIn('data-mode=',html)
-        self.assertNotIn('performance-modes',html)
+        self.assertIn('performance-modes',html)
+        self.assertIn('20-Minute History',html)
+        self.assertIn('Power Curve',html)
         self.assertIn('data-range="1yr" aria-pressed="true"',html)
         self.assertIn('Current 42-day best',html)
         self.assertIn('Best in last 12 months',html)
@@ -271,7 +273,7 @@ class PerformanceTests(unittest.TestCase):
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],3)
             self.assertEqual(db.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='performance_history'").fetchone()[0],0)
         with Store(root) as updated:
-            self.assertEqual(updated.connection.execute('PRAGMA user_version').fetchone()[0],9)
+            self.assertEqual(updated.connection.execute('PRAGMA user_version').fetchone()[0],10)
 
 
 if __name__=='__main__': unittest.main()

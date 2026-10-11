@@ -1,0 +1,22 @@
+{
+  "policy": "virtual-power-evidence-v2",
+  "method": "best-average-power-v1",
+  "read_only": true,
+  "counts": {
+    "accepted_native_oracle_parity": 1022,
+    "eligible_native": 1022,
+    "endpoint_inclusive_accepted_window_samples_after_last_stop": 127,
+    "endpoint_inclusive_summary_unverified_value_changes": 1,
+    "half_open_accepted_window_samples_after_last_stop": 127,
+    "half_open_summary_unverified_value_changes": 1,
+    "half_open_verified_value_changes": 1,
+    "multiple_active_intervals": 28,
+    "no_timer_events": 1,
+    "paired_timer": 1020,
+    "timer_summary_boundary_unverified": 981,
+    "unpaired_timer_events": 1,
+    "verified_timer": 39
+  },
+  "integrity": "ok",
+  "foreign_key_violations": 0
+}

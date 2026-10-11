@@ -483,3 +483,13 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Controlling artifacts:** [PC-01 design](docs/design/PC-01-power-duration-curves.md); [PC-01 acceptance](docs/POWER_CURVE_ACCEPTANCE.md); [editable visual reference](docs/mockups/power-curve-v1.html); [Analyst JIT PC-01](docs/tasks/PC-01.md). Owner's default is historic [ride start − 42 × 24h, ride start), excluding the selected ride and later rides. Mockup values are synthetic, not evidence.
 
 **Final disposition:** Delivered both interactive Power Curve views, cached reproducible source-qualified observed MMP, and historical prior-six-week ride comparison. JIT §13's timer evidence policy and old 20-minute parity are verified. The Analyst accepted the technical gate and the Owner accepted the running feature. Both gates are closed, PR #28 authorized to merge. Existing caveats about complete rebuild time and nonqualifying sources remain visible. No Phase 6 start.
+
+### AR-UI-01 — Activity Review visual redesign
+
+**Status:** **pending implementation** — Owner approved the [new interactive HTML concept](docs/mockups/activity-review-ui-concept.html) on 2026-10-11: **“I like it, please make it so.”** This approves design direction and authorizes a bounded presentation task; Dex has not yet been invoked. [Issue #29](https://github.com/k14krug/rideworks/issues/29).
+
+**Scope:** Make the existing **Activity Review / Ride Details**, not the Activities list, visually follow the approved concept. New responsive hero and metrics, larger Power/HR chart, contextual Ride Summary/Workout Context/Current Next Ride, full-width existing PC-01 Power Curve and best-effort comparisons, with complete source/calculation disclosures in readable sections. Keep existing sources, chart calculations, source-policy and Plan behavior. Define candidate reusable design tokens but **do not** restyle other pages yet.
+
+**Controlling artifacts:** [AR-UI-01 approved design](docs/design/AR-UI-01-activity-review-redesign.md), [HTML concept](docs/mockups/activity-review-ui-concept.html), [implementation JIT](docs/tasks/AR-UI-01.md). Historical `activity-review.png` remains background, now superseded for the specific Ride Details layout by this approved concept.
+
+**Execution and gates:** Start in Dex with `/TASK AR-UI-01` or `/AUTOTASK AR-UI-01` after refreshing `main`. Dex implements on a draft PR, checks native FIT, Strava API/retained stream, thin/unsupported and outdoor views, responsive desktop/320px mobile, keyboard/touch and preservation of PC-01/20-minute/Plan/evidence. **HARD — Analyst Gate 1** technical/UI review, then **HARD — Owner Gate 2** running visual acceptance. No merge/claim of completion before both. Phase 6 stays deferred.

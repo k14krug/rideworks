@@ -69,3 +69,9 @@ For every **eligible contiguous duration window** with real supported observed p
 7. New sync/rebuild makes new source-backed best efforts appear without unnecessary full recomputation on every page load. Normal History/Plan/Training State and Activity Review regression passes; original artifacts are intact.
 
 **Gate boundary:** This is an Owner-directed new Performance follow-up, **not** Phase 6. Product default is confirmed; implementer returns at HARD — Analyst then HARD — Owner visual acceptance. No completion/merge before gates.
+
+## 7. Controlling observed-sample/timer clarification — 2026-10-11
+
+The read-only FIT preflight in PR #28 identified conflicting paired timers and an exact terminal-stop observation. **[JIT §13](../tasks/PC-01.md) is the current controlling resolution**, superseding any broader suggestion above that all paired timer bounds must mask observed MMP samples.
+
+**PC-01 uses Performance-style contiguous recorded 1 Hz observations as primary MMP evidence.** A source watt sample timestamp exactly coincident with a verified stop event is eligible as an *observed endpoint*, while distinct **session-verified active intervals cannot be stitched**. Mere paired timer events that conflict with session duration or later observed power are not independently verified active boundaries and **must not clip source-observed best windows**. For these cases, calculate from valid consecutive samples and retain an inspectable timer-quality caveat; don't claim timer-verified active duration. This does not change the approved Performance 20-minute chart or Training State's half-open active-time/power-stress integration. Cross-check all previously eligible shared 20-minute results; a genuinely corroborated pause causing a new parity conflict is a *narrow stop/report*, not permission to silently change Phase 2 history. No blanket exclusion of paired-but-unverified FIT sources.

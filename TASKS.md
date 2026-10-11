@@ -486,7 +486,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### AR-UI-01 — Activity Review visual redesign
 
-**Status:** **pending implementation** — Owner approved the [new interactive HTML concept](docs/mockups/activity-review-ui-concept.html) on 2026-10-11: **“I like it, please make it so.”** This approves design direction and authorizes a bounded presentation task; Dex has not yet been invoked. [Issue #29](https://github.com/k14krug/rideworks/issues/29).
+**Status:** **in_progress — implementation and verification complete; ready for HARD — Analyst Gate 1** — Owner approved the [new interactive HTML concept](docs/mockups/activity-review-ui-concept.html) on 2026-10-11: **“I like it, please make it so.”** This approves design direction and authorizes a bounded presentation task; Dex invoked `/AUTOTASK AR-UI-01` on 2026-10-11; implementation and verification are complete; draft PR handoff pending. [Issue #29](https://github.com/k14krug/rideworks/issues/29).
 
 **Scope:** Make the existing **Activity Review / Ride Details**, not the Activities list, visually follow the approved concept. New responsive hero and metrics, larger Power/HR chart, contextual Ride Summary/Workout Context/Current Next Ride, full-width existing PC-01 Power Curve and best-effort comparisons, with complete source/calculation disclosures in readable sections. Keep existing sources, chart calculations, source-policy and Plan behavior. Define candidate reusable design tokens but **do not** restyle other pages yet.
 

@@ -88,6 +88,11 @@
     if (data.mode==='performance') messages.push('Periods may overlap; a period best can come from a different ride at each duration. Calendar bounds: '+data.calendar_timezone+'.');
     $('empty').textContent=messages.join(' ');
     svg.replaceChildren();
+    if (data.mode === 'activity') {
+      panel.dataset.curveEmpty=String(!durations.length);
+      svg.setAttribute('tabindex',durations.length ? '0' : '-1');
+      svg.setAttribute('aria-hidden',String(!durations.length));
+    }
     if (!durations.length) {
       for (const key of ['a','b']) {$(key+'-label').textContent=names[keys[key==='a'?0:1]];$(key+'-watts').textContent='Unavailable';$(key+'-ride').textContent='';$(key+'-link').hidden=true;$(key+'-source').replaceChildren();}
       $('duration').textContent='No supported durations';$('difference').textContent='Comparison unavailable';return;

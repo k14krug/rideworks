@@ -21,7 +21,7 @@ async (page) => {
   check(Boolean(native),'representative native contributor');
   await page.goto(base+'/activities/'+native.activity.activity_id+'?plan_tz=America%2FLos_Angeles');
   await page.waitForLoadState('networkidle');
-  check(await page.locator('.review-main #power-curve-panel').count()===1,'native curve in analysis hierarchy');
+  check(await page.locator('.activity-review-redesign > #power-curve-panel').count()===1,'native curve across full review width');
   check(await page.locator('#chart-svg').count()===1,'native stream chart retained');
   const ctx=await page.context().browser().newContext({viewport:{width:390,height:844},hasTouch:true,timezoneId:'America/Los_Angeles'});
   const touch=await ctx.newPage();await touch.goto(base+'/performance?curve=1');await touch.waitForLoadState('networkidle');

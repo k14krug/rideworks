@@ -12,8 +12,8 @@ def panel(store, nonce, *, activity_id=None, query=''):
     data = comparison(store,activity_id=activity_id,zone=zone)
     payload = json.dumps(data, ensure_ascii=True, allow_nan=False).replace('<','\\u003c').replace('&','\\u0026')
     activity = activity_id is not None
-    heading = 'This ride compared with prior performance' if activity else 'Power-duration comparison'
-    caption = ('Baseline ends at this ride’s start, excluding this ride and every later activity.' if activity else
+    heading = 'Power curve' if activity else 'Power-duration comparison'
+    caption = ('This ride compared with prior performance. Baseline ends at this ride’s start, excluding this ride and every later activity.' if activity else
                'Strongest calculated average observed power at each supported duration.')
     choices = [('six','Previous 6 weeks'),('year','Prior 12 months'),('all','All earlier history')] if activity else [
         ('six','Last 6 weeks'),('previous','Previous 6 weeks'),('ytd','Year to date'),('last_year','Previous calendar year'),('all','All time')]

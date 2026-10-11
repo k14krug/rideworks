@@ -1,0 +1,112 @@
+{
+  "python": {
+    "full_suite_passed": 445,
+    "focused_source_mode_tests_passed": 5
+  },
+  "browser": {
+    "review_synthetic": {
+      "checks": 14058,
+      "modes": [
+        "native",
+        "nativeEmpty",
+        "api",
+        "outdoor",
+        "hrOnly",
+        "thin",
+        "powerOnly"
+      ],
+      "widths": [
+        1440,
+        1024,
+        768,
+        390,
+        320
+      ],
+      "touchscreen": true,
+      "errors": []
+    },
+    "review_private": {
+      "checks": 9786,
+      "modes": [
+        "native",
+        "thin",
+        "api",
+        "outdoor"
+      ],
+      "widths": [
+        1440,
+        1024,
+        768,
+        390,
+        320
+      ],
+      "touchscreen": true,
+      "errors": []
+    },
+    "power_curve_private": {
+      "checks": 1331,
+      "source": "private",
+      "desktop": 1440,
+      "mobile": [
+        390,
+        320
+      ],
+      "period_combinations": 25,
+      "errors": []
+    },
+    "power_curve_synthetic": {
+      "checks": 614,
+      "source": "synthetic",
+      "desktop": 1440,
+      "mobile": [
+        390,
+        320
+      ],
+      "period_combinations": 25,
+      "errors": []
+    },
+    "accepted_pages_and_touch": {
+      "checks": 14,
+      "touchscreen": true,
+      "accepted_pages": true,
+      "native_review": true
+    },
+    "training_state": {
+      "checks": 510,
+      "passed": true,
+      "ranges": 4,
+      "lineToggles": 3,
+      "multiRide": true,
+      "unscored": true,
+      "noRecord": true,
+      "keyboard": true,
+      "phone": true,
+      "touch": true,
+      "stableReview": true,
+      "floatingHover": true,
+      "hoverPersistence": true,
+      "hoverAllRanges": true
+    },
+    "unrelated_page_computed_styles": {
+      "checks": 30,
+      "accepted_page_computed_styles_equal": true,
+      "widths": [
+        1440,
+        390,
+        320
+      ]
+    },
+    "total_checks": 26343
+  },
+  "widths": [
+    1440,
+    1024,
+    768,
+    390,
+    320
+  ],
+  "private_screenshots_committed": false,
+  "javascript_syntax": "passed",
+  "diff_whitespace": "passed",
+  "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending"
+}

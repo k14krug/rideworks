@@ -1,7 +1,7 @@
 # OPS-01 — Move RideWorks from disposable review stores to one everyday data home
 
-**Status:** Owner direction to simplify production data handling, 2026-10-12; proposal for approval and local inventory, **no live-store migration performed**.
-**Scope:** Production-operating/data-directory transition for this **one private rider on one PC**, separate from completed visual HOME-UI-01 and deferred Phase 6.
+**Status:** **Stage A authorized by Owner, 2026-10-12**: fix default timezone and inventory existing stores read-only. **No live-store migration, copy or deletion performed.** Final source/target selection remains pending Owner review.
+**Scope:** Production-operating/data-directory transition for this **one private rider**. Current operation appears to be local; the Owner has mentioned a production server for **existing backups**, not necessarily as the app's deployment host. Clarify the machine and final path from inventory before copying. Separate from completed visual HOME-UI-01 and deferred Phase 6.
 **Owner question:** Now that RideWorks feels production-worthy, why are many `local_data/<task>` folders each holding their own SQLite database, and can we move away from that practice?
 
 ## 1. What is true today
@@ -37,7 +37,7 @@ The code checkout/repository holds the application; the permanent user-home data
 
 ### Stage C: Production everyday defaults
 - Make the launch experience short/repeatable: one command/shortcut, one explicit user-facing **active data directory** readout, one authoritative path. Avoid confusing `local_data/<phase>` examples in current quick-start and `.env.example`.
-- Add the **smallest reliable backup + test-restore workflow** for both SQLite and original files plus the sensitive small files needed for sync. Manual backups are acceptable initially; off-machine copies materially protect against disk loss. Any scheduled backup is a separate opt-in after recovery is verified.
+- **Owner-managed backups:** The Owner already has a backup strategy on their production server and will add RideWorks to it. Do **not** design or implement a new scheduled/in-app backup service. Identify which files/folders the existing backup must cover (database, referenced originals and necessary private sidecars), and retain a **one-time verified rollback snapshot** when promoting a selected store; a small test of recovery from that snapshot is appropriate during the migration.
 - Separate disposable test data from main operation: tests create temporary stores, never select production by inherited config; verification uses read-only or copied snapshots.
 - **Do not add a 'production mode' framework** without a concrete necessity. A missing expected data store should be obvious (not silently initialize an apparently empty history) after promotion, while explicit first-run creation must remain possible for a future true new installation.
 
@@ -45,4 +45,4 @@ The code checkout/repository holds the application; the permanent user-home data
 
 No data migrations or `local_data/` deletion today; no choice of an authoritative current store without local evidence/Owner confirmation; no Strava token printing/duplication, no unsanctioned re-sync or historical fetch; no changes to training calculations, source provenance, FTP history, PC-01, Plan, or image UI. No public 'production hosting' or remote network access. User-home store, simple local loopback web server and SQLite are sufficient for this single-rider product.
 
-**Decision requested next:** Agree to `~/.rideworks` (or supply another stable outside-repo local path) as permanent destination, then authorize Dex to perform **Stage A read-only inventory first**, reporting the best candidate and conflicts before copying.
+**Decision path:** The Owner authorized **Stage A now** (small timezone bug fix plus read-only inventory) under [OPS-01 JIT](../tasks/OPS-01.md). `~/.rideworks` is the preferred destination on whichever host will run RideWorks, **not yet the approved specific target**. After inventory, Owner explicitly chooses actual active source, deployment host, destination and any needed reconciliation **before** a copy or startup switch. Day-to-day RideWorks defaults to `America/Los_Angeles` for Home, Plan, Training State and date-based browsing, without depending on JavaScript to load the page. Valid explicit query overrides continue to work for comparison/tests; original UTC measurements never change.

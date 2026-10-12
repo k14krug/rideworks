@@ -2,6 +2,7 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 import json
+import re
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -222,7 +223,7 @@ class DashboardTests(TestCase):
         self.assertIn('<h1>Home</h1>',self.app.get('/')[2].decode())
         self.assertIn('browser timezone',self.app.get('/?home_tz=bad')[2].decode())
         html=self.app.get('/?home_tz=UTC')[2].decode()
-        for heading in ('Recent Mileage','This Week','Last 7 Days','Current 42-day best','Latest eligible 20-minute ride','Mileage Progress','20-minute Performance'):
+        for heading in ('This Week','Last 7 Days','Current 42-day best','Latest eligible 20-minute ride','Mileage Progress','20-minute Performance'):
             self.assertIn(heading,html)
         self.assertIn('href="/activities"',html);self.assertIn('href="/" class="active"',html)
         self.assertIn('No cycling Activities yet.',html);self.assertIn('Unavailable',html)
@@ -230,6 +231,22 @@ class DashboardTests(TestCase):
         for query in ('q=foo','type=all&sort=oldest&page=2&tz=Asia%2FTokyo','tz=UTC','from=2026-01-01'):
             self.assertEqual(self.app.get('/?'+query)[0],303)
             self.assertEqual(self.app.legacy_browser_target('/?'+query),'/activities?'+query)
+
+    def test_scoped_home_keeps_next_ride_and_labeled_source_rows(self):
+        self.assertIn('No successful sync recorded',self.app.get('/?home_tz=UTC')[2].decode())
+        apply_observations(self.store,[normalize(dict(id=88,name='Synthetic <ride>',type='Ride',sport_type='Ride',
+            start_date='2026-10-10T12:00:00Z',elapsed_time=1200,distance=1609.344,average_watts=100))],42,1790000000)
+        html=self.app.get('/?home_tz=UTC')[2].decode()
+        self.assertIn('class="home-redesign"',html)
+        self.assertLess(html.index('id="home-recent-mileage"'),html.index('id="next-recommended-heading"'))
+        self.assertLess(html.index('Recent Activities</h2>'),html.index('Training State</h2>'))
+        self.assertIn('Synthetic &lt;ride&gt;',html)
+        for label in ('Date','Ride','Distance','Duration','Avg Pwr'):
+            self.assertIn('data-label="'+label+'"',html)
+        self.assertIn('Last sync:',html)
+        self.assertIn('No current eligible result.',html)
+        self.assertIn('Form at start of day',html)
+        self.assertNotIn('home-redesign',self.app.get('/activities')[2].decode())
 
     def test_actual_file_distance_precedence_api_fallback_and_metadata_only(self):
         raw=int(datetime(2026,1,1,tzinfo=timezone.utc).timestamp())-631065600
@@ -292,11 +309,11 @@ class DashboardTests(TestCase):
         self.post(target_miles='2200')
         html=self.app.get('/?home_tz=America%2FLos_Angeles')[2].decode()
         self.assertNotIn('home-ytd',html);self.assertNotIn('YTD mileage goal',html)
-        summary=html.split('home-summary">')[1].split('<div class="home-layout">')[0]
+        summary=re.search(r'class="panel home-summary"[^>]*>(.*?)</section>',html,re.S)[1]
         self.assertNotIn('2200',summary);self.assertNotIn('2,200',summary)
-        self.assertEqual(summary.count('<section'),3)
-        self.assertEqual(summary.count('<h2>'),3)
-        self.assertIn('id="home-recent-mileage"',summary)
+        self.assertEqual(summary.count('class="home-quick-fact"'),4)
+        self.assertEqual(summary.count('<h2>'),4)
+        self.assertIn('id="home-recent-mileage"',html)
         self.assertIn('Needed average:',html)
         chart=html.split('id="home-mileage-chart"')[1].split('</svg>')[0]
         self.assertNotIn('<title',chart)
@@ -307,7 +324,7 @@ class DashboardTests(TestCase):
         self.assertIn('tabindex="0"',chart)
         self.assertEqual(self.app.get('/static/home.js')[0],200)
 
-    def test_recent_mileage_keeps_distinct_values_and_comparison_in_one_card(self):
+    def test_quick_facts_keep_distinct_mileage_values_and_comparison(self):
         import re
         observations=[normalize(dict(id=i,name='Synthetic ride',type='Ride',sport_type='VirtualRide',
             start_date=stamp,distance=amount*1609.344,elapsed_time=1200)) for i,stamp,amount in (
@@ -316,15 +333,15 @@ class DashboardTests(TestCase):
         value=dashboard(self.store,'UTC',as_of=datetime(2026,10,7,18,tzinfo=timezone.utc))
         with patch('rideworks.home.dashboard',return_value=value):
             html=self.app.get('/?home_tz=UTC')[2].decode()
-        summary=html.split('home-summary">')[1].split('<div class="home-layout">')[0]
-        week=re.search(r'<div id="home-this-week">(.*?)</div>',summary,re.S).group(1)
-        last7=re.search(r'<div id="home-last7">(.*?)</div>',summary,re.S).group(1)
+        summary=re.search(r'class="panel home-summary"[^>]*>(.*?)</section>',html,re.S)[1]
+        week=re.search(r'<div class="home-quick-fact" id="home-this-week">(.*?)</div>',summary,re.S).group(1)
+        last7=re.search(r'<div class="home-quick-fact" id="home-last7">(.*?)</div>',summary,re.S).group(1)
         self.assertIn('<strong>2.0 mi</strong>',week)
         self.assertIn('<strong>7.0 mi</strong>',last7)
         self.assertIn('4.0 mi more than previous 7 days',last7)
         self.assertNotIn('previous 7 days',week)
-        self.assertEqual(summary.count('<section'),3)
-        self.assertEqual(summary.count('<h2>Recent Mileage</h2>'),1)
+        self.assertEqual(summary.count('class="home-quick-fact"'),4)
+        self.assertEqual(summary.count('This Week</h2>'),1);self.assertEqual(summary.count('Last 7 Days</h2>'),1)
 
     def test_independent_oracle_rejects_wrong_required_point_and_api_average(self):
         from copy import deepcopy

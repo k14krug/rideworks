@@ -91,7 +91,7 @@ def power_chart(performance, zone):
 def home_page(store, query=''):
     zone = query_zone(query,'home_tz')
     if zone is None:
-        return shell('Home','''<header><h1>Home</h1></header><section class="panel" data-calendar-timezone="home_tz"><h2>Cycling mileage and Performance</h2><p>Enable JavaScript to use your browser timezone for calendar mileage and annual goals.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section>''',active='home')
+        return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel" data-calendar-timezone="home_tz"><h2>Cycling mileage and Performance</h2><p>Enable JavaScript to use your browser timezone for calendar mileage and annual goals.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')
     data = dashboard(store,zone.key)
     goal, ytd, performance = data['goal'], data['ytd'], data['performance']
     target = data['target_miles']
@@ -111,16 +111,15 @@ def home_page(store, query=''):
         else:
             progress += '<p>Remaining miles: Unavailable</p><p id="needed-weekly">Needed average: Unavailable</p><p>No supported YTD distance.</p>'
     def card(name,title,value,note,symbol):
-        return f'<section class="metric home-metric" id="home-{name}"><div>{icon(symbol)}<h2>{title}</h2></div><strong>{value}</strong>{note}</section>'
+        missing = ' class="metric-unavailable"' if value == 'Unavailable' else ''
+        return f'<div class="home-quick-fact" id="home-{name}"><h2>{icon(symbol)}{title}</h2><strong{missing}>{value}</strong>{note}</div>'
     weekly_note = ''
     if data['last7']['miles'] is not None and data['prior7']['miles'] is not None:
         difference = data['last7']['miles']-data['prior7']['miles']
         weekly_note = f'<p>{abs(difference):,.1f} mi {"more" if difference>0 else "less"} than previous 7 days</p>' if round(difference,1) else '<p>Same mileage as previous 7 days</p>'
-    recent_mileage = f'''<section class="metric home-metric home-recent-mileage" id="home-recent-mileage">
-<div>{icon('distance')}<h2>Recent Mileage</h2></div><div class="home-mileage-submetrics">
-<div id="home-this-week"><h3>This Week</h3><strong>{miles(data['this_week']['miles'])}</strong><p>Monday through today · actual cycling miles</p></div>
-<div id="home-last7"><h3>Last 7 Days</h3><strong>{miles(data['last7']['miles'])}</strong>{weekly_note}</div>
-</div></section>'''
+    recent_mileage = card('this-week','This Week',miles(data['this_week']['miles']),
+                          '<p>Monday through today · actual cycling miles</p>','distance')
+    recent_mileage += card('last7','Last 7 Days',miles(data['last7']['miles']),weekly_note,'distance')
     def power_summary(point):
         if point is None:
             return 'Unavailable','<p>No current eligible result.</p>'
@@ -132,12 +131,11 @@ def home_page(store, query=''):
     if comparison and comparison['available']:
         diff = comparison['current']['rounded_watts']-comparison['prior']['rounded_watts']
         text = f'Latest eligible best-20: {abs(diff)} W {"above" if diff>0 else "below"} the previous six-week best.' if diff else 'Latest eligible best-20 matches the previous six-week best.'
-        latest_note += f'<p>{escape(text)}</p>'
         insights.append(text)
-    insight_panel = '<section class="panel home-insights"><h2>Recent context</h2>'+''.join(f'<p>{escape(text)}</p>' for text in insights)+'<details><summary>How this is calculated</summary><p>The best-20 comparison uses the accepted (Activity start − 42 days, Activity start) window, excluding both endpoints and the current ride. Details are available in Activity Review.</p></details></section>' if insights else ''
+    insight_panel = '<details class="home-insights"><summary>Recent performance context</summary>'+''.join(f'<p>{escape(text)}</p>' for text in insights)+'<p>The best-20 comparison uses the accepted (Activity start − 42 days, Activity start) window, excluding both endpoints and the current ride. Details are available in Activity Review.</p></details>' if insights else ''
     rows = []
     for row in data['recent']:
-        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td>{browser_time(row,compact=True)}</td><td><a href="/activities/{row['activity_id']}">{escape(row['title'])}</a><span>{escape(row['activity_type'])}</span></td><td>{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td>{duration(row['duration'])}</td><td class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
+        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride"><a href="/activities/{row['activity_id']}">{escape(row['title'])}</a><span>{escape(row['activity_type'])}</span></td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
     recent = f'<table class="home-recent-table"><thead><tr><th>Date</th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table>' if rows else '<p class="empty">No cycling Activities yet.</p>'
     week_rows = ''.join(f'<tr><td>{w["start"]}</td><td>{miles(w["miles"])}</td><td>{miles(g["needed_miles_per_week"])}</td><td>{w["file_count"]}</td><td>{w["api_count"]}</td><td>{w["distance_unavailable"]}</td></tr>' for w,g in zip(data['weeks'],data['weekly_goal']))
     details = [('Browser timezone',zone.key),('YTD start',ytd['start']),('As of',data['as_of']),
@@ -156,7 +154,8 @@ def home_page(store, query=''):
                     ('Linear target to date (mi)',goal['target_to_date']),('Pace difference (mi)',goal['pace_difference']),
                     ('Remaining calendar days after today',goal['remaining_calendar_days']),
                     ('Needed average miles per week',goal['needed_miles_per_week'])]
-    sync = f'<p>Last sync: {local_time(data["successful_sync"],compact=True)} · <a href="/settings">Settings</a></p>' if data['successful_sync'] else ''
+    sync_status = 'Last sync: '+local_time(data['successful_sync'],compact=True) if data['successful_sync'] else 'No successful sync recorded'
+    sync = f'<p class="home-sync">{sync_status} · <a href="/settings">Settings</a></p>'
     from .training_state_page import training_home
     training = training_home(store, zone.key)
     from .planning import plan
@@ -164,11 +163,10 @@ def home_page(store, query=''):
     advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of'])),compact=True)
     compact = {k:v for k,v in data.items() if k!='recent'}
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
-    return shell('Home',f'''<header class="home-heading" data-calendar-timezone="home_tz"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
-<div class="metrics home-summary">{recent_mileage}{card('current','Current 42-day best',current,current_note,'power')}{card('latest','Latest eligible 20-minute ride',latest,latest_note,'power')}</div>
-<div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section>{advisor}
-<section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Monday–Sunday weeks; outlined current bar is actual Monday-through-today mileage. Needed pace uses remaining mileage and calendar days after each Sunday; current pace uses today. Required points apply to the goal year.</p><div class="home-goal-progress"><strong>{miles(ytd['miles'])} YTD</strong>{progress}</div>
-<details><summary>Weekly distances</summary><div class="home-evidence-table"><table><thead><tr><th>Week of</th><th>Actual mi</th><th>Needed mi/week</th><th>File</th><th>API</th><th>Missing</th></tr></thead><tbody>{week_rows}</tbody></table></div></details></section>
-<section class="panel home-performance"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div>{power_chart(performance,zone)}<p>Rolling 42-day best · past year · current Performance-v2 evidence. Gaps mean no eligible result.</p></section>{insight_panel}{training}</div>
-<details class="panel home-diagnostics"><summary>Mileage evidence &amp; calendar boundaries</summary>{detail_rows(details)}<p>File-backed understood distance precedes current API summary distance. Unspecified CSV units are excluded. Known zero distance counts. Supported dates with unknown timezone use their source date; missing dates are excluded from period totals. Future Activities are excluded from totals. Weekly periods are local calendar buckets; YTD includes evidence through the as-of instant. Mileage is recalculated from retained source summaries. Needed weekly average is remaining goal mileage divided by remaining calendar days after today, times seven; it is arithmetic goal progress, not a training recommendation. Recent Avg Pwr prefers file session or a single TCX lap summary, then current API summary; CSV watts and raw streams are not used.</p></details>
-<script id="dashboard-data" type="application/json">{safe_json(compact)}</script><script src="/static/planning.js" defer></script><script src="/static/home.js" defer></script>''',active='home')
+    return shell('Home',f'''<div class="home-redesign"><header class="home-heading" data-calendar-timezone="home_tz"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
+<div class="home-lead"><section class="panel home-summary" id="home-recent-mileage" aria-label="Recent mileage and eligible power"><div class="home-quick-grid">{recent_mileage}{card('current','Current 42-day best',current,current_note,'power')}{card('latest','Latest eligible 20-minute ride',latest,latest_note,'power')}</div></section>{advisor}</div>
+<div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section><div class="home-companions">{training}<section class="panel home-performance"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div>{power_chart(performance,zone)}<p>Rolling 42-day best · past year · current Performance-v2 evidence. Gaps mean no eligible result.</p></section></div></div>
+<div class="home-progress-layout"><section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Outlined current week is partial · actual Monday-through-today mileage.</p></section><section class="panel home-goal-progress"><h2>Annual Mileage Goal</h2><strong>{miles(ytd['miles'])} YTD</strong>{progress}<p>Arithmetic goal progress, not a training recommendation.</p></section></div>
+<section class="panel home-supporting" aria-labelledby="home-supporting-title"><h2 id="home-supporting-title">Context &amp; supporting details</h2>{insight_panel}<details class="home-weekly-details"><summary>Weekly distances</summary><p>Monday–Sunday weeks; outlined current bar is actual Monday-through-today mileage. Needed pace uses remaining mileage and calendar days after each Sunday; current pace uses today. Required points apply to the goal year.</p><div class="home-evidence-table"><table><thead><tr><th>Week of</th><th>Actual mi</th><th>Needed mi/week</th><th>File</th><th>API</th><th>Missing</th></tr></thead><tbody>{week_rows}</tbody></table></div></details>
+<details class="home-diagnostics"><summary>Mileage evidence &amp; calendar boundaries</summary>{detail_rows(details)}<p>File-backed understood distance precedes current API summary distance. Unspecified CSV units are excluded. Known zero distance counts. Supported dates with unknown timezone use their source date; missing dates are excluded from period totals. Future Activities are excluded from totals. Weekly periods are local calendar buckets; YTD includes evidence through the as-of instant. Mileage is recalculated from retained source summaries. Needed weekly average is remaining goal mileage divided by remaining calendar days after today, times seven; it is arithmetic goal progress, not a training recommendation. Recent Avg Pwr prefers file session or a single TCX lap summary, then current API summary; CSV watts and raw streams are not used.</p></details></section>
+<script id="dashboard-data" type="application/json">{safe_json(compact)}</script><script src="/static/planning.js" defer></script><script src="/static/home.js" defer></script></div>''',active='home')

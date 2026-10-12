@@ -22,7 +22,8 @@ async (page) => {
   };
   const chart=page.locator('#performance-chart');
   check(await chart.getAttribute('data-view')==='rolling'&&await chart.getAttribute('data-range')==='1yr','Wrong default view');
-  check(await page.locator('.performance-modes, [data-mode]').count()===0,'Obsolete tabs remain');
+  check(await page.locator('[data-mode]').count()===0,'Obsolete history tabs remain');
+  check(await page.locator('.performance-modes').count()===1,'Accepted PC-01 mode navigation remains');
   const future=page.locator('.performance-future');
   check(await future.getAttribute('open')===null,'Future candidates should be subordinate/collapsed');
   check((await future.textContent()).includes('not implemented features or delivery commitments'),'Future direction implies implemented features');
@@ -132,7 +133,7 @@ async (page) => {
   check((await page.locator('#performance-point-context').textContent()).includes('Extraction ID'),'Provenance missing');
   await page.getByText('Eligibility & method',{exact:true}).click();
   const policy=await page.locator('.performance-policy').textContent();
-  check(policy.includes('best-average-power-v1')&&policy.includes('Outdoor Ride power is excluded')&&policy.includes('never substitute'),'Trust explanation missing');
+  check(policy.includes('best-average-power-v1')&&policy.includes('Outdoor Ride power remains excluded')&&policy.includes('never substitute'),'Trust explanation missing');
   const fixtureTimes=['2023-12-31T16:30:00+00:00','2024-01-01T07:30:00+00:00','2024-01-15T12:00:00+00:00',
     '2024-01-20T12:00:00+00:00','2024-02-01T07:30:00+00:00','2024-02-29T08:00:00+00:00',
     '2024-03-01T00:30:00+00:00','2024-03-01T01:00:00','2024-04-01T12:00:00+00:00','2024-06-01T00:00:00+00:00'];
@@ -157,7 +158,9 @@ async (page) => {
       let fixtureHtml=html.replace(/(<script id="performance-points" type="application\/json">)[\s\S]*?(<\/script>)/,
         (_,start,end)=>start+JSON.stringify(fixturePoints)+end).replace(/(<script id="performance-view" type="application\/json">)[\s\S]*?(<\/script>)/,
         (_,start,end)=>start+JSON.stringify(fixtureView)+end);
-      await probe.route('**/performance',route=>route.fulfill({status:200,contentType:'text/html',body:fixtureHtml}));
+      // PC-01 adds curve_tz through a redirect. Keep the same fixture across
+      // that query change, without intercepting /static/performance.js.
+      await probe.route(url=>url.origin===new URL(base).origin&&url.pathname==='/performance',route=>route.fulfill({status:200,contentType:'text/html',body:fixtureHtml}));
       await probe.goto(base+'/performance');await probe.waitForSelector('#performance-chart[data-view="rolling"]');
       for(const range of ['all','3mo','6mo']) {
         await probe.locator('[data-range="'+range+'"]').click();

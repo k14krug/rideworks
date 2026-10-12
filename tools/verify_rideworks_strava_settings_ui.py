@@ -116,7 +116,7 @@ def verify(root, session):
     try:
         run("""
           await page.unrouteAll({behavior:'wait'});
-          await page.goto(base+'/');await page.getByRole('link',{name:'Settings',exact:true}).click();await settingsReady();
+          await page.goto(base+'/');await page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'Settings',exact:true}).click();await settingsReady();
           check(await page.locator('#strava-credentials').textContent()==='Missing','Missing credentials state');
           check(await page.getByRole('button',{name:'Connect Strava',exact:true}).count()===0,'Invalid Connect action');
           check(await page.locator('#strava-connection').textContent()==='Not connected','Initial state');return true;
@@ -162,7 +162,7 @@ def verify(root, session):
           await page.setViewportSize({width:390,height:844});
           check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Settings phone overflow');
           await page.screenshot({path:'output/playwright/p2-05-settings-phone.png',fullPage:true});
-          await page.getByRole('link',{name:'Activities',exact:true}).click();await page.waitForSelector('.activity-row');
+          await page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'Activities',exact:true}).click();await page.waitForSelector('.activity-row');
           check(await page.locator('.activity-row').count()===3,'Activities need restart to update');
           check(await page.locator('.activity-row h2').first().textContent()==='Synthetic API-only ride','New API date not sorted first');return true;
         """)
@@ -231,7 +231,7 @@ def verify(root, session):
           check((await page.locator('#performance-sync-outcome').textContent()).includes('Performance updated'),'Retry sync result');
           await page.getByRole('button',{name:'Disconnect',exact:true}).click();await settingsReady();
           check(await page.locator('#strava-connection').textContent()==='Not connected','Disconnect state');
-          await page.getByRole('link',{name:'Activities',exact:true}).click();await page.waitForSelector('.activity-row');
+          await page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'Activities',exact:true}).click();await page.waitForSelector('.activity-row');
           check(await page.locator('.activity-row').count()===3,'Disconnect deleted history');
           await page.unrouteAll({behavior:'wait'});return true;
         """)

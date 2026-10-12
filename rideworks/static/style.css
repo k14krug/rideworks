@@ -631,3 +631,222 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .activity-review-redesign details dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .activity-review-redesign .curve-inspection { gap: 12px; }
 }
+
+/* HOME-UI-01: accepted RideWorks page language, confined to Home. */
+.home-redesign {
+  --navy: #132b48; --blue: #2563eb; --green: #0c9c92;
+  --muted: #526780; --border: #e0e8f1;
+  color: var(--navy); max-width: 1440px; margin: 6px auto 0;
+}
+.home-redesign :is(p, a, strong, td, dt, dd) { overflow-wrap: anywhere; }
+.home-redesign h1 { font-size: 28px; }
+.home-redesign h2 { font-size: 19px; letter-spacing: -.3px; }
+.home-redesign .panel { padding: 22px 24px; border-radius: 14px; min-width: 0; box-shadow: 0 2px 8px rgb(22 45 78 / 3.5%); }
+.home-redesign :is(.home-summary, .home-recent, .home-training, .home-performance, .home-mileage, .home-goal-progress, .home-supporting) { border-left: 3px solid var(--blue); }
+.home-redesign .home-lead > .next-recommended { border-left: 4px solid var(--blue); }
+.home-redesign .home-heading { align-items: end; margin-bottom: 16px; gap: 8px 20px; }
+.home-redesign .home-heading p { font-size: 12px; }
+.home-redesign .home-sync { max-width: 50%; text-align: right; }
+.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; align-items: start; margin-bottom: 16px; }
+.home-redesign .next-recommended { margin: 0; }
+.home-redesign .next-recommended h2 { font-size: 16px; }
+.home-redesign .recommended-type { font-size: 25px; margin: 8px 0 4px; }
+.home-redesign .recommended-target { font-size: 13px; font-weight: 650; }
+.home-redesign .recommended-reason { font-size: 12px; margin: 10px 0; }
+.home-redesign .plan-caveat { font-size: 11px; margin: 8px 0; }
+.home-redesign .plan-open { display: inline-block; font-size: 12px; font-weight: 650; margin-top: 6px; }
+.home-redesign .next-recommended .plan-completed { padding-top: 10px; margin-top: 12px; box-shadow: none; border-radius: 0; }
+.home-redesign .plan-completed :is(h2, h3) { font-size: 13px; }
+.home-redesign .home-summary { padding: 0 10px; }
+.home-redesign .home-quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.home-redesign .home-quick-fact { min-width: 0; padding: 14px 14px; }
+.home-redesign .home-quick-fact:nth-child(odd) { border-right: 1px solid var(--border); }
+.home-redesign .home-quick-fact:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+.home-redesign .home-quick-fact h2 { display: flex; align-items: start; gap: 6px; font-size: 12px; letter-spacing: 0; font-weight: 550; color: var(--muted); }
+.home-redesign .home-quick-fact .icon { width: 16px; height: 16px; color: var(--blue); }
+.home-redesign .home-quick-fact strong { display: block; font-size: 25px; line-height: 1.25; margin: 6px 0; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.home-redesign .home-quick-fact strong.metric-unavailable { font-size: 19px; }
+.home-redesign .home-quick-fact :is(p, a) { font-size: 11px; }
+.home-redesign .home-quick-fact > a { display: block; margin-top: 4px; }
+.home-redesign .home-layout { grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; }
+.home-redesign .home-companions { display: grid; gap: 16px; min-width: 0; }
+.home-redesign .home-panel-heading { flex-wrap: wrap; margin-bottom: 14px; gap: 6px 12px; }
+.home-redesign .home-panel-heading a { font-size: 12px; }
+.home-redesign .home-recent-table th:first-child { width: 21%; }
+.home-redesign .home-recent-table th:nth-child(2) { width: 39%; }
+.home-redesign .home-recent-table th:nth-child(3) { width: 14%; }
+.home-redesign .home-recent-table th:nth-child(4) { width: 13%; }
+.home-redesign .home-recent-table time { white-space: normal; }
+.home-redesign .home-recent-table :is(th, td) { padding: 12px 6px; }
+.home-redesign .home-recent-table td:nth-child(2) a { font-weight: 600; }
+.home-redesign .home-training > p:first-of-type { font-size: 16px; font-weight: 650; color: var(--navy); }
+.home-redesign .home-training > p:last-of-type { font-size: 12px; }
+.home-redesign .home-progress-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; align-items: start; margin-top: 16px; }
+.home-redesign .home-goal-progress { border-top: 1px solid var(--border); margin: 0; }
+.home-redesign .home-goal-progress > strong { display: block; font-size: 28px; margin: 12px 0; font-variant-numeric: tabular-nums; }
+.home-redesign .home-goal-progress > p { font-size: 12px; margin: 8px 0; }
+.home-redesign .home-goal-progress > p:last-child { font-size: 11px; }
+.home-redesign .home-supporting { margin-top: 16px; }
+.home-redesign .home-supporting > h2 { margin-bottom: 12px; }
+.home-redesign .home-supporting details { margin-top: 12px; font-size: 12px; }
+.home-redesign .home-supporting summary { cursor: pointer; font-weight: 600; }
+.home-redesign .home-supporting details p { margin: 10px 0; line-height: 1.6; }
+.home-redesign .home-diagnostics dl > div { grid-template-columns: minmax(0, .7fr) minmax(0, 1fr); }
+@media (max-width: 1100px) {
+  .home-redesign .panel { padding: 20px; }
+  .home-redesign .home-lead { grid-template-columns: minmax(0, 1fr); }
+  .home-redesign .home-summary { padding: 0 8px; }
+  .home-redesign .home-quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .home-redesign .home-quick-fact { padding: 14px 12px; }
+  .home-redesign .home-quick-fact:nth-child(n) { border: 0; border-right: 1px solid var(--border); }
+  .home-redesign .home-quick-fact:last-child { border-right: 0; }
+  .home-redesign .home-layout, .home-redesign .home-progress-layout { grid-template-columns: minmax(0, 1fr); }
+  .home-redesign .home-companions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .home-redesign { margin-top: 0; }
+  .home-redesign h1 { font-size: 25px; }
+  .home-redesign .panel { padding: 18px; }
+  .home-redesign .home-heading { display: block; margin-bottom: 14px; }
+  .home-redesign .home-sync { max-width: none; text-align: left; margin-top: 8px; }
+  .home-redesign .home-summary { padding: 0 8px; }
+  .home-redesign .home-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-redesign .home-quick-fact { padding: 12px 10px; }
+  .home-redesign .home-quick-fact:nth-child(n) { border: 0; }
+  .home-redesign .home-quick-fact:nth-child(odd) { border-right: 1px solid var(--border); }
+  .home-redesign .home-quick-fact:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+  .home-redesign .home-quick-fact strong { font-size: 22px; }
+  .home-redesign .home-quick-fact strong.metric-unavailable { font-size: 16px; }
+  .home-redesign .home-companions { grid-template-columns: minmax(0, 1fr); }
+  .home-redesign .home-chart { overflow: visible; }
+  .home-redesign .home-chart text { font-size: 20px; }
+  .home-redesign .home-power-line { stroke-width: 3; }
+  .home-redesign .home-recent-table, .home-redesign .home-recent-table :is(tbody, tr, td) { display: block; width: 100%; }
+  .home-redesign .home-recent-table thead { display: none; }
+  .home-redesign .home-recent-table tr { padding: 14px 0; }
+  .home-redesign .home-recent-table td { padding: 2px 0; border: 0; font-size: 12px; }
+  .home-redesign .home-recent-table td:nth-child(2) { font-size: 13px; }
+  .home-redesign .home-recent-table td:not(:nth-child(2))::before { content: attr(data-label) ': '; color: var(--muted); }
+  .home-redesign .home-goal-progress > strong { font-size: 25px; }
+  .home-redesign .home-diagnostics dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+
+/* HOME-UI-01 expanded pass: opt-in page surfaces, with existing chart geometry. */
+.rw-page {
+  --rw-ink: #132b48; --rw-blue: #2563eb; --rw-teal: #0c9c92;
+  --rw-stroke: #e0e8f1; --rw-muted: #526780;
+  --navy: var(--rw-ink); --blue: var(--rw-blue);
+  --border: var(--rw-stroke); --muted: var(--rw-muted);
+  color: var(--rw-ink);
+}
+.rw-page :is(p, a, strong, label, time, dt, dd, code) { overflow-wrap: anywhere; }
+.rw-page h1 { font-size: 28px; }
+.rw-page h2 { font-size: 19px; letter-spacing: -.3px; }
+.rw-page > header { margin-bottom: 16px; }
+.rw-page > header p { font-size: 12px; margin-top: 5px; }
+.rw-page :is(.panel, .performance-summary, .training-help) {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 22px 24px; min-width: 0; box-shadow: 0 2px 8px rgb(22 45 78 / 3.5%);
+}
+.rw-page :is(.history-filters, .activity-results, .empty, .performance-summary,
+  .performance-chart-panel, .power-curve-panel, .training-trend, .plan-context,
+  .plan-milestone, .plan-hard),
+.rw-page :is(.training-lower, .plan-summary, .settings-panels) > .panel {
+  border-left: 3px solid var(--blue);
+}
+.rw-page :is(button, input, select) { font-family: inherit; font-size: 13px; }
+.rw-page :is(button, select, input:not([type="hidden"]):not([type="checkbox"])) {
+  min-height: 38px; border-radius: 8px; max-width: 100%; min-width: 0;
+}
+.rw-page :is(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--blue); outline-offset: 3px;
+}
+.rw-page summary { cursor: pointer; font-weight: 600; }
+.rw-page details p { margin: 10px 0; line-height: 1.6; }
+
+/* Browse: one results surface, with complete source fields on narrow rows. */
+.activities-redesign .activities-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; }
+.activities-redesign .result-count { margin: 0; }
+.activities-redesign .history-filters { gap: 12px; }
+.activities-redesign .activity-list { border: 0; padding: 0; box-shadow: none; border-radius: 0; }
+.activities-redesign .activity-columns, .activities-redesign .activity-row { padding-left: 0; padding-right: 0; }
+.activities-redesign .activity-columns { font-size: 12px; }
+.activities-redesign .activity-row { padding-top: 16px; padding-bottom: 16px; }
+.activities-redesign .activity-row h2 { font-size: 15px; letter-spacing: 0; }
+.activities-redesign .row-identity h2 { color: var(--blue); }
+.activities-redesign .row-type { font-size: 12px; }
+.activities-redesign .pagination { flex-wrap: wrap; gap: 10px 20px; }
+
+/* Performance: summaries share a quiet outer card; charts keep their full width. */
+.performance-redesign .performance-modes { margin: 0 0 16px; }
+.performance-redesign .performance-summary { padding: 0 10px; gap: 0; }
+.performance-redesign .performance-card { border: 0; border-right: 1px solid var(--border); border-radius: 0; padding: 16px 14px; background: none; }
+.performance-redesign .performance-card:last-child { border-right: 0; }
+.performance-redesign .performance-card h2 { font-size: 12px; letter-spacing: 0; }
+.performance-redesign .performance-card a { white-space: normal; overflow: visible; text-overflow: clip; }
+.performance-redesign .performance-card-date { white-space: normal; }
+.performance-redesign .performance-card strong { font-size: 25px; }
+.performance-redesign .performance-controls { gap: 12px 20px; }
+.performance-redesign .performance-selection { padding-top: 14px; margin-top: 12px; }
+.performance-redesign #performance-watts { font-size: 22px; }
+.performance-redesign :is(.performance-policy, .performance-future, .performance-evidence) { font-size: 13px; }
+.performance-redesign .curve-series { border-radius: 8px; }
+.performance-redesign .curve-inspection article { border-radius: 8px; background: #f8faff; }
+
+/* Training: preserve the accepted 600/400px plot and stress strip without scaling. */
+.training-redesign .training-values { gap: 16px; padding: 18px 0; }
+.training-redesign .training-values strong { font-size: 28px; }
+.training-redesign .training-toggles { flex-wrap: wrap; gap: 10px 20px; }
+.training-redesign .training-lower { gap: 16px; margin-top: 16px; }
+.training-redesign .training-help { margin: 16px 0 0; max-width: none; font-size: 13px; }
+
+/* Plan: preserve its chronology and distinguish logged work from recommendations. */
+.plan-redesign .plan-workspace { max-width: none; }
+.plan-redesign .plan-header { margin-bottom: 16px; }
+.plan-redesign .plan-summary { gap: 16px; margin-bottom: 16px; }
+.plan-redesign .plan-summary > .plan-completed { border-left: 4px solid var(--green); }
+.plan-redesign .plan-summary > .next-recommended { border-left-width: 4px; }
+.plan-redesign .plan-context { margin-bottom: 20px; }
+.plan-redesign .plan-milestones { gap: 16px; margin-bottom: 20px; }
+.plan-redesign .plan-milestone { border-top: 1px solid var(--border); }
+.plan-redesign .plan-hard { background: #f8faff; }
+.plan-redesign .plan-low { border-radius: 8px; }
+.plan-redesign :is(.plan-history, .plan-help) { font-size: 13px; }
+
+/* Settings: independently grouped forms, with status and local configuration intact. */
+.settings-redesign .settings-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; max-width: 1200px; }
+.settings-redesign :is(.strava-settings, .annual-goal) { max-width: none; margin: 0; }
+.settings-redesign .strava-settings dl > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 16px; }
+.settings-redesign .strava-settings dt { min-width: 0; }
+.settings-redesign .goal-actions form { align-items: start; }
+.settings-redesign .goal-actions button { padding: 8px 14px; border: 1px solid var(--blue); background: var(--blue); color: white; cursor: pointer; }
+.settings-redesign .goal-actions .secondary { background: white; color: var(--navy); border-color: #bac4d1; }
+
+@media (max-width: 1100px) {
+  .rw-page :is(.panel, .training-help) { padding: 20px; }
+  .activities-redesign .activity-list { padding: 0; }
+  .performance-redesign .performance-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .performance-redesign .performance-card:nth-child(2) { border-right: 0; }
+  .performance-redesign .performance-card:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+}
+@media (max-width: 850px) {
+  .settings-redesign .settings-panels { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 620px) {
+  .rw-page h1 { font-size: 25px; }
+  .rw-page :is(.panel, .training-help) { padding: 18px; }
+  .activities-redesign .activity-list { padding: 0; }
+  .activities-redesign .activity-columns { display: none; }
+  .activities-redesign .activity-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .activities-redesign .row-type { grid-column: auto; }
+  .activities-redesign .row-date::before { content: 'Date: '; color: var(--muted); }
+  .activities-redesign .row-type::before { content: 'Type: '; color: var(--muted); }
+  .activities-redesign .list-metrics { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 12px; gap: 8px; font-size: 12px; }
+  .activities-redesign .list-metrics span:first-child::before { content: 'Distance: '; color: var(--muted); }
+  .activities-redesign .list-metrics span:nth-child(2)::before { content: 'Duration: '; color: var(--muted); }
+  .performance-redesign .performance-card { padding: 12px 10px; }
+  .performance-redesign .performance-card strong { font-size: 23px; }
+  .training-redesign .training-values { gap: 8px; }
+  .training-redesign .training-values strong { font-size: 25px; }
+  .settings-redesign .strava-settings dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}

@@ -148,12 +148,12 @@ class Settings:
         setup = '' if credentials else '<p>Set STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in the ignored local <code>.env</code>, then reload Settings. Use <code>127.0.0.1</code> as the Strava Authorization Callback Domain.</p>'
         message = 'Authorization timed out. Reconnect and check that the Strava Authorization Callback Domain is 127.0.0.1.' if expired else self.notice
         notice = f'<p role="status" id="strava-notice">{escape(message)}</p>' if message else ''
-        return f'''<header><h1>Settings</h1></header><section class="panel strava-settings" aria-labelledby="strava-heading">
+        return f'''<header><h1>Settings</h1></header><div class="settings-panels"><section class="panel strava-settings" aria-labelledby="strava-heading">
 <h2 id="strava-heading">Strava</h2><dl><div><dt>Connection</dt><dd id="strava-connection">{status}</dd></div>
 <div><dt>App credentials</dt><dd id="strava-credentials">{'Configured' if credentials else 'Missing'}</dd></div>
 <div><dt>Last successful sync</dt><dd id="strava-last-sync">{last_time}</dd></div></dl>
 {setup}{notice}{outcome}<div class="strava-actions">{actions}</div>
-<p class="strava-manual-note">Sync runs only when you choose Sync now. It does not run continuously.</p></section>{self.goal_content(query)}'''
+<p class="strava-manual-note">Sync runs only when you choose Sync now. It does not run continuously.</p></section>{self.goal_content(query)}</div>'''
 
     @staticmethod
     def redirect(location='/settings'):

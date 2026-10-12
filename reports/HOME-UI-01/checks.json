@@ -1,0 +1,762 @@
+{
+  "verification_round": "2026-10-12 expanded app-wide pass",
+  "baseline": "747e388a2da745f5acf254ae75f6c197bd0f8490",
+  "python_tests": 446,
+  "cross_page_private": {
+    "checks": 1001,
+    "source": "private",
+    "routes": 6,
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
+      {
+        "name": "activities",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 390,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 390,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 390,
+        "headerHeight": 78.5
+      },
+      {
+        "name": "settings",
+        "width": 390,
+        "headerHeight": 32.5
+      },
+      {
+        "name": "activities",
+        "width": 320,
+        "headerHeight": 74.5
+      },
+      {
+        "name": "performance-history",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 320,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 320,
+        "headerHeight": 96.5
+      },
+      {
+        "name": "settings",
+        "width": 320,
+        "headerHeight": 32.5
+      }
+    ],
+    "errors": []
+  },
+  "cross_page_synthetic": {
+    "checks": 1028,
+    "source": "synthetic",
+    "routes": 6,
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
+      {
+        "name": "activities",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 390,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 390,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 390,
+        "headerHeight": 78.5
+      },
+      {
+        "name": "settings",
+        "width": 390,
+        "headerHeight": 32.5
+      },
+      {
+        "name": "activities",
+        "width": 320,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 320,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 320,
+        "headerHeight": 96.5
+      },
+      {
+        "name": "settings",
+        "width": 320,
+        "headerHeight": 32.5
+      }
+    ],
+    "errors": []
+  },
+  "cross_page_empty": {
+    "checks": 553,
+    "source": "empty",
+    "routes": 6,
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
+      {
+        "name": "activities",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 390,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 390,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 390,
+        "headerHeight": 78.5
+      },
+      {
+        "name": "settings",
+        "width": 390,
+        "headerHeight": 32.5
+      },
+      {
+        "name": "activities",
+        "width": 320,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 320,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 320,
+        "headerHeight": 96.5
+      },
+      {
+        "name": "settings",
+        "width": 320,
+        "headerHeight": 32.5
+      }
+    ],
+    "errors": []
+  },
+  "plan_controls": {
+    "checks": 76,
+    "scenarios": [
+      "before",
+      "completed"
+    ],
+    "intent": true,
+    "feedback": true,
+    "classification": true,
+    "home_parity": true,
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "errors": []
+  },
+  "activity_review": {
+    "checks": 9962,
+    "modes": [
+      "native",
+      "thin",
+      "api",
+      "outdoor"
+    ],
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "headers": [
+      {
+        "mode": "native",
+        "width": 1440,
+        "headerAndNav": 216.578125,
+        "chartTop": 310.578125
+      },
+      {
+        "mode": "native",
+        "width": 1024,
+        "headerAndNav": 230.78125,
+        "chartTop": 324.78125
+      },
+      {
+        "mode": "native",
+        "width": 768,
+        "headerAndNav": 274.375,
+        "chartTop": 368.375
+      },
+      {
+        "mode": "native",
+        "width": 390,
+        "headerAndNav": 389.46875,
+        "chartTop": 714.46875
+      },
+      {
+        "mode": "native",
+        "width": 320,
+        "headerAndNav": 424.65625,
+        "chartTop": 749.65625
+      },
+      {
+        "mode": "thin",
+        "width": 1440,
+        "headerAndNav": 211.578125,
+        "chartTop": 305.578125
+      },
+      {
+        "mode": "thin",
+        "width": 1024,
+        "headerAndNav": 203.78125,
+        "chartTop": 297.78125
+      },
+      {
+        "mode": "thin",
+        "width": 768,
+        "headerAndNav": 241.28125,
+        "chartTop": 335.28125
+      },
+      {
+        "mode": "thin",
+        "width": 390,
+        "headerAndNav": 314.46875,
+        "chartTop": 639.46875
+      },
+      {
+        "mode": "thin",
+        "width": 320,
+        "headerAndNav": 371.65625,
+        "chartTop": 696.65625
+      },
+      {
+        "mode": "api",
+        "width": 1440,
+        "headerAndNav": 216.578125,
+        "chartTop": 310.578125
+      },
+      {
+        "mode": "api",
+        "width": 1024,
+        "headerAndNav": 208.78125,
+        "chartTop": 302.78125
+      },
+      {
+        "mode": "api",
+        "width": 768,
+        "headerAndNav": 251.28125,
+        "chartTop": 345.28125
+      },
+      {
+        "mode": "api",
+        "width": 390,
+        "headerAndNav": 351.46875,
+        "chartTop": 676.46875
+      },
+      {
+        "mode": "api",
+        "width": 320,
+        "headerAndNav": 442.75,
+        "chartTop": 767.75
+      },
+      {
+        "mode": "outdoor",
+        "width": 1440,
+        "headerAndNav": 211.578125,
+        "chartTop": 305.578125
+      },
+      {
+        "mode": "outdoor",
+        "width": 320,
+        "headerAndNav": 352.46875,
+        "chartTop": 677.46875
+      }
+    ],
+    "touchscreen": true,
+    "errors": []
+  },
+  "power_curve": {
+    "checks": 1331,
+    "source": "private",
+    "desktop": 1440,
+    "mobile": [
+      390,
+      320
+    ],
+    "period_combinations": 25,
+    "errors": []
+  },
+  "training_state": {
+    "checks": 508,
+    "passed": true,
+    "ranges": 4,
+    "lineToggles": 3,
+    "multiRide": true,
+    "unscored": true,
+    "noRecord": true,
+    "keyboard": true,
+    "phone": true,
+    "touch": true,
+    "stableReview": true,
+    "floatingHover": true,
+    "hoverPersistence": true,
+    "hoverAllRanges": true
+  },
+  "home_private": {
+    "checks": 940,
+    "source": "private",
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
+      {
+        "width": 1440,
+        "headerHeight": 59.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 544,
+        "recommendationTop": 155.390625,
+        "recommendationWidth": 680,
+        "priorRecommendationTop": 338.046875,
+        "recentTop": 448.65625
+      },
+      {
+        "width": 1024,
+        "headerHeight": 59.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 836,
+        "recommendationTop": 315.234375,
+        "recommendationWidth": 836,
+        "priorRecommendationTop": 873.640625,
+        "recentTop": 604.5
+      },
+      {
+        "width": 768,
+        "headerHeight": 90.390625,
+        "factsTop": 186.390625,
+        "factsWidth": 580,
+        "recommendationTop": 412.234375,
+        "recommendationWidth": 580,
+        "priorRecommendationTop": 1006.9375,
+        "recentTop": 701.5
+      },
+      {
+        "width": 390,
+        "headerHeight": 81.5,
+        "factsTop": 404.5,
+        "factsWidth": 366,
+        "recommendationTop": 703.890625,
+        "recommendationWidth": 366,
+        "priorRecommendationTop": 1624.984375,
+        "recentTop": 1008.34375
+      },
+      {
+        "width": 320,
+        "headerHeight": 99.5,
+        "factsTop": 422.5,
+        "factsWidth": 296,
+        "recommendationTop": 771.390625,
+        "recommendationWidth": 296,
+        "priorRecommendationTop": 1709.28125,
+        "recentTop": 1111.53125
+      }
+    ],
+    "touch": true,
+    "errors": []
+  },
+  "anchor_styles": {
+    "checks": 24,
+    "widths": [
+      1440,
+      390,
+      320
+    ],
+    "routes": 4,
+    "home_and_activity_review_unchanged": true
+  },
+  "touch_navigation": {
+    "checks": 12,
+    "touchscreen": true,
+    "history_contributor": true,
+    "activity_rows": true,
+    "settings": true,
+    "widths": [
+      390,
+      320
+    ]
+  },
+  "chromium_check_total": 15435,
+  "standalone_performance": "passed",
+  "standalone_settings": "passed",
+  "standalone_dashboard": "passed",
+  "javascript_syntax": "passed",
+  "diff_whitespace": "passed",
+  "private_screenshots_committed": false,
+  "review_gate": "HARD \u2014 Analyst Gate 1 reopened; holistic Owner Gate 2 pending"
+}

@@ -18,11 +18,11 @@ def training_page(store, query=''):
     zone=query_zone(query)
     header='<header data-calendar-timezone="tz"><h1>Training State</h1><p>Your training trend and the rides behind it.</p></header>'
     if zone is None:
-        return shell('Training State',header+'<p>Enable JavaScript to use your browser’s local calendar.</p>'+HELP,active='training')
+        return shell('Training State',header+'<p>Enable JavaScript to use your browser’s local calendar.</p>'+HELP,active='training',page_class='training-redesign')
     data=training_state(store,zone.key)
     if not data['days']:
-        return shell('Training State',header+'<section class="panel"><h2>No usable training stress yet</h2><p>Recorded rides remain available in Activities. Training State needs qualified power with dated FTP or usable measured HR and active duration.</p><a href="/activities">Open Activities</a></section>'+HELP,active='training')
-    content=header+HELP+'''<section class="panel training-trend" aria-label="Training trend">
+        return shell('Training State',header+'<section class="panel"><h2>No usable training stress yet</h2><p>Recorded rides remain available in Activities. Training State needs qualified power with dated FTP or usable measured HR and active duration.</p><a href="/activities">Open Activities</a></section>'+HELP,active='training',page_class='training-redesign')
+    content=header+'''<section class="panel training-trend" aria-label="Training trend">
 <div class="training-toolbar"><div role="group" aria-label="History range" id="training-ranges">
 <button type="button" data-range="42" aria-pressed="false">6 weeks</button><button type="button" data-range="3months" aria-pressed="true">3 months</button><button type="button" data-range="12months" aria-pressed="false">12 months</button><button type="button" data-range="all" aria-pressed="false">All history</button></div>
 <label class="training-date">Selected date <input type="date" id="training-date"></label></div>
@@ -41,8 +41,8 @@ def training_page(store, query=''):
 <div class="training-lower"><section class="panel"><h2 id="training-day-heading">Selected day</h2><div id="training-day-detail" aria-live="polite"></div></section>
 <section class="panel"><h2>Recent workload</h2><div id="training-workload"></div><p>Stress points and observed kJ have different meanings. Subtotals reflect recorded evidence; omissions do not assert zero effort.</p></section></div>
 <noscript>Enable JavaScript for the interactive trend and exact daily inspection.</noscript>'''
-    content+=f'<script id="training-state-data" type="application/json">{safe_json(data)}</script><script src="/static/training_state.js" defer></script>'
-    return shell('Training State',content,active='training')
+    content+=HELP+f'<script id="training-state-data" type="application/json">{safe_json(data)}</script><script src="/static/training_state.js" defer></script>'
+    return shell('Training State',content,active='training',page_class='training-redesign')
 
 
 def training_home(store, zone_name):

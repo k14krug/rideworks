@@ -1,0 +1,15 @@
+{
+  "fixed_clock_cases": 6,
+  "timezones": 2,
+  "all_dashboard_payloads_equal": true,
+  "chart_svg_values_geometry_links_equal": true,
+  "recommendation_training_kpis_evidence_equal": true,
+  "accepted_models_equal": true,
+  "source_tables": 26,
+  "original_artifacts": 1422,
+  "all_tables_equal": true,
+  "original_hashes_sizes_mtimes_equal": true,
+  "approved_references_equal": true,
+  "integrity": "ok",
+  "foreign_key_violations": 0
+}

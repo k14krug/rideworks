@@ -66,3 +66,17 @@ Document concise normal startup and datastore identity (read-only active path/st
 - Treat obsolete `local_data/<task>` stores as **cleanup candidates**, not permanent products. Once the Owner-approved authoritative store is successfully promoted, verified in the running application and covered by the Owner's normal backup practice, propose **one batch cleanup** of known-disposable directories. **No deletion yet**: an old folder may contain a more recent classification, sync or original not in the chosen store. At final Gate 4 show a concise proposed delete/retain list and obtain Owner permission before removing anything. Do not require repeated per-folder heavyweight rechecks at cleanup time; use the existing inventory and verified store-difference summary.
 
 **Do not expand scope again:** no 85-source merge system, no complicated archival retention policy, no background audit, no new backup service. Use the existing inventory, establish the one permanent database, then clean up old test copies after direct Owner approval.
+
+## 5. Owner-provided normal launch and production usability — 2026-10-12
+
+**Important newly confirmed active-use evidence:** The Owner says they have recently started RideWorks using:
+
+```sh
+.venv/bin/python -m rideworks --data-dir local_data/p2-05-review serve --port 8766
+```
+
+Treat **`local_data/p2-05-review` as the first, high-priority authoritative SOURCE CANDIDATE**, not as automatically proven final canonical or a disposable folder just because its name says "review". The relative directory resolves against the actual working directory used for that command; verify its effective absolute path **privately** in the local inventory, confirm it matches the active running app if possible, then compare only meaningful newer/different candidates using the existing completed 85-store inventory. The port **8766** explains the Owner's normal browsing address; it is **not** part of the data identity. Do not repeat expensive all-store audits. Do not mutate this source or overwrite it during the inventory.
+
+**Explicit Owner production-use requirement:** They **do not want to open a terminal and type a `.venv/bin/python -m rideworks --data-dir ... serve --port ...` command** in production. The approved permanent store should be selected transparently by default. After Owner source/host/destination selection, provide the **smallest practical normal launch experience**: on a local desktop, a launcher/shortcut that starts RideWorks and opens the correct browser address, or if the Owner separately selects a server host, a simple appropriate service/startup mechanism with browser access. Avoid Docker/cloud installers/daemons unless actual deployment host requires one. Preserve the Owner's desired web port/bookmark if useful; no manually chosen test-folder argument for everyday use. The actual launch method depends on Owner's final deployment-host choice at Gate 2; **don't introduce a speculative server install before that**.
+
+**Stage A next output:** Report in plain English that `p2-05-review` is the Owner's recently used store; whether it is also the *currently running* resolved data directory; whether it includes the latest user data relative to few genuinely distinct candidates; and whether `~/.rideworks` is vacant or already contains data. The Owner should not need to interpret 85 database IDs to answer this.

@@ -3,7 +3,7 @@
 **Product:** RideWorks.
 **Current task:** HOME-UI-01 — Home dashboard visual refinement; `/AUTOTASK HOME-UI-01` on 2026-10-11.
 **State:** ready_for_review — implementation and verification complete; stopped at HARD — Analyst Gate 1. Not accepted.
-**Branch / issue:** `task/home-ui-01-dashboard`; [issue #31](https://github.com/k14krug/rideworks/issues/31). Draft PR being opened.
+**Branch / PR:** `task/home-ui-01-dashboard`; [draft PR #32](https://github.com/k14krug/rideworks/pull/32); [issue #31](https://github.com/k14krug/rideworks/issues/31). Implementation commit `defa46b`.
 **Implemented:** Compact Home header/sync status; prominent shared next ride beside four quick facts; labelled responsive recent rows; companion real Training State/Performance; mileage/annual goal and complete supporting disclosures. CSS scoped to Home. Mileage keyboard tooltip remains visible after focus-driven scroll/resize; Escape keeps it dismissed.
 **Verification:** 446 Python tests; 13,476 counted Chromium checks plus standalone synthetic Dashboard sync/goal/oracle/failure-recovery acceptance. Real/synthetic Home at 1440/1024/768/390/320px, keyboard and touch; before/completed/empty Plan parity; Activity Review/PC-01/Training State unchanged. Eight unrelated routes' computed styles equal accepted main. Six fixed-clock/timezone cases preserve all dashboard data/chart SVGs, accepted models, all 26 tables / 1,422 originals and approved FTP/Elevate. [Report](reports/HOME-UI-01/implementation.md).
 **Running review:** `http://127.0.0.1:8801/?home_tz=America%2FLos_Angeles` (disposable retained-source copy); synthetic preview at `http://127.0.0.1:8803/`. Original accepted store untouched; private captures/routes stay ignored.

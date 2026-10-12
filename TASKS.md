@@ -502,7 +502,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### HOME-UI-01 — Home dashboard visual redesign
 
-**Status:** **in_progress — implementation and verification complete; ready for HARD — Analyst Gate 1** — Owner invoked `/AUTOTASK HOME-UI-01` on 2026-10-11. Scoped Dashboard presentation verified on `task/home-ui-01-dashboard`; [issue #31](https://github.com/k14krug/rideworks/issues/31). Draft PR being opened; not accepted.
+**Status:** **in_progress — implementation and verification complete; ready for HARD — Analyst Gate 1** — Owner invoked `/AUTOTASK HOME-UI-01` on 2026-10-11. Scoped Dashboard presentation verified on `task/home-ui-01-dashboard`; [issue #31](https://github.com/k14krug/rideworks/issues/31). [Draft PR #32](https://github.com/k14krug/rideworks/pull/32); not accepted.
 
 **Scope:** Reduce Home header/metric whitespace; prioritize **Next Recommended Ride**, retain all four quick metrics, Recent Activities, Training State, 20-minute Performance, real interactive mileage chart and YTD goal, context/evidence details. Use the approved Activity Review design language but keep exact current Plan, Performance, Training State, mileage source and period values unchanged. The proposed Home HTML has **synthetic** numbers and graph traces and is not data.
 

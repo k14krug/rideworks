@@ -143,7 +143,7 @@ real single-ride case. It is evidence of responsive behavior, not fabricated adv
 
 Running real-source review: `http://127.0.0.1:8801/?home_tz=America%2FLos_Angeles`.
 Synthetic review: `http://127.0.0.1:8803/?home_tz=America%2FLos_Angeles`.
-Branch `task/home-ui-01-dashboard`; draft PR and current head are recorded in
-`STATUS.md`. Stop at **HARD — Analyst Gate 1** for code, source parity, interaction
+Branch `task/home-ui-01-dashboard`; [draft PR #32](https://github.com/k14krug/rideworks/pull/32),
+implementation commit `defa46b`; current handoff is recorded in `STATUS.md`. Stop at **HARD — Analyst Gate 1** for code, source parity, interaction
 and visual review. Owner Gate 2 must accept the running dashboard before merge.
 Task remains `in_progress`; no other-page redesign or Phase 6 work.

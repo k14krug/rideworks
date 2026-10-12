@@ -8,7 +8,7 @@ remains required. Baseline: accepted `main` at `516cbd7`.
 
 - A compact Home title/subtitle and source-accurate last successful sync link.
   Missing sync is explicit. The application shell and navigation are unchanged.
-- Existing **Next Recommended Ride** leads the page beside four compact facts:
+- Four compact facts lead the page, with **Next Recommended Ride** beside them:
   This Week, Last 7 Days, current 42-day best, and latest eligible 20-minute ride.
   These preserve their distinct periods, supplied values and contributor links.
 - Recent Activities leads the body, with real dates, titles/types, distance,
@@ -27,28 +27,40 @@ remains required. Baseline: accepted `main` at `516cbd7`.
   restrained 14px panels and 18–24px padding. The header has no banner/gradient.
   All other page styles and global navigation retain their accepted behavior.
 
+The Owner's latest running-page corrections are implemented on the same PR:
+facts first/left in actual DOM and keyboard order, recommendation second/right
+with a 1:1.25 width ratio. Both align at the top without stretching the shorter
+card. The eight main cards have thin #2563eb left edges: 3px except the next ride's
+existing 4px. Individual facts, nested completed context, charts and disclosures
+have no additional blue stripes. The restrained treatment is retained for Owner
+review. The explicit no-other-pages decision is the final scope boundary;
+there is no planned visual rollout or Phase 6 work.
+
 ## Reference and deliberate adaptations
 
 The Analyst HTML proposal and historical Dashboard PNG were inspected in Chromium.
 Real before/after captures at **1440, 1024, 768, 390 and 320 CSS px** were compared;
 private captures, titles, routes and store snapshots remain ignored/local.
 
-The proposed hierarchy is retained: recommendation/facts, recent rides and
+The proposed hierarchy is retained: facts/recommendation, recent rides and
 companions, mileage/goal, then supporting evidence. The existing global shell
 stays intact, including its mobile navigation. No invented FTP, fitness points,
 race classification, recommendation, chart traces or example values were copied.
 
 The four facts form a 2×2 matrix on desktop/phone; intermediate widths use a
-compact four-column strip below the recommendation. Missing/long values wrap.
+compact four-column strip above the recommendation. Missing/long values wrap.
 Advice has no arbitrary minimum height; supported completed-today context remains
 inside the shared recommendation, so multiple actual rides naturally need more
 space. Training State retains its real text values rather than the proposed fake
 mini chart. The accepted SVG chart generators are untouched; mobile text size is
 increased through scoped CSS while SVG values, paths, points and links stay exact.
 
-On the captured real desktop Home, recommendation top moved **338 → 155px**,
-with Recent Activities starting at **449px**. At 320px it moved **1709 → 423px**;
-the unchanged global mobile shell accounts for the preceding navigation space.
+On the captured real desktop Home, facts and recommendation start at **155px**,
+with widths **544 / 680px** and Recent Activities starting at **449px**. At 320px
+the facts start at **423px**, followed by the recommendation at **771px**. The
+requested stacked order moves advice below the facts; it remains much higher
+than accepted main's **1709px** placement. The unchanged global mobile shell
+accounts for the preceding navigation space.
 This is measured placement, not a claim that every source state fits one screen.
 
 ## Interaction correction
@@ -85,10 +97,20 @@ results remain protected. The separate unchanged-input check compares **all**
 tables, including those caches. Its reported schema now reflects the actual
 fixture instead of the older hardcoded schema 7.
 
-**13,476 counted Chromium checks** pass: 825 real / 748 synthetic Home,
+**14,256 counted Chromium checks** pass after the Owner corrections:
+940 real / 883 synthetic Home,
 9,962 Activity Review, 1,331 existing Power Curve, 510 Training State, 14 accepted-page,
 28 before/completed/empty recommendation, 10 focus-scroll/resize/Escape, and 48
-unchanged-page computed-style checks across eight routes and three widths.
+unchanged-page computed-style checks across eight routes and three widths,
+plus 530 refinement checks over four scenarios at all five widths. Those cases
+cover before a ride, one completed ride, empty history and generated long
+contributor names/large mileage. Real and synthetic Home also cover short advice,
+long explanations and multiple completed rides. DOM/focus order, all eight
+3px/4px rounded borders and no nested blue stripes pass. Normal fact/link text
+meets 4.5:1 contrast and the blue accent exceeds 3:1 on the actual white cards.
+An initial overlapping-database comparison received a server error; repeating
+without competing requests passes all 48 other-page style/geometry comparisons.
+The final unchanged-input preservation check also passes after browser regressions.
 The standalone Dashboard acceptance also passes its independent checks, calendar
 cases, fake sync/failure/recovery, goal settings and 48 tooltip lifecycle cases;
 these are reported separately rather than added to the counted total.
@@ -106,6 +128,8 @@ Snapshots contain private evidence and must stay in ignored local storage.
 ```bash
 .venv/bin/python -m unittest discover -s tests -q
 .venv/bin/python tools/preview_home.py --data-dir /path/to/new-synthetic-preview
+.venv/bin/python tools/preview_home.py --long-facts \
+  --data-dir /path/to/new-synthetic-wrapping-preview
 .venv/bin/python tools/verify_home_preservation.py \
   --data-dir /path/to/disposable-store --code-root /path/to/accepted-main \
   --snapshot /path/to/ignored-before.json
@@ -125,6 +149,10 @@ The configuration is read locally and never copied into reports or Git.
 Existing Activity Review, Power Curve and Training State browser tools were rerun
 against the disposable current server. Scenario previews reuse
 `tools/preview_planning_v2.py` with and without `--before-ride`, plus an empty store.
+Run `tools/verify_home_refinements_browser.js` with `CASE_INPUT` replaced locally
+by an array of `{name, base, longFacts}` cases: `before`, `completed`, `empty` and
+`long-facts` (only the last sets `longFacts: true`). All fixtures are generated,
+disposable source evidence, including the intentionally exaggerated wrapping case.
 
 ## Synthetic screenshot comparison
 
@@ -139,11 +167,20 @@ real single-ride case. It is evidence of responsive behavior, not fabricated adv
 | Desktop | [Before](synthetic-before-desktop.png) | [After](synthetic-after-desktop.png) |
 | 320px phone | [Before](synthetic-before-320.png) | [After](synthetic-after-320.png) |
 
+The Owner-refinement comparison uses the previous Home implementation, rather
+than accepted main, as its before state. All five widths were captured and
+inspected locally; representative source-neutral captures are retained here.
+
+| View | Before Owner corrections | Refined Home |
+| --- | --- | --- |
+| Desktop | [Before](synthetic-owner-before-desktop.png) | [After](synthetic-after-desktop.png) |
+| 320px phone | [Before](synthetic-owner-before-320.png) | [After](synthetic-after-320.png) |
+
 ## Review handoff
 
 Running real-source review: `http://127.0.0.1:8801/?home_tz=America%2FLos_Angeles`.
 Synthetic review: `http://127.0.0.1:8803/?home_tz=America%2FLos_Angeles`.
 Branch `task/home-ui-01-dashboard`; [draft PR #32](https://github.com/k14krug/rideworks/pull/32),
-implementation commit `defa46b`; current handoff is recorded in `STATUS.md`. Stop at **HARD — Analyst Gate 1** for code, source parity, interaction
+current head and handoff are recorded on the PR and in `STATUS.md`. Stop again at **HARD — Analyst Gate 1** for code, source parity, interaction
 and visual review. Owner Gate 2 must accept the running dashboard before merge.
 Task remains `in_progress`; no other-page redesign or Phase 6 work.

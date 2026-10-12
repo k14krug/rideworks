@@ -642,10 +642,12 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign h1 { font-size: 28px; }
 .home-redesign h2 { font-size: 19px; letter-spacing: -.3px; }
 .home-redesign .panel { padding: 22px 24px; border-radius: 14px; min-width: 0; box-shadow: 0 2px 8px rgb(22 45 78 / 3.5%); }
+.home-redesign :is(.home-summary, .home-recent, .home-training, .home-performance, .home-mileage, .home-goal-progress, .home-supporting) { border-left: 3px solid var(--blue); }
+.home-redesign .home-lead > .next-recommended { border-left: 4px solid var(--blue); }
 .home-redesign .home-heading { align-items: end; margin-bottom: 16px; gap: 8px 20px; }
 .home-redesign .home-heading p { font-size: 12px; }
 .home-redesign .home-sync { max-width: 50%; text-align: right; }
-.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; margin-bottom: 16px; }
+.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; align-items: start; margin-bottom: 16px; }
 .home-redesign .next-recommended { margin: 0; }
 .home-redesign .next-recommended h2 { font-size: 16px; }
 .home-redesign .recommended-type { font-size: 25px; margin: 8px 0 4px; }

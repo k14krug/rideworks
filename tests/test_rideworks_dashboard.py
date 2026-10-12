@@ -238,7 +238,7 @@ class DashboardTests(TestCase):
             start_date='2026-10-10T12:00:00Z',elapsed_time=1200,distance=1609.344,average_watts=100))],42,1790000000)
         html=self.app.get('/?home_tz=UTC')[2].decode()
         self.assertIn('class="home-redesign"',html)
-        self.assertLess(html.index('id="next-recommended-heading"'),html.index('id="home-recent-mileage"'))
+        self.assertLess(html.index('id="home-recent-mileage"'),html.index('id="next-recommended-heading"'))
         self.assertLess(html.index('Recent Activities</h2>'),html.index('Training State</h2>'))
         self.assertIn('Synthetic &lt;ride&gt;',html)
         for label in ('Date','Ride','Distance','Duration','Avg Pwr'):

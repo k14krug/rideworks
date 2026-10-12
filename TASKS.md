@@ -502,7 +502,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### HOME-UI-01 — Home dashboard visual redesign
 
-**Status:** **in_progress — Owner refinements requested, 2026-10-11; HARD — Analyst Gate 1 remains open**. On [draft PR #32](https://github.com/k14krug/rideworks/pull/32), quick facts must move left/first, Next Recommended Ride right/second, and main Home cards trial a restrained blue left edge. Only earlier pre-refinement tests passed; no final Owner Gate 2 acceptance or merge. [Issue #31](https://github.com/k14krug/rideworks/issues/31).
+**Status:** **in_progress — Owner refinements implemented and reverified, 2026-10-11; ready for HARD — Analyst Gate 1**. On [draft PR #32](https://github.com/k14krug/rideworks/pull/32), quick facts are left/first in DOM and keyboard order, Next Recommended Ride right/second, and the eight main Home cards have restrained 3px blue edges (Next Ride 4px). Desktop/mobile screenshots, 446 Python tests, Chromium regressions, unchanged other-page styles and source preservation pass. Owner Gate 2 remains open; no merge. [Issue #31](https://github.com/k14krug/rideworks/issues/31).
 
 **Scope:** Reduce Home header/metric whitespace; prioritize **Next Recommended Ride**, retain all four quick metrics, Recent Activities, Training State, 20-minute Performance, real interactive mileage chart and YTD goal, context/evidence details. Use the approved Activity Review design language but keep exact current Plan, Performance, Training State, mileage source and period values unchanged. The proposed Home HTML has **synthetic** numbers and graph traces and is not data.
 

@@ -27,9 +27,30 @@ async page => {
     const rec=await page.locator('.next-recommended').boundingBox(),quick=await page.locator('.home-summary').boundingBox();
     const prior=await old.locator('.next-recommended').boundingBox();
     const recent=await page.locator('.home-recent').boundingBox();
+    check(await page.locator('.home-lead').evaluate(n=>n.children[0].classList.contains('home-summary')&&n.children[1].classList.contains('next-recommended')),'facts first in actual DOM');
+    const leadLinks=await page.locator('.home-lead a').all();
+    if(leadLinks.length)await leadLinks[0].focus();
+    for(let i=0;i<leadLinks.length;i++) {
+      check(await leadLinks[i].evaluate(n=>n===document.activeElement),'lead keyboard follows DOM order');
+      if(i+1<leadLinks.length)await page.keyboard.press('Tab');
+    }
+    const accents=await page.locator('.home-summary, .home-lead > .next-recommended, .home-recent, .home-training, .home-performance, .home-mileage, .home-goal-progress, .home-supporting').evaluateAll(ns=>ns.map(n=>{
+      const s=getComputedStyle(n);return {next:n.classList.contains('next-recommended'),width:s.borderLeftWidth,color:s.borderLeftColor,style:s.borderLeftStyle,radius:s.borderTopLeftRadius};
+    }));
+    check(accents.length===8,'eight main cards accented');
+    for(const accent of accents) {
+      check(accent.width===(accent.next?'4px':'3px'),'single restrained main-card edge');
+      check(accent.color==='rgb(37, 99, 235)'&&accent.style==='solid'&&accent.radius==='14px','palette blue and rounded main-card edge');
+    }
+    check(await page.locator('.home-quick-fact, .home-supporting details, .next-recommended .plan-completed, .home-chart').evaluateAll(ns=>ns.every(n=>{
+      const s=getComputedStyle(n);return parseFloat(s.borderLeftWidth)===0||s.borderLeftColor!=='rgb(37, 99, 235)';
+    })),'no nested blue stripes');
     check(rec.y<prior.y,'next ride closer to top');
     check(rec.y+rec.height<=recent.y,'recommendation above recent rides');
-    if(width===1440)check(rec.y<220 && Math.abs(rec.y-quick.y)<1,'recommendation and quick facts above desktop fold');
+    if(width===1440) {
+      check(rec.y<220 && Math.abs(rec.y-quick.y)<1,'recommendation and quick facts above desktop fold');
+      check(quick.x+quick.width<rec.x&&rec.width>quick.width,'facts left and wider recommendation right');
+    } else check(quick.y+quick.height<rec.y,'stacked facts above recommendation');
     if(width<=620) {
       const boxes=await page.locator('.home-quick-fact').evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y};}));
       check(boxes[0].y===boxes[1].y&&boxes[2].y===boxes[3].y&&boxes[2].y>boxes[0].y,'phone 2 by 2 facts');
@@ -37,7 +58,7 @@ async page => {
       check(await page.locator('.home-recent-row td:not(:nth-child(2))').evaluateAll(ns=>ns.every(n=>getComputedStyle(n,'::before').content.includes(n.dataset.label))),'visible mobile source-field labels');
     }
     const header=await page.locator('.home-heading').boundingBox();
-    geometry.push({width,headerHeight:header.height,recommendationTop:rec.y,priorRecommendationTop:prior.y,recentTop:recent.y});
+    geometry.push({width,headerHeight:header.height,factsTop:quick.y,factsWidth:quick.width,recommendationTop:rec.y,recommendationWidth:rec.width,priorRecommendationTop:prior.y,recentTop:recent.y});
     check(await page.locator('.home-recent-row').count()===data.recent.length,'all recent rows retained');
     for(const row of data.recent) {
       const el=page.locator('.home-recent-row[data-activity-id="'+row.activity_id+'"]');

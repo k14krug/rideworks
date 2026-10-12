@@ -1,7 +1,7 @@
 {
   "python_tests": 446,
   "home_private": {
-    "checks": 825,
+    "checks": 940,
     "source": "private",
     "widths": [
       1440,
@@ -14,35 +14,50 @@
       {
         "width": 1440,
         "headerHeight": 59.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 544,
         "recommendationTop": 155.390625,
+        "recommendationWidth": 680,
         "priorRecommendationTop": 338.046875,
         "recentTop": 448.65625
       },
       {
         "width": 1024,
         "headerHeight": 59.390625,
-        "recommendationTop": 155.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 836,
+        "recommendationTop": 315.234375,
+        "recommendationWidth": 836,
         "priorRecommendationTop": 873.640625,
         "recentTop": 604.5
       },
       {
         "width": 768,
         "headerHeight": 90.390625,
-        "recommendationTop": 186.390625,
+        "factsTop": 186.390625,
+        "factsWidth": 580,
+        "recommendationTop": 412.234375,
+        "recommendationWidth": 580,
         "priorRecommendationTop": 1006.9375,
         "recentTop": 701.5
       },
       {
         "width": 390,
         "headerHeight": 81.5,
-        "recommendationTop": 404.5,
+        "factsTop": 404.5,
+        "factsWidth": 366,
+        "recommendationTop": 703.890625,
+        "recommendationWidth": 366,
         "priorRecommendationTop": 1624.984375,
         "recentTop": 1008.34375
       },
       {
         "width": 320,
         "headerHeight": 99.5,
-        "recommendationTop": 422.5,
+        "factsTop": 422.5,
+        "factsWidth": 296,
+        "recommendationTop": 771.390625,
+        "recommendationWidth": 296,
         "priorRecommendationTop": 1709.28125,
         "recentTop": 1111.53125
       }
@@ -51,7 +66,7 @@
     "errors": []
   },
   "home_synthetic": {
-    "checks": 748,
+    "checks": 883,
     "source": "synthetic",
     "widths": [
       1440,
@@ -64,35 +79,50 @@
       {
         "width": 1440,
         "headerHeight": 59.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 544,
         "recommendationTop": 155.390625,
+        "recommendationWidth": 680,
         "priorRecommendationTop": 338.046875,
         "recentTop": 855.84375
       },
       {
         "width": 1024,
         "headerHeight": 59.390625,
-        "recommendationTop": 155.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 836,
+        "recommendationTop": 315.234375,
+        "recommendationWidth": 836,
         "priorRecommendationTop": 855.640625,
         "recentTop": 990.5
       },
       {
         "width": 768,
         "headerHeight": 90.390625,
-        "recommendationTop": 186.390625,
+        "factsTop": 186.390625,
+        "factsWidth": 580,
+        "recommendationTop": 396.03125,
+        "recommendationWidth": 580,
         "priorRecommendationTop": 988.9375,
         "recentTop": 1090.484375
       },
       {
         "width": 390,
         "headerHeight": 81.5,
-        "recommendationTop": 404.5,
+        "factsTop": 404.5,
+        "factsWidth": 366,
+        "recommendationTop": 687.390625,
+        "recommendationWidth": 366,
         "priorRecommendationTop": 1621.984375,
-        "recentTop": 1398.03125
+        "recentTop": 1414.53125
       },
       {
         "width": 320,
         "headerHeight": 99.5,
-        "recommendationTop": 422.5,
+        "factsTop": 422.5,
+        "factsWidth": 296,
+        "recommendationTop": 755.1875,
+        "recommendationWidth": 296,
         "priorRecommendationTop": 1689.78125,
         "recentTop": 1600.515625
       }
@@ -294,5 +324,25 @@
   "baseline": "516cbd7",
   "private_screenshots_committed": false,
   "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending",
-  "chromium_check_total": 13476
+  "chromium_check_total": 14256,
+  "owner_refinement_scenarios": {
+    "checks": 530,
+    "scenarios": [
+      "before",
+      "completed",
+      "empty",
+      "long-facts"
+    ],
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "contrast": true,
+    "overflow": false
+  },
+  "owner_refinements": "facts first/left in DOM and keyboard; 3px main-card blue edges, 4px next ride; other pages unchanged",
+  "verification_round": "Owner refinement; current production markup/styles"
 }

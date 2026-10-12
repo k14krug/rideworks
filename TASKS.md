@@ -509,3 +509,14 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Controlling resources:** [HOME-UI-01 JIT](docs/tasks/HOME-UI-01.md), [responsive HTML concept](docs/mockups/home-dashboard-ui-concept.html), [AR-UI-01 accepted design](docs/design/AR-UI-01-activity-review-redesign.md).
 
 **Final acceptance evidence:** 446 Python tests and 15,435 Chromium assertions passed, including all five viewports and full Activities, Performance, Training State, Plan and Settings interactions. Six fixed-clock cases preserve 36 page states, models, all 26 tables, 1,422 source originals and approved FTP/Elevate references. [Implementation report](reports/HOME-UI-01/implementation.md). Analyst reviewed committed code/evidence (not the private local store); Owner viewed the integrated running app and said **“I like the way things look now”**, clearing final visual acceptance. **Next focus is production data-store transition planning**, not another UI change or Phase 6.
+
+
+### OPS-01 — One authoritative RideWorks data store
+
+**Status:** **pending / Owner destination agreement needed**, 2026-10-12. [Issue #33](https://github.com/k14krug/rideworks/issues/33). No local data copy, migration or cleanup has occurred.
+
+**Purpose:** Promote RideWorks from task-specific `local_data/<task>` verification copies to **one stable everyday store** outside the repository, while keeping SQLite, preserved original ride data, source provenance, historical metrics and private Strava tokens/settings intact. Existing default `~/.rideworks` is the recommended destination; Owner has not yet agreed or selected an authoritative source.
+
+**Controlling resources:** [OPS-01 design and options](docs/design/OPS-01-production-data-home.md), [gated implementation/inventory JIT](docs/tasks/OPS-01.md). Startup already honors `--data-dir` > exported env > ignored checkout `.env` > `~/.rideworks`; `.env.example` still references a development store and needs later cleanup.
+
+**Gates:** after Owner confirms the intended permanent destination and invokes `/TASK OPS-01` or `/AUTOTASK OPS-01`, Dex performs **read-only local inventory only**, without Store auto-migrations, then **HARD — Owner Gate** chooses actual canonical source+target. Only then stage a consistent SQLite+originals+sidecar copy with full backup/restore/rollback and source/model validation; **HARD — Analyst** and **HARD — Owner** accept the resulting running app before closure. Never delete old testing copies automatically, merge unrelated SQLite databases, or reveal private tokens. Phase 6 remains deferred.

@@ -2,6 +2,7 @@
 async (page) => {
   const config = CASE_INPUT;
   let checks = 0;
+  const headers = [];
   const errors = [];
   const check = (v,m) => { checks++; if (!v) throw new Error(m); };
   page.on('pageerror', e => errors.push(e.name));
@@ -36,6 +37,26 @@ async (page) => {
       await open(item.path);
       check(await page.locator('h1').count()===1,'single activity title');
       check(await page.locator('.review-hero .metric').count()===4,'four real summary metrics');
+      check(await page.locator('.review-hero a[href^="#"]').count()===0,'section navigation is the only header jump control');
+      const header = await page.locator('.review-hero').evaluate(hero => {
+        const rect = node => { const r=node.getBoundingClientRect(); return {x:r.x,y:r.y,bottom:r.bottom,height:r.height}; };
+        const heading=hero.querySelector('.ride-heading'),title=hero.querySelector('h1'),meta=hero.querySelector('.ride-meta');
+        const nav=hero.nextElementSibling,metrics=hero.querySelector('.metrics');
+        return {height:rect(nav).bottom-rect(hero).y,chartTop:document.querySelector('.review-layout').getBoundingClientRect().top,
+          divider:getComputedStyle(metrics).borderTopWidth,
+          fits:rect(heading).height<=parseFloat(getComputedStyle(title).lineHeight)+1 && rect(meta).height<=parseFloat(getComputedStyle(meta).lineHeight)+1 && !hero.querySelector('.source-caption'),
+          cards:[...hero.querySelectorAll('.metric')].map(n=>rect(n)),values:[...hero.querySelectorAll('.metric strong')].map(n=>rect(n))};
+      });
+      check(header.divider==='0px','natural spacing between identity and metrics');
+      if(width>=1024 && header.fits) check(header.height<=220,'compact desktop header and navigation');
+      if(width<=620) {
+        check(Math.abs(header.cards[0].y-header.cards[1].y)<1 && Math.abs(header.cards[2].y-header.cards[3].y)<1 && header.cards[2].y>header.cards[0].y,'compact mobile 2 by 2 metrics');
+      } else check(header.cards.every(c=>Math.abs(c.y-header.cards[0].y)<1),'four aligned desktop metrics');
+      for(let i=0;i<4;i++) {
+        const first=width<=620 ? Math.floor(i/2)*2 : 0;
+        check(Math.abs(header.values[i].bottom-header.values[first].bottom)<1,'summary values aligned within each row');
+      }
+      headers.push({mode:item.mode,width,headerAndNav:header.height,chartTop:header.chartTop});
       check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal overflow');
       const ids = await page.locator('[id]').evaluateAll(nodes=>nodes.map(n=>n.id));
       check(ids.length===new Set(ids).size,'unique HTML IDs');
@@ -182,5 +203,5 @@ async (page) => {
     check(!(await page.locator('.activity-plan-context').textContent()).includes('rider confirmed'),'automatic classification restored');
   }
   check(errors.length===0,'no JavaScript or console errors');
-  return {checks,modes:config.cases.map(c=>c.mode),widths:[1440,1024,768,390,320],touchscreen:true,errors};
+  return {checks,modes:config.cases.map(c=>c.mode),widths:[1440,1024,768,390,320],headers,touchscreen:true,errors};
 }

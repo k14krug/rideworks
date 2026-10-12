@@ -6,7 +6,7 @@ Owner-approved visual reference implemented in the real RideWorks Activity Revie
 ## Delivered behavior
 
 - Shared source-neutral review composition for native FIT, retained API streams,
-  thin/unsupported and outdoor modes. A coherent hero and four source-labelled
+  thin/unsupported and outdoor modes. A compact header and four source-labelled
   metrics precede local section links, the ride chart and real companion cards.
 - The overview places the large chart alongside Ride Summary on desktop, followed
   by the full-width Power Curve, then Workout Context and Current Next Ride.
@@ -39,9 +39,22 @@ its historical selector inspected, and desktop/320px captures compared with the
 production page. Actual FIT, API-rich and thin full-page captures were produced at
 1440, 1024, 768, 390 and 320 CSS px. Private titles and screenshots remain local.
 
-The reference's hero, pale gradient, blue/teal hierarchy, stat strip, section links,
+The reference's information hierarchy, blue/teal palette, stat strip, section links,
 chart/summary arrangement, full-width curve, context row and bottom disclosures
 are retained. Adaptations follow available evidence and the Owner’s explicit follow-up:
+
+- **Owner compact-header update (`/TASK AR-UI-01`, 2026-10-11):** Removed
+  the duplicate Inspect ride / Power Curve buttons and the horizontal divider.
+  The smaller title, compact local date, ride type and source attribution stay
+  together above an aligned four-metric row. Equivalent type/subtype spellings
+  (Virtual Ride / VirtualRide) appear once; distinct labels and all original source
+  fields remain inspectable. The header uses a plain white surface and smaller
+  padding. The five existing section links remain the sole header jump controls,
+  with a subtle background/bottom border and unchanged focus/scroll targets.
+  Phones use a compact 2×2 metric grid with aligned values. API supplied-average
+  attribution appears with activity information; thin unsupported-summary caveats
+  remain in Ride Summary and Source Evidence. Duration still means source elapsed
+  time; full elapsed/timer/moving distinctions remain in the source summary.
 
 - **Owner section-order update (2026-10-11):** Power Curve now appears above
   Workout Context and Current next ride on desktop and mobile. This supersedes
@@ -75,12 +88,13 @@ These are scoped implementation patterns, not an authorization for other pages:
 | Canvas / stroke | `#f4f7fb` / `#e0e8f1` |
 | Muted text | `#526780` (stronger contrast than mockup captions) |
 | Card radius / padding | 14px / 24px desktop, 20px tablet, 18px mobile |
+| Compact activity header | 12px vertical / 22px horizontal padding; 14px / 16px phone; 28px maximum title |
 | Chart heights | Ride 380/320px; Power Curve 350/320px |
 | Information patterns | identity/stat strip; named local anchors; large inspectable charts; compact live context; grouped evidence disclosures |
 
 ## Verification
 
-Final verification: **445 Python tests**, five focused source-mode tests,
+Initial redesign and section-order verification: **445 Python tests**, five focused source-mode tests,
 **26,463 Chromium checks** (14,127 synthetic / 9,837 private review checks;
 1,945 existing Power Curve, 510 Training State, 14 accepted-page/touch and
 30 unchanged-page geometry/style checks). Zero browser errors. Aggregates are
@@ -92,13 +106,24 @@ Browser checks cover section/link targets and scroll clearance, unique IDs,
 expanded-source wrapping, sample/curve readouts, controls, exact period membership,
 keyboard, actual Chromium touchscreen, save/return and reduced-motion contexts.
 
+The **Owner compact-header refinement** reran **445 Python tests** (including
+five focused source-mode contracts), **24,304 Chromium checks** (14,298 synthetic,
+9,962 private review, 30 unrelated-page geometry/style and 14 accepted-page/touch
+checks), and the fixed-clock preservation comparison. All pass with zero browser
+errors. The final review matrices add duplicate-control removal, no divider,
+compact desktop height where text fits, desktop metric alignment and mobile 2×2
+alignment to existing navigation, charts, touch, source and form checks. Existing
+Power Curve and Training State standalone counts above are earlier task evidence,
+not claimed as additional reruns for this focused header change.
+
 `verify_activity_review_preservation.py` reads the same disposable retained-source
 store using detached accepted `main` and task code at **2026-10-11 12:00 PDT**.
 It compares 27 representative source combinations, all 26 store table hashes (including the 20 previously preserved source tables),
 all artifacts, raw native/API sample JSON, summaries, best-20/context/provenance,
 PC-01 JSON for every prior option, classification/intent and live next-ride content.
 Performance, Training State, Plan and Dashboard model outputs use the same clock.
-New thin hero metrics are separately validated against the current supplied API
+The Owner-shortened Duration label is normalized to Elapsed duration only for
+comparison; values remain exact. New thin hero metrics are separately validated against the current supplied API
 summary or explicit missing values. Snapshot files contain private source data and
 must remain in ignored local storage; only aggregate equality is committed.
 
@@ -137,12 +162,43 @@ synthetic-only assertions. Training State's existing smoke can be run with its
 local server origin substituted in an ignored copy. Screenshots remain in ignored
 `output/playwright/`; only explicitly synthetic selected captures are committed.
 
+## Owner compact-header comparison
+
+Before/after captures use the preceding task head (`bc778f2`) and the refined
+running implementation with the same source stores and viewport sizes. Heights
+measure from the top of the activity header through the bottom of section
+navigation, excluding the unchanged global application shell. Narrow layouts
+allow titles and attribution to wrap naturally; no fixed height clips content.
+
+| Synthetic source mode | Desktop before → after | Chart moves up | 320px before → after |
+| --- | --- | --- | --- |
+| Native FIT | 334 → 217px | 126px | 578 → 407px |
+| Retained API stream | 357 → 217px | 149px | 610 → 415px |
+| Metadata only | 376 → 217px | 168px | 595 → 408px |
+
+Real desktop FIT/API headers measure 217px and limited/outdoor headers 212px;
+the chart moves up 149–195px in the captured real FIT/API/thin modes. Real 320px
+headers are 186–223px shorter. Those captures remain ignored/local.
+
+The 1024px synthetic headers measure 209px. Longer real titles and missing-evidence
+messages may require additional wrapping on smaller widths. Source-neutral
+measurements and final rerun totals are recorded in `checks.json`.
+
+| Synthetic source mode | Desktop before | Desktop after | Phone before | Phone after |
+| --- | --- | --- | --- | --- |
+| Native FIT | [Before](header-before-native-desktop.png) | [After](synthetic-native-desktop.png) | [Before](header-before-native-320.png) | [After](synthetic-native-320.png) |
+| Retained API stream | [Before](header-before-api-desktop.png) | [After](synthetic-api-desktop.png) | [Before](header-before-api-320.png) | [After](synthetic-api-320.png) |
+| Metadata only | [Before](header-before-thin-desktop.png) | [After](synthetic-thin-desktop.png) | [Before](header-before-thin-320.png) | [After](synthetic-thin-320.png) |
+
+Real FIT/API/thin before/after captures stay local. The rest of Activity Review,
+including Power Curve above Workout Context and Current next ride, retains the
+prior layout and behavior.
+
 ## Handoff
 
 Running disposable review: `http://127.0.0.1:8791/activities`; open any actual ride.
 Native FIT, retained-stream API and limited-evidence pages are available. The
-accepted original store is untouched. [Draft PR #30](https://github.com/k14krug/rideworks/pull/30) contains implementation commit
-`f708eb2`; branch and current handoff are recorded in `STATUS.md`. Analyst review must clear Gate 1 before Owner running-page Gate 2.
+accepted original store is untouched. [Draft PR #30](https://github.com/k14krug/rideworks/pull/30) contains the redesign and Owner refinements; branch and current handoff are recorded in `STATUS.md`. Analyst review must clear Gate 1 before Owner running-page Gate 2.
 No merge, done status, next-page redesign or Phase 6 is authorized at this handoff.
 
 ## Computed synthetic production captures

@@ -212,6 +212,17 @@ def chart_legend():
     return '<div class="legend"><label><input id="toggle-power" type="checkbox" checked><i class="power-swatch" aria-hidden="true"></i>Power · W</label><label><input id="toggle-hr" type="checkbox" checked><i class="hr-swatch" aria-hidden="true"></i>Heart rate · bpm</label></div>'
 
 
+def review_identity(title, title_origin, date, activity_type, subtype, source):
+    # Collapse spelling-only duplicates for presentation; source fields remain
+    # separately inspectable in evidence and classification stays unchanged.
+    normalized = lambda text: ''.join(text.casefold().replace('_', ' ').split())
+    types = [activity_type or 'Unavailable']
+    if subtype and normalized(subtype) != normalized(types[0]):
+        types.append(subtype)
+    type_text = ' / '.join(types)
+    return f'''<header><div class="breadcrumb"><a href="/activities">Activities</a><span>/</span>Ride details</div><div class="ride-heading"><h1>{escape(title)}</h1><span class="title-origin">{escape(title_origin)}</span></div><p class="ride-meta">{date}<span class="meta-separator">·</span>{escape(type_text)}<span class="meta-separator">·</span>{escape(source)}</p></header>'''
+
+
 def activity_review_layout(title, *, identity, metrics, chart, summary, best, evidence, payload=''):
     '''One source-neutral layout; callers retain ownership of all source values.
 
@@ -220,7 +231,7 @@ def activity_review_layout(title, *, identity, metrics, chart, summary, best, ev
     '''
     return shell(title, f'''<div class="activity-review-redesign">
 <section class="review-hero" id="overview" aria-label="Activity overview">
-{identity}<div class="review-actions"><a href="#ride-chart-section">Inspect ride ↓</a><a class="curve-jump" href="#power-curve-panel">Power Curve ↓</a></div>{metrics}</section>
+{identity}{metrics}</section>
 <nav class="review-section-nav" aria-label="Ride detail sections"><a href="#overview">Overview</a><a href="#ride-chart-section">Power &amp; HR</a><a href="#power-curve-panel">Power Curve</a><a href="#bests">Best Efforts</a><a href="#sources">Source Evidence</a></nav>
 <div class="review-layout"><div class="review-main" id="ride-chart-section">{chart}</div>
 {summary}</div>
@@ -240,7 +251,7 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
     title_origin = metadata['title_origin'] if metadata else 'Derived title'
     subtype = (summary.get('sub_sport') or summary.get('sport') or 'Type unavailable').replace('_', ' ').title()
     cards = ''.join(metric(name, value, symbol) for name, value, symbol in [
-        ('Elapsed duration', duration(summary.get('total_elapsed_time')), 'duration'),
+        ('Duration', duration(summary.get('total_elapsed_time')), 'duration'),
         ('Distance', distance(summary.get('total_distance')), 'distance'),
         ('Average power', sensor(summary.get('avg_power'), 'W'), 'power'),
         ('Average heart rate', sensor(summary.get('avg_heart_rate'), 'bpm'), 'heart'),
@@ -313,7 +324,8 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
     type_text = metadata['activity_type'] if metadata and metadata['type_source'] and metadata['type_source']['source']['kind'] in ('strava_export','strava_api') else (summary.get('sport') or 'Unavailable').replace('_', ' ').title()
     if metadata and metadata['subtype']:
         subtype = metadata['subtype']
-    identity = f'''<header><div class="breadcrumb"><a href="/activities">Activities</a><span>/</span>Ride details</div><div class="ride-heading"><h1>{escape(title)}</h1><span class="title-origin">{escape(title_origin)}</span></div><p class="ride-meta">{local_time(summary.get('start_time'))}<span class="meta-separator">·</span>Type: {escape(type_text)}<span class="meta-separator">·</span>Subtype: {escape(subtype)}<span class="meta-separator">·</span>FIT source</p></header>'''
+    identity = review_identity(title, title_origin, local_time(summary.get('start_time'), compact=True),
+                              type_text, subtype, 'FIT source')
     chart = f'''<section class="panel chart-panel" aria-labelledby="chart-title">
 <div class="panel-heading"><h2 id="chart-title">Ride power &amp; heart rate</h2>{chart_legend()}</div>
 <div id="ride-chart" data-record-count="{len(records)}" data-start-time="{escape(summary.get('start_time') or '', quote=True)}"><svg id="chart-svg" role="img" aria-label="Native power and heart rate over elapsed ride time" aria-describedby="chart-help"></svg></div>
@@ -368,7 +380,7 @@ def api_review_page(row, observation, observations, source_details, recent=None)
     summary_source = next(e for e in row['sources'] if e['source']['kind']=='strava_api' and e['source']['is_current'])
     summary = summary_source['summary']['values']
     cards = ''.join(metric(name, value, symbol) for name, value, symbol in [
-        ('Elapsed duration', duration(summary.get('elapsed_time')), 'duration'),
+        ('Duration', duration(summary.get('elapsed_time')), 'duration'),
         ('Distance', distance(summary.get('distance')), 'distance'),
         ('Average power', sensor(summary.get('average_watts'), 'W'), 'power'),
         ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm'), 'heart'),
@@ -422,8 +434,9 @@ def api_review_page(row, observation, observations, source_details, recent=None)
             'performance_rebuild_required':'Performance update incomplete; retry the update or Sync now.',
         }.get(reason,'The returned evidence does not meet the Performance policy.')
     best_rows += [('Performance policy',POLICY),('Performance eligibility reason',None if eligible else reason)]
-    identity = f'''<header><div class="breadcrumb"><a href="/activities">Activities</a><span>/</span>Ride details</div><div class="ride-heading"><h1>{escape(row['title'])}</h1><span class="title-origin">{escape(row['title_origin'])}</span></div><p class="ride-meta">{browser_time(row,compact=True)}<span class="meta-separator">·</span>Type: {escape(row['activity_type'])}<span class="meta-separator">·</span>Subtype: {escape(row['subtype'] or 'Unavailable')}<span class="meta-separator">·</span>Strava API source</p></header>'''
-    metrics = f'''<section aria-label="Strava API summary evidence"><p class="source-caption">Strava API summary evidence · supplied averages</p><div class="metrics">{cards}</div></section>'''
+    identity = review_identity(row['title'], row['title_origin'], browser_time(row, compact=True),
+                              row['activity_type'], row['subtype'], 'Strava API summary evidence · supplied averages')
+    metrics = f'<section class="metrics" aria-label="Strava API summary evidence">{cards}</section>'
     best_panel = f'''<section class="panel best-panel api-best20" data-best20-status="{best['status']}"><div><h2>{icon('power')}Best 20-minute power</h2><p>RideWorks-calculated from Strava API stream evidence</p></div><strong class="best-value">{sensor(best['rounded_watts'],'W')}</strong><p class="window-context">{escape(window_text)}</p>
 <p class="source-caption">{escape(eligibility_note)}</p>
 {recent_context_panel(recent) if eligible else ''}</section>'''
@@ -487,7 +500,9 @@ def thin_review_page(row, streams=None, stream_reason=None, recent=None):
         explanation=REASONS.get((current or {}).get('chart_unavailable_reason') or stream_reason or 'not_fetched','Stream review is unavailable.')
         reason_note=f'<p>{escape(explanation)}</p>' if all(e['source']['kind']=='strava_api' for e in row['sources']) else ''
         intro=f'<section class="panel review-unavailable"><h2>Detailed RideWorks review unavailable</h2><p>This activity does not currently have a single supported FIT analysis source. Available source evidence is shown below; no charts or best-20 result are substituted.</p>{reason_note}</section>'
-    identity = f'''<header><div class="breadcrumb"><a href="/activities">Activities</a><span>/</span>Activity details</div><h1>{escape(row['title'])}</h1><p class="title-origin">{escape(row['title_origin'])}</p><p class="ride-meta">{browser_time(row,compact=bool(api_only and current and current['chart_unavailable_reason'] is None))} · Type: {escape(row['activity_type'])} · Subtype: {escape(row['subtype'] or 'Unavailable')}</p></header>'''
+    source_label = 'Strava API summary evidence · supplied averages' if api_only else 'Associated source evidence'
+    identity = review_identity(row['title'], row['title_origin'], browser_time(row, compact=True),
+                              row['activity_type'], row['subtype'], source_label)
     # Thin views keep source evidence rather than selecting a new canonical
     # summary across competing files or guessing unspecified CSV units.
     values = {}
@@ -496,13 +511,13 @@ def thin_review_page(row, streams=None, stream_reason=None, recent=None):
         if current_summary:
             values = current_summary['summary']['values']
     cards = ''.join(metric(name, value, symbol) for name, value, symbol in [
-        ('Elapsed duration', duration(values.get('elapsed_time')), 'duration'),
+        ('Duration', duration(values.get('elapsed_time')), 'duration'),
         ('Distance', distance(values.get('distance')), 'distance'),
         ('Average power', sensor(values.get('average_watts'), 'W'), 'power'),
         ('Average heart rate', sensor(values.get('average_heartrate'), 'bpm'), 'heart'),
     ])
     caption = 'Strava API summary evidence · supplied averages' if api_only else 'No single supported summary selected; inspect associated source evidence.'
-    metrics = f'<p class="source-caption">{caption}</p><section class="metrics" aria-label="Available source summary">{cards}</section>'
+    metrics = f'<section class="metrics" aria-label="Available source summary">{cards}</section>'
     summary_panel = f'<aside class="panel ride-summary"><h2>Ride summary</h2><p>{caption}</p><a href="#sources">Inspect source summaries</a></aside>'
     evidence = f'{stream_details(observations)}<section class="thin-sources" aria-label="Associated source evidence">{"".join(sources)}</section>'
     return activity_review_layout(row['title'], identity=identity, metrics=metrics, chart=intro,

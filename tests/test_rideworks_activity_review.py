@@ -58,6 +58,12 @@ class ActivityReviewTests(unittest.TestCase):
         self.assertIn('action="/plan/classification"',html)
         self.assertIn('name="back" value="activity"',html)
         self.assertIn('Current next ride',html)
+        hero = html.split('aria-label="Activity overview">',1)[1].split('</section>',1)[0]
+        self.assertNotIn('Inspect ride',hero)
+        self.assertNotIn('href="#',hero)
+        self.assertIn('FIT source',hero)
+        self.assertIn('data-compact-time',hero)
+        self.assertIn('<span>Duration</span>',hero)
         self.assertEqual(structure.open_details,[])
 
     def test_native_missing_and_zero_samples_survive_layout(self):
@@ -79,6 +85,12 @@ class ActivityReviewTests(unittest.TestCase):
         self.assertNotIn('id="native-records"',html); self.assertNotIn('id="api-stream-samples"',html)
         self.assertIn('No supported best-20 result',html)
         self.assertIn('<summary>Strava API metadata',html)
+        hero = html.split('aria-label="Activity overview">',1)[1].split('</section>',1)[0]
+        self.assertIn('Virtual Ride',hero)
+        self.assertNotIn('VirtualRide',hero)
+        self.assertNotIn('Type:',hero)
+        # Original sport_type remains inspectable, separate from header display.
+        self.assertIn('<dt>Sport type</dt><dd>VirtualRide</dd>',html)
 
     def test_ambiguous_native_sources_do_not_create_a_canonical_summary(self):
         identity = self.native()

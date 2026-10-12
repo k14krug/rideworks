@@ -44,6 +44,10 @@ class Evidence(HTMLParser):
         if attrs.get('class') in ('best-value', 'window-context', 'recent-difference') or attrs.get('id') in ('recent-current-watts', 'recent-prior-watts'):
             self.values.append(value)
         if tag == 'div' and attrs.get('class') == 'metric':
+            # Owner shortened the elapsed-duration card label to Duration.
+            # Normalize only that display label; all value text remains exact.
+            if value.startswith('Duration'):
+                value = 'Elapsed duration' + value[len('Duration'):]
             self.values.append(value)
         if tag == 'section' and attrs.get('class') in ('panel activity-plan-context', 'panel next-recommended'):
             self.context.append(value)

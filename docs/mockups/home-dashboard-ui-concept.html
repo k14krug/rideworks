@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RideWorks — Home Dashboard visual concept</title>
+<style>
+:root{--ink:#132b48;--blue:#2563eb;--blue-dark:#164fc9;--teal:#0c9c92;--canvas:#f4f7fb;--stroke:#e0e8f1;--muted:#526780;--soft:#edf3fe;--white:#fff;--shadow:0 2px 10px rgba(24,47,82,.035)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--canvas);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}button{font:inherit}button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.top{height:56px;background:#fff;border-bottom:1px solid var(--stroke);position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:0 20px}.brand{font-weight:850;font-size:22px;letter-spacing:-.8px;color:var(--ink)}.brand i{font-style:normal;color:var(--blue)}.top-note{font-size:11px;color:var(--muted)}
+.sidebar{position:fixed;top:56px;left:0;bottom:0;width:156px;border-right:1px solid var(--stroke);background:#f8faff;padding:20px 10px;z-index:3}.navitem{display:flex;gap:11px;align-items:center;border-radius:8px;padding:11px 12px;color:#526987;font-size:12px;font-weight:700}.navitem.active{background:#e6efff;color:var(--blue)}.navitem .sym{font-size:17px;width:19px;text-align:center}
+.main{margin-left:156px;padding:24px clamp(18px,3vw,48px) 60px;max-width:1650px}.mocknotice{padding:9px 14px;background:#e7eefb;border:1px solid #d4e0f6;border-radius:9px;color:#506682;font-size:11px;margin-bottom:18px}
+.pagehead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:21px}.pagehead h1{font-size:29px;letter-spacing:-.7px;line-height:1.25;margin:0;color:var(--ink)}.pagehead p{color:var(--muted);font-size:12px;margin:5px 0 0}.sync{font-size:11px;color:var(--muted);white-space:nowrap}.sync b{color:#117e71}
+.card{min-width:0;background:#fff;border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow)}.cardpad{padding:21px 23px}.eyebrow{font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.095em;text-transform:uppercase}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.sectionhead h2{font-size:18px;letter-spacing:-.2px;margin:0}.sectionhead a,.sectionhead span{font-size:11px;font-weight:700}.muted{color:var(--muted)}.fine{font-size:11px;color:var(--muted)}.subtle{font-size:12px;color:var(--muted)}.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:50px;font-size:10px;font-weight:760;background:#e7efff;color:#1d55cc}
+.lead{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-bottom:17px}.recommendation{position:relative;border-left:4px solid var(--blue);background:linear-gradient(110deg,#fff 61%,#f1f6ff 100%);min-height:188px}.rec-top{display:flex;justify-content:space-between;align-items:start;gap:12px}.rec-type{font-size:26px;letter-spacing:-.6px;font-weight:790;margin:8px 0 2px;line-height:1.15}.rec-target{font-size:13px;font-weight:700;color:#314e75}.rec-why{font-size:12px;color:#58708c;max-width:700px;line-height:1.6;margin:12px 0 11px}.rec-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}.rec-footer a{font-size:12px;font-weight:750}.rec-footer .note{font-size:11px;color:#637b98;text-align:right}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:5px 22px}.quick .stat{padding:16px 8px 14px;border-bottom:1px solid #ecf1f7}.quick .stat:nth-child(odd){border-right:1px solid #ecf1f7;padding-right:20px}.quick .stat:nth-child(even){padding-left:21px}.quick .stat:nth-child(n+3){border-bottom:0}.quick .stat span{font-size:11px;color:var(--muted);display:block}.quick .stat strong{font-size:25px;letter-spacing:-.6px;line-height:1.2;display:block;margin:5px 0 1px;font-variant-numeric:tabular-nums}.quick .stat small{font-size:10px;color:#7a8ba0;display:block}
+.middle{display:grid;grid-template-columns:minmax(0,1.48fr) minmax(285px,.8fr);gap:16px;align-items:start}.stack{display:grid;gap:16px}.activities{grid-row:span 2}.tablewrap{width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;text-align:left}th{font-size:11px;font-weight:600;color:#7a8aa0;border-bottom:1px solid var(--stroke);padding:7px 7px 9px}td{padding:12px 7px;border-bottom:1px solid #edf2f7;font-size:12px;vertical-align:top}tr:last-child td{border-bottom:0}td strong{display:block;font-weight:650;color:#245bdd}td small{display:block;color:#8190a2;font-size:11px;margin-top:3px}td.nowrap{white-space:nowrap}td.number{font-variant-numeric:tabular-nums;white-space:nowrap}.activities th:nth-child(2){min-width:170px}.recovery{display:inline-flex;font-size:10px;border-radius:4px;padding:2px 6px;background:#eaf7f4;color:#0d8578;margin-top:4px}
+.state-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 14px}.state-values>div{padding:10px 9px;background:#f6f9fe;border-radius:8px}.state-values small{display:block;font-size:10px;color:var(--muted)}.state-values strong{font-size:22px;font-variant-numeric:tabular-nums;display:block;line-height:1.3}.trend{width:100%;height:auto;display:block}.state-line{fill:none;stroke:var(--blue);stroke-width:2.5;stroke-linecap:round}.fatigue-line{fill:none;stroke:var(--teal);stroke-width:2}.form-line{fill:none;stroke:#91a2b7;stroke-width:1.6;stroke-dasharray:5 5}.axis{stroke:#dce5f0;stroke-width:1}.chart-label{font-size:10px;fill:#8392a6}.chartnote{color:#71829a;font-size:10px;margin-top:7px}
+.spark{height:100px;width:100%;display:block}.performance-readout{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-top:10px}.performance-readout strong{font-size:22px}.performance-readout p{font-size:11px;color:var(--muted);margin:2px 0 0}
+.bottom{margin-top:16px;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(265px,.75fr);gap:16px;align-items:stretch}.weeklychart{display:block;width:100%;height:auto}.mileagelegend{display:flex;flex-wrap:wrap;gap:15px;font-size:10px;color:var(--muted);margin-top:7px}.sq{width:12px;height:12px;display:inline-block;background:var(--blue);border-radius:2px;vertical-align:-2px;margin-right:4px}.linelegend{display:inline-block;width:20px;border-top:3px solid var(--teal);vertical-align:3px;margin-right:5px}.goal{display:flex;flex-direction:column;gap:9px}.goal strong.mainval{font-size:30px;line-height:1.1;letter-spacing:-.65px}.goal p{margin:1px 0 6px;font-size:12px;color:var(--muted)}.goal progress{width:100%;height:11px;accent-color:var(--teal)}.goal .goal-info{display:grid;grid-template-columns:1fr 1fr;gap:10px}.goal .goal-info div{background:#f6f9fd;padding:9px 11px;border-radius:8px}.goal .goal-info small{display:block;color:var(--muted);font-size:10px}.goal .goal-info b{font-size:13px}.link{font-size:12px;font-weight:750}
+.footnotes{margin-top:17px}.footnotes details{font-size:12px;color:var(--muted);margin:10px 0}.footnotes summary{cursor:pointer;font-weight:700;color:#45617f}.footnotes p{font-size:11px;max-width:1100px}.design{border-top:1px solid var(--stroke);margin-top:24px;padding-top:15px}.design details{font-size:12px;color:var(--muted)}.design summary{font-weight:700;cursor:pointer;color:#45617f}
+@media(max-width:1100px){.middle{grid-template-columns:minmax(0,1fr) minmax(250px,.75fr)}.lead{grid-template-columns:minmax(0,1fr)}.quick{grid-template-columns:repeat(4,minmax(0,1fr))}.quick .stat{border:0!important;border-right:1px solid #ecf1f7!important;padding:13px 11px!important}.quick .stat:last-child{border:0!important}.bottom{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.middle,.bottom{grid-template-columns:1fr}.activities{grid-row:auto}.sidebar{width:66px;padding:20px 7px}.navitem{justify-content:center}.navitem span.label{display:none}.main{margin-left:66px}.lead{grid-template-columns:1fr}.quick .stat strong{font-size:22px}}
+@media(max-width:650px){.sidebar{display:none}.main{margin:0;padding:16px 13px 42px}.top{height:52px;position:relative;padding:0 14px}.top-note{display:none}.pagehead{display:block;margin-bottom:13px}.pagehead h1{font-size:25px}.sync{margin-top:7px}.cardpad{padding:17px}.quick{grid-template-columns:repeat(2,1fr);padding:7px 15px}.quick .stat{border-right:0!important;border-bottom:1px solid var(--stroke)!important;padding:10px 7px!important}.quick .stat:nth-child(odd){border-right:1px solid var(--stroke)!important}.quick .stat:nth-child(n+3){border-bottom:0!important}.rec-type{font-size:25px}.rec-footer{align-items:start}.rec-footer .note{text-align:left}.tablewrap table{min-width:420px}.state-values strong{font-size:19px}.goal-info{grid-template-columns:1fr 1fr}}
+@media(max-width:440px){.tablewrap{overflow:visible}table,tbody,tr,td{display:block;width:100%}thead{display:none}tr{position:relative;border-bottom:1px solid var(--stroke);padding:8px 0}tr:last-child{border:0}td{border:0;padding:2px 0}td:first-child{color:var(--muted);font-size:10px}td:nth-child(n+3){display:inline-block;width:auto;margin:4px 13px 0 0;font-size:11px;color:#526780}.tablewrap table{min-width:0}.quick .stat strong{font-size:21px}.rec-footer{display:block}.rec-footer .note{margin-top:7px}.goal-info{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><a href="#dashboard" class="brand"><i>◀</i> RideWorks</a><span class="top-note">Home redesign concept — illustrative, not a running app</span></header>
+<aside class="sidebar" aria-label="Illustrative app navigation">
+ <a href="#dashboard" class="navitem active"><span class="sym">⌂</span><span class="label">Home</span></a>
+ <a href="#recent" class="navitem"><span class="sym">▤</span><span class="label">Activities</span></a>
+ <a href="#performance" class="navitem"><span class="sym">⌁</span><span class="label">Performance</span></a>
+ <a href="#state" class="navitem"><span class="sym">∿</span><span class="label">Training State</span></a>
+ <a href="#recommendation" class="navitem"><span class="sym">▦</span><span class="label">Plan</span></a>
+ <a href="#design" class="navitem"><span class="sym">⚙</span><span class="label">Settings</span></a>
+</aside>
+<main class="main" id="dashboard">
+<div class="mocknotice"><b>VISUAL DESIGN CONCEPT — not live data.</b> Numbers, ride names, recommendations and chart shapes are synthetic and illustrative. Real RideWorks source calculations, dates, and behavior must remain authoritative. Links navigate this mockup only.</div>
+<div class="pagehead"><div><h1>Home</h1><p>Your riding at a glance · 2026 cycling</p></div><div class="sync"><b>●</b> Example last sync: Oct 10 · 5:03 PM &nbsp;·&nbsp; <a href="#design">Settings</a></div></div>
+<div class="lead">
+  <section class="card cardpad recommendation" id="recommendation">
+    <div class="rec-top"><div><div class="eyebrow">Next recommended ride · Sun, Oct 11</div><div class="rec-type">Easy endurance</div></div><span class="pill">From Plan</span></div>
+    <div class="rec-target">45–60 min &nbsp;·&nbsp; approximately 100–110 W</div>
+    <p class="rec-why">Keep today's work comfortable while recent classifications are reviewed. A hard session remains conditional on confirmed training history and how your legs feel during warmup.</p>
+    <div class="rec-footer"><a href="#design">View rolling Plan →</a><span class="note">Recommendation based on available history · illustrative</span></div>
+  </section>
+  <section class="card quick" aria-label="Key dashboard metrics">
+   <div class="stat"><span>This week</span><strong>36.8 mi</strong><small>Monday through today</small></div>
+   <div class="stat"><span>Last 7 days</span><strong>54.6 mi</strong><small>Rolling distance</small></div>
+   <div class="stat"><span>Current 42-day best</span><strong>195 W</strong><small>20-minute average</small></div>
+   <div class="stat"><span>Latest 20-minute ride</span><strong>100 W</strong><small>Eligible recorded effort</small></div>
+  </section>
+</div>
+<div class="middle">
+  <section class="card cardpad activities" id="recent">
+   <div class="sectionhead"><h2>Recent Activities</h2><a href="#design">View all activities →</a></div>
+   <div class="tablewrap"><table><thead><tr><th>Date</th><th>Ride</th><th>Distance</th><th>Time</th><th>Avg power</th></tr></thead><tbody>
+    <tr><td>Oct 10</td><td><strong>Zwift — Recovery spin</strong><small>Virtual Ride · 4:09 PM</small><span class="recovery">Recovery</span></td><td class="number">10.5 mi</td><td class="number">40:20</td><td class="number">94 W</td></tr>
+    <tr><td>Oct 7</td><td><strong>Zwift — VO₂ intervals</strong><small>Virtual Ride · 1:17 PM</small></td><td class="number">13.4 mi</td><td class="number">47:28</td><td class="number">134 W</td></tr>
+    <tr><td>Oct 5</td><td><strong>Zwift — Z2 workout</strong><small>Virtual Ride · 10:31 AM</small></td><td class="number">12.9 mi</td><td class="number">42:24</td><td class="number">110 W</td></tr>
+    <tr><td>Oct 4</td><td><strong>Zwift — Circuit race</strong><small>Virtual Ride · 9:14 AM</small></td><td class="number">17.8 mi</td><td class="number">1:00:16</td><td class="number">152 W</td></tr>
+    <tr><td>Oct 3</td><td><strong>Zwift — Recovery spin</strong><small>Virtual Ride · 11:41 AM</small></td><td class="number">12.8 mi</td><td class="number">50:15</td><td class="number">91 W</td></tr>
+    <tr><td>Oct 2</td><td><strong>Morning Ride</strong><small>Outdoor Ride · 10:26 AM</small></td><td class="number">17.8 mi</td><td class="number">1:25:21</td><td class="number">74 W</td></tr>
+   </tbody></table></div>
+  </section>
+  <div class="stack">
+   <section class="card cardpad" id="state">
+    <div class="sectionhead"><h2>Training State</h2><a href="#design">View Training State →</a></div>
+    <p class="fine">Fitness, Fatigue and start-of-day Form · source-based modeled stress</p>
+    <div class="state-values"><div><small>Fitness</small><strong>34.1</strong></div><div><small>Fatigue</small><strong>24.7</strong></div><div><small>Form</small><strong>+6.4</strong></div></div>
+    <svg class="trend" viewBox="0 0 380 94" role="img" aria-label="Illustrative Fitness and Fatigue trend with a dotted Form line"><path class="axis" d="M0 84H380M0 43H380M0 10H380"/><path class="state-line" d="M0 63 L35 60 L70 56 L105 59 L140 49 L175 44 L210 40 L245 41 L280 36 L315 40 L345 32 L380 30"/><path class="fatigue-line" d="M0 76L35 72L70 70L105 45L140 66L175 52L210 33L245 56L280 61L315 44L345 69L380 58"/><path class="form-line" d="M0 79L35 75L70 77L105 80L140 62L175 65L210 76L245 67L280 67L315 70L345 59L380 60"/></svg>
+    <div class="chartnote">Small illustrative trend; the full modeled chart stays on Training State.</div>
+   </section>
+   <section class="card cardpad" id="performance">
+    <div class="sectionhead"><h2>20-minute Performance</h2><a href="#design">View Performance →</a></div>
+    <div class="fine">Rolling best · prior year</div>
+    <svg class="spark" viewBox="0 0 380 100" role="img" aria-label="Illustrative rolling 20-minute best trend"><path class="axis" d="M0 82H380M0 45H380M0 8H380"/><path d="M0 32H22V30H48V27H74V29H99V34H132V39H168V44H197V50H214V83H226V64H243V54H264V52H293V48H324V43H345V35H380" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/><text x="0" y="98" class="chart-label">Oct 2025</text><text x="380" y="98" text-anchor="end" class="chart-label">Oct 2026</text></svg>
+    <div class="performance-readout"><div><strong>195 W</strong><p>Current 42-day best</p></div><div style="text-align:right"><span class="pill">Best effort history</span><p>See contributing rides in Performance</p></div></div>
+   </section>
+  </div>
+</div>
+<div class="bottom">
+ <section class="card cardpad" id="mileage">
+  <div class="sectionhead"><h2>Mileage Progress</h2><span class="muted">Last 12 weeks · miles</span></div>
+  <svg class="weeklychart" viewBox="0 0 760 250" role="img" aria-label="Illustrative 12-week mileage bars and required-pace line"><g stroke="#e5ecf5"><path d="M35 18H735M35 114H735M35 211H735"/></g><g fill="#7d8fa6" font-size="11" font-family="system-ui,sans-serif"><text x="24" y="22" text-anchor="end">110</text><text x="24" y="215" text-anchor="end">0</text><text x="45" y="238">Jul 20</text><text x="216" y="238">Aug 10</text><text x="402" y="238">Aug 31</text><text x="585" y="238">Sep 21</text><text x="733" y="238" text-anchor="end">Oct 5</text></g>
+   <g fill="#2563eb"><rect x="46" y="160" width="39" height="51"/><rect x="102" y="143" width="39" height="68"/><rect x="158" y="157" width="39" height="54"/><rect x="214" y="104" width="39" height="107"/><rect x="270" y="121" width="39" height="90"/><rect x="326" y="67" width="39" height="144"/><rect x="382" y="94" width="39" height="117"/><rect x="438" y="48" width="39" height="163"/><rect x="494" y="94" width="39" height="117"/><rect x="550" y="99" width="39" height="112"/><rect x="606" y="57" width="39" height="154"/></g><rect x="662" y="150" width="39" height="61" fill="rgba(37,99,235,.13)" stroke="#2563eb" stroke-width="2" stroke-dasharray="4 4"/>
+   <path d="M66 123L122 122L178 121L234 120L290 119L346 122L402 123L458 126L514 127L570 130L626 133L682 136" stroke="#0c9c92" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#0c9c92"><circle cx="66" cy="123" r="4"/><circle cx="122" cy="122" r="4"/><circle cx="178" cy="121" r="4"/><circle cx="234" cy="120" r="4"/><circle cx="290" cy="119" r="4"/><circle cx="346" cy="122" r="4"/><circle cx="402" cy="123" r="4"/><circle cx="458" cy="126" r="4"/><circle cx="514" cy="127" r="4"/><circle cx="570" cy="130" r="4"/><circle cx="626" cy="133" r="4"/><circle cx="682" cy="136" r="4"/></g>
+  </svg>
+  <div class="mileagelegend"><span><i class="sq"></i>Actual miles</span><span><i class="linelegend"></i>Needed average per week</span><span>Outlined bar = current week</span></div>
+ </section>
+ <section class="card cardpad goal">
+  <div class="sectionhead"><h2>Annual Mileage Goal</h2><a href="#design">Edit goal →</a></div><span class="eyebrow">Year to date</span><strong class="mainval">1,641.7 <span style="font-size:15px;color:var(--muted)">mi</span></strong><div class="subtle">of 2,200 miles targeted</div>
+  <progress max="2200" value="1641.7" aria-label="Illustrative annual mileage progress">74.6%</progress><div class="subtle">74.6% complete · 558.3 mi to go</div>
+  <div class="goal-info"><div><small>Needed weekly pace</small><b>48.2 mi</b></div><div><small>Behind calendar pace</small><b>70.1 mi</b></div></div>
+  <p>Goal progress is arithmetic mileage tracking, not a training recommendation. The weekly detail and exact method remain inspectable.</p>
+  <a class="link" href="#details">Mileage details ↓</a>
+ </section>
+</div>
+<section class="card cardpad footnotes" id="details"><div class="sectionhead"><h2>Context &amp; supporting details</h2><span class="fine">Available when you need them</span></div>
+ <details><summary>Recent performance context</summary><p>Illustrative example: the latest eligible 20-minute effort is lower than a previous six-week best. Real comparison uses existing RideWorks historical source and timing eligibility.</p></details>
+ <details><summary>Weekly mileage, actual vs. needed</summary><p>The production page retains real weekly distances, source evidence, eligible dates and contribution counts. The current week is partial, not projected mileage.</p></details>
+ <details><summary>Mileage evidence &amp; calendar boundaries</summary><p>Keep detailed FIT/API evidence selection, supported local dates, YTD accumulation, and annual goal formulas inspectable. Do not replace this technical detail with synthetic metrics.</p></details>
+</section>
+<footer class="design" id="design"><details><summary>Designer notes / reusable RideWorks visual language</summary><p>Approved Activity Review patterns applied as a proposal: compact page header, ink/blue/teal palette, 14px cards, 18–24px padding, carefully ranked panels, readable charts and collapsible data evidence. Dashboard proposal emphasizes the next ride and recent activities, with Training State and Performance alongside. No changes to real recommendation logic, source calculations, FTP or page routes are implied. Retain current RideWorks navigation and responsive chart controls in implementation. No global redesign until separately approved.</p></details></footer>
+</main>
+</body></html>

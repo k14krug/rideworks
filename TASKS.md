@@ -499,3 +499,13 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Execution and gates:** Start in Dex with `/TASK AR-UI-01` or `/AUTOTASK AR-UI-01` after refreshing `main`. Dex implements on a draft PR, checks native FIT, Strava API/retained stream, thin/unsupported and outdoor views, responsive desktop/320px mobile, keyboard/touch and preservation of PC-01/20-minute/Plan/evidence. **HARD — Analyst Gate 1** technical/UI review, then **HARD — Owner Gate 2** running visual acceptance. No merge/claim of completion before both. Phase 6 stays deferred.
 
 **AR-UI-01 final acceptance evidence:** [Implementation report](reports/AR-UI-01/implementation.md): 445 Python tests, 24,304 Chromium checks, 212–217px desktop header/navigation, chart raised 149–195px, 27 fixed-clock source-mode parity comparisons and all source artifacts/accepted calculations preserved. Owner said “This looks good.” Dashboard redesign is a separate forthcoming task; Phase 6 deferred.
+
+### HOME-UI-01 — Home dashboard visual redesign
+
+**Status:** **pending implementation** — Owner requested the Activity Review's cleaner compact presentation be applied to the Dashboard on 2026-10-11. [Issue #31](https://github.com/k14krug/rideworks/issues/31). No Dex invocation or PR yet.
+
+**Scope:** Reduce Home header/metric whitespace; prioritize **Next Recommended Ride**, retain all four quick metrics, Recent Activities, Training State, 20-minute Performance, real interactive mileage chart and YTD goal, context/evidence details. Use the approved Activity Review design language but keep exact current Plan, Performance, Training State, mileage source and period values unchanged. The proposed Home HTML has **synthetic** numbers and graph traces and is not data.
+
+**Controlling resources:** [HOME-UI-01 JIT](docs/tasks/HOME-UI-01.md), [responsive HTML concept](docs/mockups/home-dashboard-ui-concept.html), [AR-UI-01 accepted design](docs/design/AR-UI-01-activity-review-redesign.md). HTML layout specifics remain a proposal subject to final running-app Owner review; prior Dashboard PNG remains historical approved design context.
+
+**Execution:** `/TASK HOME-UI-01` or `/AUTOTASK HOME-UI-01` after refreshing `main`. Dex delivers one draft PR with desktop/mobile visual checks, fixed-clock dashboard/model and source-preservation parity, accessible charts/links, then stops at **HARD — Analyst Gate 1**. **HARD — Owner Gate 2** requires actual running Dashboard approval before merge. Keep Phase 6 deferred and other pages unchanged.

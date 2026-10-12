@@ -1,0 +1,298 @@
+{
+  "python_tests": 446,
+  "home_private": {
+    "checks": 825,
+    "source": "private",
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
+      {
+        "width": 1440,
+        "headerHeight": 59.390625,
+        "recommendationTop": 155.390625,
+        "priorRecommendationTop": 338.046875,
+        "recentTop": 448.65625
+      },
+      {
+        "width": 1024,
+        "headerHeight": 59.390625,
+        "recommendationTop": 155.390625,
+        "priorRecommendationTop": 873.640625,
+        "recentTop": 604.5
+      },
+      {
+        "width": 768,
+        "headerHeight": 90.390625,
+        "recommendationTop": 186.390625,
+        "priorRecommendationTop": 1006.9375,
+        "recentTop": 701.5
+      },
+      {
+        "width": 390,
+        "headerHeight": 81.5,
+        "recommendationTop": 404.5,
+        "priorRecommendationTop": 1624.984375,
+        "recentTop": 1008.34375
+      },
+      {
+        "width": 320,
+        "headerHeight": 99.5,
+        "recommendationTop": 422.5,
+        "priorRecommendationTop": 1709.28125,
+        "recentTop": 1111.53125
+      }
+    ],
+    "touch": true,
+    "errors": []
+  },
+  "home_synthetic": {
+    "checks": 748,
+    "source": "synthetic",
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
+      {
+        "width": 1440,
+        "headerHeight": 59.390625,
+        "recommendationTop": 155.390625,
+        "priorRecommendationTop": 338.046875,
+        "recentTop": 855.84375
+      },
+      {
+        "width": 1024,
+        "headerHeight": 59.390625,
+        "recommendationTop": 155.390625,
+        "priorRecommendationTop": 855.640625,
+        "recentTop": 990.5
+      },
+      {
+        "width": 768,
+        "headerHeight": 90.390625,
+        "recommendationTop": 186.390625,
+        "priorRecommendationTop": 988.9375,
+        "recentTop": 1090.484375
+      },
+      {
+        "width": 390,
+        "headerHeight": 81.5,
+        "recommendationTop": 404.5,
+        "priorRecommendationTop": 1621.984375,
+        "recentTop": 1398.03125
+      },
+      {
+        "width": 320,
+        "headerHeight": 99.5,
+        "recommendationTop": 422.5,
+        "priorRecommendationTop": 1689.78125,
+        "recentTop": 1600.515625
+      }
+    ],
+    "touch": true,
+    "errors": []
+  },
+  "keyboard_tooltip_regression": {
+    "checks": 10,
+    "keyboard_scroll_resize_escape": true
+  },
+  "recommendation_scenarios": {
+    "checks": 28,
+    "cases": [
+      {
+        "name": "before",
+        "nextIsFuture": false,
+        "completedCount": 0
+      },
+      {
+        "name": "completed",
+        "nextIsFuture": true,
+        "completedCount": 1
+      },
+      {
+        "name": "empty",
+        "nextIsFuture": false,
+        "completedCount": 0
+      }
+    ]
+  },
+  "activity_review": {
+    "checks": 9962,
+    "modes": [
+      "native",
+      "thin",
+      "api",
+      "outdoor"
+    ],
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "headers": [
+      {
+        "mode": "native",
+        "width": 1440,
+        "headerAndNav": 216.578125,
+        "chartTop": 310.578125
+      },
+      {
+        "mode": "native",
+        "width": 1024,
+        "headerAndNav": 230.78125,
+        "chartTop": 324.78125
+      },
+      {
+        "mode": "native",
+        "width": 768,
+        "headerAndNav": 274.375,
+        "chartTop": 368.375
+      },
+      {
+        "mode": "native",
+        "width": 390,
+        "headerAndNav": 389.46875,
+        "chartTop": 714.46875
+      },
+      {
+        "mode": "native",
+        "width": 320,
+        "headerAndNav": 424.65625,
+        "chartTop": 749.65625
+      },
+      {
+        "mode": "thin",
+        "width": 1440,
+        "headerAndNav": 211.578125,
+        "chartTop": 305.578125
+      },
+      {
+        "mode": "thin",
+        "width": 1024,
+        "headerAndNav": 203.78125,
+        "chartTop": 297.78125
+      },
+      {
+        "mode": "thin",
+        "width": 768,
+        "headerAndNav": 241.28125,
+        "chartTop": 335.28125
+      },
+      {
+        "mode": "thin",
+        "width": 390,
+        "headerAndNav": 314.46875,
+        "chartTop": 639.46875
+      },
+      {
+        "mode": "thin",
+        "width": 320,
+        "headerAndNav": 371.65625,
+        "chartTop": 696.65625
+      },
+      {
+        "mode": "api",
+        "width": 1440,
+        "headerAndNav": 216.578125,
+        "chartTop": 310.578125
+      },
+      {
+        "mode": "api",
+        "width": 1024,
+        "headerAndNav": 208.78125,
+        "chartTop": 302.78125
+      },
+      {
+        "mode": "api",
+        "width": 768,
+        "headerAndNav": 251.28125,
+        "chartTop": 345.28125
+      },
+      {
+        "mode": "api",
+        "width": 390,
+        "headerAndNav": 351.46875,
+        "chartTop": 676.46875
+      },
+      {
+        "mode": "api",
+        "width": 320,
+        "headerAndNav": 442.75,
+        "chartTop": 767.75
+      },
+      {
+        "mode": "outdoor",
+        "width": 1440,
+        "headerAndNav": 211.578125,
+        "chartTop": 305.578125
+      },
+      {
+        "mode": "outdoor",
+        "width": 320,
+        "headerAndNav": 352.46875,
+        "chartTop": 677.46875
+      }
+    ],
+    "touchscreen": true,
+    "errors": []
+  },
+  "power_curve": {
+    "checks": 1331,
+    "source": "private",
+    "desktop": 1440,
+    "mobile": [
+      390,
+      320
+    ],
+    "period_combinations": 25,
+    "errors": []
+  },
+  "accepted_pages": {
+    "checks": 14,
+    "touchscreen": true,
+    "accepted_pages": true,
+    "native_review": true
+  },
+  "training_state": {
+    "checks": 510,
+    "passed": true,
+    "ranges": 4,
+    "lineToggles": 3,
+    "multiRide": true,
+    "unscored": true,
+    "noRecord": true,
+    "keyboard": true,
+    "phone": true,
+    "touch": true,
+    "stableReview": true,
+    "floatingHover": true,
+    "hoverPersistence": true,
+    "hoverAllRanges": true
+  },
+  "unrelated_page_styles": {
+    "checks": 48,
+    "widths": [
+      1440,
+      390,
+      320
+    ],
+    "routes": 8,
+    "all_computed_styles_equal": true
+  },
+  "javascript_syntax": "passed",
+  "diff_whitespace": "passed",
+  "baseline": "516cbd7",
+  "private_screenshots_committed": false,
+  "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending",
+  "chromium_check_total": 13476
+}

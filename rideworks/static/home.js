@@ -4,6 +4,7 @@
   const chart = document.querySelector('#home-mileage-chart');
   const tooltip = document.querySelector('#mileage-tooltip');
   if (!chart || !tooltip) return;
+  let focusedItem = null;
   const show = (item, event) => {
     tooltip.textContent = item.dataset.mileageValue;
     tooltip.hidden = false;
@@ -20,10 +21,15 @@
     item.addEventListener('pointermove', event => show(item, event));
     item.addEventListener('pointerleave', hide);
     item.addEventListener('pointercancel', hide);
-    item.addEventListener('focus', () => show(item));
-    item.addEventListener('blur', hide);
-    item.addEventListener('keydown', event => { if (event.key === 'Escape') hide(); });
+    item.addEventListener('focus', () => { focusedItem = item; show(item); });
+    item.addEventListener('blur', () => { focusedItem = null; hide(); });
+    item.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { focusedItem = null; hide(); }
+    });
   }
-  window.addEventListener('scroll', hide, {passive:true});
-  window.addEventListener('resize', hide);
+  // Focusing an offscreen week scrolls it into view. Reposition its keyboard
+  // readout after that scroll instead of immediately hiding the focused value.
+  const reposition = () => { if (focusedItem) show(focusedItem); else hide(); };
+  window.addEventListener('scroll', reposition, {passive:true});
+  window.addEventListener('resize', reposition);
 })();

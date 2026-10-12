@@ -143,7 +143,7 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
                 if(data.target_miles===null)check((await local.locator('.home-goal-progress').textContent()).includes('Set annual goal'),'No-goal path');
                 check(await local.locator('#home-ytd').count()===0,'Duplicate annual card');
                 check((await local.locator('#home-this-week strong').textContent())===(data.this_week.miles===null?'Unavailable':data.this_week.miles.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi'),'Actual This Week Miles');
-                check(await local.locator('.home-summary > section').count()===3,'Three top cards');
+                check(await local.locator('.home-summary .home-quick-fact').count()===4,'Four compact quick facts');
                 check(await local.locator('#home-recent-mileage #home-this-week').count()===1&&await local.locator('#home-recent-mileage #home-last7').count()===1,'Both submetrics inside Recent Mileage');
                 const last7=data.last7.miles===null?'Unavailable':data.last7.miles.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi';
                 check(await local.locator('#home-last7 strong').textContent()===last7,'Last 7 Days value');
@@ -244,8 +244,8 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
             check(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),'Responsive width');
             const week=await page.locator('#home-this-week').boundingBox(),last7=await page.locator('#home-last7').boundingBox();
             if(width===1448)check(Math.abs(week.y-last7.y)<1&&last7.x>=week.x+week.width,'Desktop submetrics side by side');
-            else check(Math.abs(week.x-last7.x)<1&&last7.y>=week.y+week.height,'Phone submetrics stacked');
-            check(await page.locator('.home-summary > section').count()===3,'No replacement fourth metric');
+            else check(Math.abs(week.y-last7.y)<1&&last7.x>=week.x+week.width,'Phone mileage facts in compact 2 by 2 matrix');
+            check(await page.locator('.home-summary .home-quick-fact').count()===4,'All four quick facts retained');
             const items=chart.locator('[data-mileage-value]');
             for(let i=0;i<await items.count();i++){
               const immediate=await items.nth(i).evaluate(el=>{
@@ -336,20 +336,26 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
         after=fingerprint(store.connection)
         assert all(rows.issubset(set(tuple(r) for r in store.connection.execute('SELECT * FROM '+table))) for table,rows in preserved.items())
         assert v1==[tuple(r) for r in store.connection.execute("SELECT * FROM performance_history WHERE policy='virtual-native-power-v1' ORDER BY activity_id")]
-        native=[k for k in before if k not in ('annual_mileage_goals','performance_history','activities','strava_sync_state') and not k.startswith(('strava_api_','strava_stream_'))]
+        # Later accepted phases populate/invalidate these derived caches during
+        # Home reads and the deliberate synthetic sync/failure/recovery flow.
+        # They are not original source tables. Fixed-clock HOME-UI-01 parity
+        # separately compares all tables when source inputs are unchanged.
+        caches=('training_stress_cache','planning_classification_cache','power_curve_profiles')
+        native=[k for k in before if k not in ('annual_mileage_goals','performance_history','activities','strava_sync_state',*caches) and not k.startswith(('strava_api_','strava_stream_'))]
         assert all(before[k]==after[k] for k in native)
         if originals:assert originals=={p.name:(p.stat().st_size,p.stat().st_mtime_ns) for p in store.originals.iterdir()}
         assert store.connection.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
         assert not store.connection.execute('PRAGMA foreign_key_check').fetchall()
         artifact_count=0
+        current_schema=store.connection.execute('PRAGMA user_version').fetchone()[0]
         for row in store.connection.execute('SELECT stored_path,sha256,byte_size FROM sources UNION SELECT stored_path,sha256,byte_size FROM export_snapshots'):
             assert artifact_integrity(store.data_dir/row[0])==(row[1],row[2])
             artifact_count+=1
     safe_sync=[{k:v for k,v in result.items() if k not in ('after','before')} for result in observed]
     return dict(status='passed',mode='synthetic' if synthetic else 'live',schema6_migration_accepted_tables_preserved=bool(legacy),
-        schema_version=7,native_export_tables_unchanged=True,originals_unchanged=True,
-        migration_evidence='disposable_schema6_replay' if legacy else 'synthetic_schema7_fixture',
-        accepted_preverification_schema=initial_version if not synthetic else 7,
+        schema_version=current_schema,native_export_tables_unchanged=True,originals_unchanged=True,
+        migration_evidence='disposable_schema6_replay' if legacy else 'synthetic_current_schema_fixture',
+        accepted_preverification_schema=initial_version if not synthetic else current_schema,
         schema6_existing_tables_replayed=len(legacy) if legacy else 0,source_observations_retained=True,
         v1_rows_unchanged=len(v1),original_artifact_hashes_verified=artifact_count,calendar_boundary_checks=calendar_checks,
         independent_checks=answers,home_activities_settings_routes=True,old_root_bookmark_redirect=True,
@@ -360,7 +366,7 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
         immediate_miles_only_tooltip_checks=tooltip_checks,tooltip_pointer_keyboard_desktop_phone=True,
         this_week_card_matches_current_actual_bar=True,all_bars_are_actual=True,required_line_current_endpoint_geometry=True,
         average_power_table_matches_source_payload=True,
-        recent_mileage_three_cards_desktop_side_by_side_phone_stacked=True,
+        four_quick_facts_desktop_phone_matrix=True,
         read_only_live_rerun=skip_sync,activities_title_sort_pagination_verified=True,
         exception_failure_restart_later_sync_verified=failure_verified,
         sync_results=safe_sync,integrity=True,foreign_keys=True,phase_4_5_6_implemented=False)

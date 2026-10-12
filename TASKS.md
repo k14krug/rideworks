@@ -513,7 +513,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-01 — One authoritative RideWorks data store
 
-**Status:** **pending Dex invocation; Stage A authorized by Owner 2026-10-12**. [Issue #33](https://github.com/k14krug/rideworks/issues/33). No migration, local inventory, data copy or cleanup has occurred. Stage A is the approved `America/Los_Angeles` server-default fix plus **read-only** candidate-store inventory. Report to HARD — Analyst Gate 1, then owner chooses actual source/deployment host/destination at HARD — Owner Gate 2 before any store move.
+**Status:** in_progress — Stage A invoked via `/AUTOTASK OPS-01`, 2026-10-12. [Issue #33](https://github.com/k14krug/rideworks/issues/33). No migration, data promotion or cleanup has occurred. Stage A is the approved `America/Los_Angeles` server-default fix plus **read-only** candidate-store inventory. Report to HARD — Analyst Gate 1, then owner chooses actual source/deployment host/destination at HARD — Owner Gate 2 before any store move.
 
 **Purpose:** Promote RideWorks from task-specific `local_data/<task>` verification copies to **one stable everyday store** outside the repository, while keeping SQLite, preserved original ride data, source provenance, historical metrics and private Strava tokens/settings intact. Existing default `~/.rideworks` is the recommended destination; Owner has not yet agreed or selected an authoritative source.
 

@@ -8,15 +8,10 @@
   const names = data.mode === 'activity'
     ? {ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',all:'All earlier history'}
     : {six:'Last 6 weeks',previous:'Previous 6 weeks',ytd:'Year to date',last_year:'Previous calendar year',all:'All time'};
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const url = new URL(location.href);
-  if (data.mode === 'performance' && url.searchParams.get('curve_tz') !== timezone) {
-    url.searchParams.set('curve_tz',timezone);
-    location.replace(url); return;
-  }
   const $ = id => document.getElementById('curve-'+id);
   const fmt = d => d < 60 ? d+' s' : d < 3600 ? (d/60).toFixed(d%60 ? 1 : 0)+' min' : (d/3600).toFixed(d%3600 ? 2 : 0)+' h';
-  const date = value => value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}) : 'All earlier supported history';
+  const date = value => value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:data.calendar_timezone || document.documentElement.dataset.displayTimezone || 'America/Los_Angeles'}) : 'All earlier supported history';
   const namespace = 'http://www.w3.org/2000/svg';
   const node = (tag, attrs, content) => {
     const el = document.createElementNS(namespace,tag);

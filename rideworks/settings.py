@@ -83,7 +83,7 @@ class Settings:
     def goal_content(self, query):
         zone = query_zone(query)
         if zone is None:
-            return '<section class="panel annual-goal" id="annual-goal" data-calendar-timezone="tz"><h2>Annual cycling mileage goal</h2><p>Enable JavaScript to set the goal for your browser-local calendar year.</p></section>'
+            return '<section class="panel annual-goal" id="annual-goal"><h2>Annual cycling mileage goal</h2><p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p></section>'
         year = datetime.now(timezone.utc).astimezone(zone).year
         with Store(self.data_dir) as store:
             goal = annual_goal(store, year)
@@ -91,7 +91,7 @@ class Settings:
         hidden = f'<input type="hidden" name="nonce" value="{self.nonce}"><input type="hidden" name="tz" value="{escape(zone.key,quote=True)}">'
         clear = f'<form method="post" data-settings-action action="/settings/annual-goal">{hidden}<input type="hidden" name="clear" value="1"><button type="submit" class="secondary">Clear annual goal</button></form>' if goal else ''
         notice = f'<p role="status">{escape(self.goal_notice)}</p>' if self.goal_notice else ''
-        return f'''<section class="panel annual-goal" id="annual-goal" data-calendar-timezone="tz"><h2>Annual cycling mileage goal · {year}</h2>
+        return f'''<section class="panel annual-goal" id="annual-goal"><h2>Annual cycling mileage goal · {year}</h2>
 <p>Virtual Ride and outdoor Ride mileage both count. Calendar year: {escape(zone.key)}.</p>
 <p id="annual-goal-state">{'Target: '+escape(value)+' mi' if goal else 'No annual target set.'}</p>{notice}
 <div class="goal-actions"><form method="post" data-settings-action action="/settings/annual-goal">{hidden}

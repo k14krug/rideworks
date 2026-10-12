@@ -12,6 +12,7 @@ from uuid import UUID
 
 from .analysis import analyze_activity
 from .errors import RideWorksError
+from .goals import DEFAULT_TIMEZONE, query_zone
 from .history import SORTS, browse, presentation
 from .recent_context import recent_context
 from .store import Store, resolve_data_dir
@@ -121,7 +122,7 @@ def activities_page(store, query_string=''):
 <label>To<input type="date" name="to" value="{query.before}"></label>
 <label>Sort<select name="sort">{options(list(SORTS.items()), query.sort)}</select></label>
 <div class="filter-actions"><button type="submit">Apply</button><a href="/activities">Reset</a></div>
-</form><p class="date-filter-note">Dates and filters use your local timezone. Timezone-unknown source dates stay as supplied.</p><noscript>Enable JavaScript to use your browser's local dates for absolute timestamps.</noscript>'''
+</form><p class="date-filter-note">Dates and filters use {escape(query.timezone_name)}. Timezone-unknown source dates stay as supplied.</p>'''
     if query.message:
         controls += f'<p class="query-message" role="status">{escape(query.message)}</p>'
     if not result['total']:
@@ -608,22 +609,27 @@ class Application:
             name = path.removeprefix('/static/')
             if name in ASSETS:
                 return 200, ASSETS[name], (STATIC / name).read_bytes()
+        key = 'home_tz' if path == '/' else 'plan_tz' if path == '/plan' or path.startswith('/activities/') else 'tz'
+        zone = query_zone(url.query, key)
+        curve_invalid = (path == '/performance' or path.startswith('/activities/')) and query_zone(url.query, 'curve_tz') is None
+        if zone is None or curve_invalid:
+            return 400, 'text/html', shell('Invalid timezone', '<h1>Invalid timezone</h1><p>Supply one valid timezone or omit the timezone parameter to use America/Los_Angeles.</p>').encode()
         with Store(self.data_dir) as store:
             if path == '/settings':
-                return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'))
+                return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':
                 from .home import home_page
-                return 200, 'text/html', self.page(store, home_page(store,url.query))
+                return 200, 'text/html', self.page(store, home_page(store,url.query), display_zone=zone.key)
             if path == '/plan':
                 from .planning_page import plan_page
-                return 200, 'text/html', self.page(store, plan_page(store,url.query,self.settings.nonce))
+                return 200, 'text/html', self.page(store, plan_page(store,url.query,self.settings.nonce), display_zone=zone.key)
             if path == '/activities':
-                return 200, 'text/html', self.page(store, activities_page(store, url.query))
+                return 200, 'text/html', self.page(store, activities_page(store, url.query), display_zone=zone.key)
             if path == '/training-state':
                 from .training_state_page import training_page
-                return 200, 'text/html', self.page(store, training_page(store,url.query))
+                return 200, 'text/html', self.page(store, training_page(store,url.query), display_zone=zone.key)
             if path == '/performance':
-                return 200, 'text/html', self.page(store, performance_page(store,self.settings.nonce,url.query))
+                return 200, 'text/html', self.page(store, performance_page(store,self.settings.nonce,url.query), display_zone=zone.key)
             if path.startswith('/activities/'):
                 activity_id = path.removeprefix('/activities/')
                 try:
@@ -662,7 +668,7 @@ class Application:
                  '<!-- review-power-curve -->': curve}
         for slot, content in slots.items():
             html = html.replace(slot, content, 1)
-        return self.page(store,html)
+        return self.page(store,html,display_zone=query_zone(query,'plan_tz').key)
 
     def post(self,path,body,origin):
         if not path.startswith('/plan/'):
@@ -696,7 +702,8 @@ class Application:
         except (ValueError,UnicodeError):
             return 400,{},b'Plan inputs changed or are invalid. Reload Plan and try again.'
 
-    def page(self, store, html):
+    def page(self, store, html, *, display_zone=DEFAULT_TIMEZONE):
+        html = html.replace('<html lang="en">', f'<html lang="en" data-display-timezone="{escape(display_zone, quote=True)}">', 1)
         pending = performance_history(store)['pending']
         if pending:
             noun = 'Activity needs' if pending == 1 else 'Activities need'

@@ -10,6 +10,7 @@ from datetime import date, datetime, timezone
 from math import ceil
 from urllib.parse import parse_qs, urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from .goals import DEFAULT_TIMEZONE
 
 PAGE_SIZE = 30
 SORTS = {'newest': 'Newest first', 'oldest': 'Oldest first',
@@ -107,14 +108,14 @@ class BrowserQuery:
     after: str = ''
     before: str = ''
     sort: str = 'newest'
-    timezone_name: str = ''
+    timezone_name: str = DEFAULT_TIMEZONE
     message: str = ''
 
     @classmethod
     def parse(cls, query_string, type_choices):
         messages = []
         try:
-            params = parse_qs(query_string, max_num_fields=20)
+            params = parse_qs(query_string, keep_blank_values=True, max_num_fields=20)
         except ValueError:
             params = {}
             messages.append('Too many filters; showing defaults.')
@@ -151,7 +152,7 @@ class BrowserQuery:
         if len(search) > 200:
             search = search[:200]
             messages.append('Search limited to 200 characters.')
-        timezone_name = value('tz')
+        timezone_name = value('tz', DEFAULT_TIMEZONE)
         if timezone_name:
             try:
                 if len(timezone_name) > 128:

@@ -91,7 +91,7 @@ def power_chart(performance, zone):
 def home_page(store, query=''):
     zone = query_zone(query,'home_tz')
     if zone is None:
-        return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel" data-calendar-timezone="home_tz"><h2>Cycling mileage and Performance</h2><p>Enable JavaScript to use your browser timezone for calendar mileage and annual goals.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')
+        return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel"><h2>Cycling mileage and Performance</h2><p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')
     data = dashboard(store,zone.key)
     goal, ytd, performance = data['goal'], data['ytd'], data['performance']
     target = data['target_miles']
@@ -163,7 +163,7 @@ def home_page(store, query=''):
     advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of'])),compact=True)
     compact = {k:v for k,v in data.items() if k!='recent'}
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
-    return shell('Home',f'''<div class="home-redesign"><header class="home-heading" data-calendar-timezone="home_tz"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
+    return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
 <div class="home-lead"><section class="panel home-summary" id="home-recent-mileage" aria-label="Recent mileage and eligible power"><div class="home-quick-grid">{recent_mileage}{card('current','Current 42-day best',current,current_note,'power')}{card('latest','Latest eligible 20-minute ride',latest,latest_note,'power')}</div></section>{advisor}</div>
 <div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section><div class="home-companions">{training}<section class="panel home-performance"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div>{power_chart(performance,zone)}<p>Rolling 42-day best · past year · current Performance-v2 evidence. Gaps mean no eligible result.</p></section></div></div>
 <div class="home-progress-layout"><section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Outlined current week is partial · actual Monday-through-today mileage.</p></section><section class="panel home-goal-progress"><h2>Annual Mileage Goal</h2><strong>{miles(ytd['miles'])} YTD</strong>{progress}<p>Arithmetic goal progress, not a training recommendation.</p></section></div>

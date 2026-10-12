@@ -1,0 +1,29 @@
+{
+  "result": "passed",
+  "browser": "Chromium",
+  "payload_eligible_results": 1029,
+  "all_range_ride_points": 1029,
+  "default_rolling_one_year": true,
+  "rolling_line_dominant": true,
+  "single_performance_surface": true,
+  "all_range_view_combinations": true,
+  "summaries_and_freshness": true,
+  "monthly_yearly_bests_independently_verified": true,
+  "synthetic_calendar_raw_tie_range_tests": true,
+  "monthly_yearly_lines_with_markers": true,
+  "missing_month_year_breaks_verified": true,
+  "supporting_rides_in_all_views": true,
+  "future_candidates_secondary": true,
+  "complete_paged_evidence": true,
+  "first_middle_last_pointer": true,
+  "keyboard_inspection": true,
+  "point_activity_and_back": true,
+  "source_title_date_watts": true,
+  "eligibility_provenance": true,
+  "local_date_zones": [
+    "America/Los_Angeles",
+    "Asia/Tokyo"
+  ],
+  "desktop_tablet_phone_no_overflow": true,
+  "no_native_stream_payload": true
+}

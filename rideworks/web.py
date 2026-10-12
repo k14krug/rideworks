@@ -85,7 +85,9 @@ def local_time(timestamp, *, compact=False):
             f'{escape(timestamp)} (UTC source time)</time>')
 
 
-def shell(title, content, *, active='activities'):
+def shell(title, content, *, active='activities', page_class=''):
+    if page_class:
+        content = f'<div class="rw-page {escape(page_class, quote=True)}">{content}</div>'
     def nav_state(name):
         return ' class="active" aria-current="page"' if active == name else ''
     return f'''<!doctype html>
@@ -136,7 +138,7 @@ def activities_page(store, query_string=''):
             distance_context = row['distance_source']['context'] if row['distance_source'] else 'Distance unavailable'
             items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'])}"><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}</div><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-type">{escape(types)}</span><div class="list-metrics"><span title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="open-ride" aria-hidden="true">→</span></div></a></li>''')
         columns = '<div class="activity-columns" aria-hidden="true"><span>Title</span><span>Date</span><span>Type</span><div class="list-metrics"><span>Distance</span><span>Duration</span><span></span></div></div>'
-        body = columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul>'
+        body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0
     last = result['start'] + len(rows)
@@ -144,7 +146,7 @@ def activities_page(store, query_string=''):
     previous = f'<a rel="prev" href="{escape(query.url(result["page"] - 1), quote=True)}">← Previous</a>' if result['page'] > 1 else '<span aria-disabled="true">← Previous</span>'
     following = f'<a rel="next" href="{escape(query.url(result["page"] + 1), quote=True)}">Next →</a>' if result['page'] < result['pages'] else '<span aria-disabled="true">Next →</span>'
     navigation = f'<nav class="pagination" aria-label="Activity pages">{previous}<span>Page {result["page"]} of {result["pages"]}</span>{following}</nav>'
-    return shell('Activities', '<header><h1>Activities</h1></header>' + controls + context + body + navigation)
+    return shell('Activities', '<header class="activities-heading"><h1>Activities</h1>' + context + '</header>' + controls + body + navigation, page_class='activities-redesign')
 
 
 def metric(name, value, symbol):
@@ -586,7 +588,7 @@ def performance_page(store, nonce='', query=''):
 <p>Method: best-average-power-v1 · Policy: {POLICY}. One eligible file Source controls each file-backed Activity result; multiple eligible file Sources are ambiguous and excluded. API evidence cannot bypass ineligible file-backed power. API results retain stream/summary provenance and returned-offset window bounds. CSV and summary averages never substitute for sample power. Ineligible or missing results are not plotted as zero.</p>
 </details>
 <details class="panel performance-future"><summary>Future Performance candidates</summary><p>Possible future direction includes FTP and historical athlete context and explainable performance or training-state signals. These are candidates, not implemented features or delivery commitments.</p></details></div>{curve_panel(store,nonce,query=query)}
-<script id="performance-points" type="application/json">{safe_json(points)}</script><script id="performance-view" type="application/json">{safe_json(view)}</script><script src="/static/performance.js" defer></script>''', active='performance')
+<script id="performance-points" type="application/json">{safe_json(points)}</script><script id="performance-view" type="application/json">{safe_json(view)}</script><script src="/static/performance.js" defer></script>''', active='performance', page_class='performance-redesign')
 
 
 class Application:
@@ -608,7 +610,7 @@ class Application:
                 return 200, ASSETS[name], (STATIC / name).read_bytes()
         with Store(self.data_dir) as store:
             if path == '/settings':
-                return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings'))
+                return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'))
             if path == '/':
                 from .home import home_page
                 return 200, 'text/html', self.page(store, home_page(store,url.query))

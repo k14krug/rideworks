@@ -1,8 +1,11 @@
 {
+  "verification_round": "2026-10-12 expanded app-wide pass",
+  "baseline": "747e388a2da745f5acf254ae75f6c197bd0f8490",
   "python_tests": 446,
-  "home_private": {
-    "checks": 940,
+  "cross_page_private": {
+    "checks": 1001,
     "source": "private",
+    "routes": 6,
     "widths": [
       1440,
       1024,
@@ -12,62 +15,162 @@
     ],
     "geometry": [
       {
+        "name": "activities",
         "width": 1440,
-        "headerHeight": 59.390625,
-        "factsTop": 155.390625,
-        "factsWidth": 544,
-        "recommendationTop": 155.390625,
-        "recommendationWidth": 680,
-        "priorRecommendationTop": 338.046875,
-        "recentTop": 448.65625
+        "headerHeight": 36.390625
       },
       {
+        "name": "performance-history",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
         "width": 1024,
-        "headerHeight": 59.390625,
-        "factsTop": 155.390625,
-        "factsWidth": 836,
-        "recommendationTop": 315.234375,
-        "recommendationWidth": 836,
-        "priorRecommendationTop": 873.640625,
-        "recentTop": 604.5
+        "headerHeight": 36.390625
       },
       {
+        "name": "performance-history",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
         "width": 768,
-        "headerHeight": 90.390625,
-        "factsTop": 186.390625,
-        "factsWidth": 580,
-        "recommendationTop": 412.234375,
-        "recommendationWidth": 580,
-        "priorRecommendationTop": 1006.9375,
-        "recentTop": 701.5
+        "headerHeight": 36.390625
       },
       {
+        "name": "performance-history",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
         "width": 390,
-        "headerHeight": 81.5,
-        "factsTop": 404.5,
-        "factsWidth": 366,
-        "recommendationTop": 703.890625,
-        "recommendationWidth": 366,
-        "priorRecommendationTop": 1624.984375,
-        "recentTop": 1008.34375
+        "headerHeight": 56.5
       },
       {
+        "name": "performance-history",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 390,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 390,
+        "headerHeight": 78.5
+      },
+      {
+        "name": "settings",
+        "width": 390,
+        "headerHeight": 32.5
+      },
+      {
+        "name": "activities",
         "width": 320,
-        "headerHeight": 99.5,
-        "factsTop": 422.5,
-        "factsWidth": 296,
-        "recommendationTop": 771.390625,
-        "recommendationWidth": 296,
-        "priorRecommendationTop": 1709.28125,
-        "recentTop": 1111.53125
+        "headerHeight": 74.5
+      },
+      {
+        "name": "performance-history",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 320,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 320,
+        "headerHeight": 96.5
+      },
+      {
+        "name": "settings",
+        "width": 320,
+        "headerHeight": 32.5
       }
     ],
-    "touch": true,
     "errors": []
   },
-  "home_synthetic": {
-    "checks": 883,
+  "cross_page_synthetic": {
+    "checks": 1028,
     "source": "synthetic",
+    "routes": 6,
     "widths": [
       1440,
       1024,
@@ -77,82 +180,341 @@
     ],
     "geometry": [
       {
+        "name": "activities",
         "width": 1440,
-        "headerHeight": 59.390625,
-        "factsTop": 155.390625,
-        "factsWidth": 544,
-        "recommendationTop": 155.390625,
-        "recommendationWidth": 680,
-        "priorRecommendationTop": 338.046875,
-        "recentTop": 855.84375
+        "headerHeight": 36.390625
       },
       {
+        "name": "performance-history",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
         "width": 1024,
-        "headerHeight": 59.390625,
-        "factsTop": 155.390625,
-        "factsWidth": 836,
-        "recommendationTop": 315.234375,
-        "recommendationWidth": 836,
-        "priorRecommendationTop": 855.640625,
-        "recentTop": 990.5
+        "headerHeight": 36.390625
       },
       {
+        "name": "performance-history",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
         "width": 768,
-        "headerHeight": 90.390625,
-        "factsTop": 186.390625,
-        "factsWidth": 580,
-        "recommendationTop": 396.03125,
-        "recommendationWidth": 580,
-        "priorRecommendationTop": 988.9375,
-        "recentTop": 1090.484375
+        "headerHeight": 36.390625
       },
       {
+        "name": "performance-history",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
         "width": 390,
-        "headerHeight": 81.5,
-        "factsTop": 404.5,
-        "factsWidth": 366,
-        "recommendationTop": 687.390625,
-        "recommendationWidth": 366,
-        "priorRecommendationTop": 1621.984375,
-        "recentTop": 1414.53125
+        "headerHeight": 56.5
       },
       {
+        "name": "performance-history",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 390,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 390,
+        "headerHeight": 78.5
+      },
+      {
+        "name": "settings",
+        "width": 390,
+        "headerHeight": 32.5
+      },
+      {
+        "name": "activities",
         "width": 320,
-        "headerHeight": 99.5,
-        "factsTop": 422.5,
-        "factsWidth": 296,
-        "recommendationTop": 755.1875,
-        "recommendationWidth": 296,
-        "priorRecommendationTop": 1689.78125,
-        "recentTop": 1600.515625
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 320,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 320,
+        "headerHeight": 96.5
+      },
+      {
+        "name": "settings",
+        "width": 320,
+        "headerHeight": 32.5
       }
     ],
-    "touch": true,
     "errors": []
   },
-  "keyboard_tooltip_regression": {
-    "checks": 10,
-    "keyboard_scroll_resize_escape": true
-  },
-  "recommendation_scenarios": {
-    "checks": 28,
-    "cases": [
+  "cross_page_empty": {
+    "checks": 553,
+    "source": "empty",
+    "routes": 6,
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "geometry": [
       {
-        "name": "before",
-        "nextIsFuture": false,
-        "completedCount": 0
+        "name": "activities",
+        "width": 1440,
+        "headerHeight": 36.390625
       },
       {
-        "name": "completed",
-        "nextIsFuture": true,
-        "completedCount": 1
+        "name": "performance-history",
+        "width": 1440,
+        "headerHeight": 59.390625
       },
       {
-        "name": "empty",
-        "nextIsFuture": false,
-        "completedCount": 0
+        "name": "performance-curves",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1440,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1440,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 1024,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 1024,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "performance-history",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "performance-curves",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "training",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "plan",
+        "width": 768,
+        "headerHeight": 59.390625
+      },
+      {
+        "name": "settings",
+        "width": 768,
+        "headerHeight": 36.390625
+      },
+      {
+        "name": "activities",
+        "width": 390,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 390,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 390,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 390,
+        "headerHeight": 78.5
+      },
+      {
+        "name": "settings",
+        "width": 390,
+        "headerHeight": 32.5
+      },
+      {
+        "name": "activities",
+        "width": 320,
+        "headerHeight": 56.5
+      },
+      {
+        "name": "performance-history",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "performance-curves",
+        "width": 320,
+        "headerHeight": 73.5
+      },
+      {
+        "name": "training",
+        "width": 320,
+        "headerHeight": 55.5
+      },
+      {
+        "name": "plan",
+        "width": 320,
+        "headerHeight": 96.5
+      },
+      {
+        "name": "settings",
+        "width": 320,
+        "headerHeight": 32.5
       }
-    ]
+    ],
+    "errors": []
+  },
+  "plan_controls": {
+    "checks": 76,
+    "scenarios": [
+      "before",
+      "completed"
+    ],
+    "intent": true,
+    "feedback": true,
+    "classification": true,
+    "home_parity": true,
+    "widths": [
+      1440,
+      1024,
+      768,
+      390,
+      320
+    ],
+    "errors": []
   },
   "activity_review": {
     "checks": 9962,
@@ -287,14 +649,8 @@
     "period_combinations": 25,
     "errors": []
   },
-  "accepted_pages": {
-    "checks": 14,
-    "touchscreen": true,
-    "accepted_pages": true,
-    "native_review": true
-  },
   "training_state": {
-    "checks": 510,
+    "checks": 508,
     "passed": true,
     "ranges": 4,
     "lineToggles": 3,
@@ -309,30 +665,9 @@
     "hoverPersistence": true,
     "hoverAllRanges": true
   },
-  "unrelated_page_styles": {
-    "checks": 48,
-    "widths": [
-      1440,
-      390,
-      320
-    ],
-    "routes": 8,
-    "all_computed_styles_equal": true
-  },
-  "javascript_syntax": "passed",
-  "diff_whitespace": "passed",
-  "baseline": "516cbd7",
-  "private_screenshots_committed": false,
-  "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending",
-  "chromium_check_total": 14256,
-  "owner_refinement_scenarios": {
-    "checks": 530,
-    "scenarios": [
-      "before",
-      "completed",
-      "empty",
-      "long-facts"
-    ],
+  "home_private": {
+    "checks": 940,
+    "source": "private",
     "widths": [
       1440,
       1024,
@@ -340,9 +675,88 @@
       390,
       320
     ],
-    "contrast": true,
-    "overflow": false
+    "geometry": [
+      {
+        "width": 1440,
+        "headerHeight": 59.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 544,
+        "recommendationTop": 155.390625,
+        "recommendationWidth": 680,
+        "priorRecommendationTop": 338.046875,
+        "recentTop": 448.65625
+      },
+      {
+        "width": 1024,
+        "headerHeight": 59.390625,
+        "factsTop": 155.390625,
+        "factsWidth": 836,
+        "recommendationTop": 315.234375,
+        "recommendationWidth": 836,
+        "priorRecommendationTop": 873.640625,
+        "recentTop": 604.5
+      },
+      {
+        "width": 768,
+        "headerHeight": 90.390625,
+        "factsTop": 186.390625,
+        "factsWidth": 580,
+        "recommendationTop": 412.234375,
+        "recommendationWidth": 580,
+        "priorRecommendationTop": 1006.9375,
+        "recentTop": 701.5
+      },
+      {
+        "width": 390,
+        "headerHeight": 81.5,
+        "factsTop": 404.5,
+        "factsWidth": 366,
+        "recommendationTop": 703.890625,
+        "recommendationWidth": 366,
+        "priorRecommendationTop": 1624.984375,
+        "recentTop": 1008.34375
+      },
+      {
+        "width": 320,
+        "headerHeight": 99.5,
+        "factsTop": 422.5,
+        "factsWidth": 296,
+        "recommendationTop": 771.390625,
+        "recommendationWidth": 296,
+        "priorRecommendationTop": 1709.28125,
+        "recentTop": 1111.53125
+      }
+    ],
+    "touch": true,
+    "errors": []
   },
-  "owner_refinements": "facts first/left in DOM and keyboard; 3px main-card blue edges, 4px next ride; other pages unchanged",
-  "verification_round": "Owner refinement; current production markup/styles"
+  "anchor_styles": {
+    "checks": 24,
+    "widths": [
+      1440,
+      390,
+      320
+    ],
+    "routes": 4,
+    "home_and_activity_review_unchanged": true
+  },
+  "touch_navigation": {
+    "checks": 12,
+    "touchscreen": true,
+    "history_contributor": true,
+    "activity_rows": true,
+    "settings": true,
+    "widths": [
+      390,
+      320
+    ]
+  },
+  "chromium_check_total": 15435,
+  "standalone_performance": "passed",
+  "standalone_settings": "passed",
+  "standalone_dashboard": "passed",
+  "javascript_syntax": "passed",
+  "diff_whitespace": "passed",
+  "private_screenshots_committed": false,
+  "review_gate": "HARD \u2014 Analyst Gate 1 reopened; holistic Owner Gate 2 pending"
 }

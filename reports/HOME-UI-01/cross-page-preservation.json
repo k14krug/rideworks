@@ -1,0 +1,14 @@
+{
+  "page_states": 36,
+  "fixed_clock_cases": 6,
+  "timezones": 2,
+  "page_text_links_controls_json_equal": true,
+  "accepted_models_equal": true,
+  "source_tables": 26,
+  "original_artifacts": 1422,
+  "all_tables_equal": true,
+  "original_hashes_sizes_mtimes_equal": true,
+  "approved_references_equal": true,
+  "integrity": "ok",
+  "foreign_key_violations": 0
+}

@@ -1,7 +1,7 @@
 # HOME-UI-01 — Dashboard visual refinement
 
-**Status:** Pending Dex implementation; Owner requested the same cleaner visual treatment for Home immediately after accepting AR-UI-01 on 2026-10-11.
-**Task:** A **presentation-focused** redesign of the existing Home/dashboard, not a new dashboard data model or adaptive training feature.
+**CURRENT STATUS:** **in_progress — OWNER-EXPANDED CROSS-PAGE SCOPE, 2026-10-12.** Home redesign is implemented and independently reviewed; see **controlling §10** for the additional implementation now required on Activities list, Performance, Training State, Plan and Settings **in this same draft PR #32**. Final Analyst/Owner gates reopened and not accepted for the expanded work.
+**Task:** A **presentation-focused** RideWorks interface redesign, initially Home/dashboard but explicitly expanded by the Owner to all remaining main pages. No new dashboard/training data model, calculations or adaptive planning.
 **Reference:** [Proposed responsive HTML mockup](../mockups/home-dashboard-ui-concept.html). It is an Analyst-authored starting layout based on Owner-approved Activity Review style; individual card-placement details are proposals for Owner's eventual running-app review, not additional hard user decisions.
 
 ## 1. Requirements Used

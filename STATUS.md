@@ -1,7 +1,7 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** HOME-UI-01 — Home dashboard visual refinement; `/TASK HOME-UI-01` on 2026-10-11.
+**Current task:** HOME-UI-01 — Home dashboard visual refinement; `/TASK HOME-UI-01` resumed on 2026-10-12.
 **State:** **ready_for_review — Owner refinements implemented and reverified**; stopped again at HARD — Analyst Gate 1. Owner Gate 2 for the refined running Home remains open. Task stays `in_progress`; no merge.
 **Branch / PR:** `task/home-ui-01-dashboard`; [draft PR #32](https://github.com/k14krug/rideworks/pull/32); [issue #31](https://github.com/k14krug/rideworks/issues/31). Refinement head is recorded on the PR.
 **Implemented:** Four quick facts first/left in DOM and keyboard order; shared Next Recommended Ride second/right with more width, stacked below the facts on narrow screens. Eight main Home cards have 3px blue edges, except the next ride's 4px edge; no nested stripes. Compact header, responsive recent rows, real Training State/Performance, mileage/goal and complete supporting disclosures remain. CSS stays scoped to Home; all other pages retain their approved styles.

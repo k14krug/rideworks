@@ -33,8 +33,11 @@ with a 1:1.25 width ratio. Both align at the top without stretching the shorter
 card. The eight main cards have thin #2563eb left edges: 3px except the next ride's
 existing 4px. Individual facts, nested completed context, charts and disclosures
 have no additional blue stripes. The restrained treatment is retained for Owner
-review. The explicit no-other-pages decision is the final scope boundary;
-there is no planned visual rollout or Phase 6 work.
+review. The Owner corrected "not" to "now" on 2026-10-12: the Activity Review/Home
+design language should extend to the remaining RideWorks pages through separate,
+focused tasks and running-page reviews. HOME-UI-01 changes Home only; its scoped
+styles preserve unrelated pages within this PR. The correction requires no
+additional Home implementation changes. Phase 6 remains deferred.
 
 ## Reference and deliberate adaptations
 
@@ -183,4 +186,5 @@ Synthetic review: `http://127.0.0.1:8803/?home_tz=America%2FLos_Angeles`.
 Branch `task/home-ui-01-dashboard`; [draft PR #32](https://github.com/k14krug/rideworks/pull/32),
 current head and handoff are recorded on the PR and in `STATUS.md`. Stop again at **HARD — Analyst Gate 1** for code, source parity, interaction
 and visual review. Owner Gate 2 must accept the running dashboard before merge.
-Task remains `in_progress`; no other-page redesign or Phase 6 work.
+Task remains `in_progress`. Future page-specific visual updates follow the Owner's
+corrected direction; they are outside this Home PR. Phase 6 remains deferred.

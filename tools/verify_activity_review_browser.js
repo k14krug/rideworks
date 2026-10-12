@@ -55,6 +55,12 @@ async (page) => {
       const curve = await page.locator('#power-curve-panel').boundingBox();
       const wrapper = await page.locator('.activity-review-redesign').boundingBox();
       check(Math.abs(curve.width-wrapper.width)<2,'Power Curve spans full content width');
+      const overview = await page.locator('.review-layout').boundingBox();
+      const context = await page.locator('.review-context-layout').boundingBox();
+      const bests = await page.locator('#bests').boundingBox();
+      check(overview.y+overview.height<=curve.y,'ride chart and summary first');
+      check(curve.y+curve.height<=context.y,'Power Curve before Workout Context and Current next ride');
+      check(context.y+context.height<=bests.y,'context cards before best efforts');
       check(await page.locator('.ride-summary dl').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).display==='block')),'summary rows retain readable spacing at tablet widths');
       const source = await signals();
       if(source) {

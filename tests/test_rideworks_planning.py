@@ -335,6 +335,7 @@ class StorePlanningTests(TestCase):
             self.assertIn('No recorded intent',review)
             self.assertIn('activity-plan-context',review)
             self.assertIn('Detailed RideWorks review unavailable',review)
-            self.assertLess(review.index('activity-plan-context'),review.index('id="power-curve-panel"'))
+            self.assertLess(review.index('id="power-curve-panel"'),review.index('activity-plan-context'))
+            self.assertLess(review.index('activity-plan-context'),review.index('id="bests"'))
             historic=app.get('/activities/'+self.identity+'?plan_tz=UTC')[2].decode()
             self.assertIn('Current next ride',historic)

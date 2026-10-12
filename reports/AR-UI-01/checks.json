@@ -5,7 +5,7 @@
   },
   "browser": {
     "review_synthetic": {
-      "checks": 14058,
+      "checks": 14127,
       "modes": [
         "native",
         "nativeEmpty",
@@ -26,7 +26,7 @@
       "errors": []
     },
     "review_private": {
-      "checks": 9786,
+      "checks": 9837,
       "modes": [
         "native",
         "thin",
@@ -96,7 +96,7 @@
         320
       ]
     },
-    "total_checks": 26343
+    "total_checks": 26463
   },
   "widths": [
     1440,
@@ -108,5 +108,6 @@
   "private_screenshots_committed": false,
   "javascript_syntax": "passed",
   "diff_whitespace": "passed",
-  "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending"
+  "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending",
+  "owner_section_order": "Ride chart and summary; Power Curve; Workout Context and Current next ride; Best Efforts; Source Evidence"
 }

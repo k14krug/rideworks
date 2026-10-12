@@ -546,7 +546,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .review-section-nav a:hover,
 .activity-review-redesign .review-section-nav a:focus-visible { color: var(--rw-blue); background: #eaf1ff; }
 .activity-review-redesign :is(#overview, #ride-chart-section, #power-curve-panel, #bests, #sources) { scroll-margin-top: 138px; }
-.activity-review-redesign .review-layout { grid-template-columns: minmax(0, 1.9fr) minmax(290px, .83fr); grid-template-areas: 'chart summary' 'context next'; gap: 18px; }
+.activity-review-redesign .review-layout { grid-template-columns: minmax(0, 1.9fr) minmax(290px, .83fr); grid-template-areas: 'chart summary'; gap: 18px; }
+.activity-review-redesign .review-context-layout { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(290px, .83fr); grid-template-areas: 'context next'; gap: 18px; margin: 22px 0; align-items: start; }
 .activity-review-redesign .review-main { grid-area: chart; }
 .activity-review-redesign .ride-summary { grid-area: summary; }
 .activity-review-redesign .activity-plan-context { grid-area: context; margin: 0; }
@@ -608,7 +609,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .review-best-unavailable { padding: 18px 0; }
 @media (max-width: 1100px) {
   .activity-review-redesign { --rw-padding: 20px; }
-  .activity-review-redesign .review-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'chart' 'summary' 'context' 'next'; }
+  .activity-review-redesign .review-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'chart' 'summary'; }
+  .activity-review-redesign .review-context-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'context' 'next'; }
   .activity-review-redesign .review-hero { padding: 24px; }
   .activity-review-redesign .metric { padding-left: 12px; padding-right: 12px; }
   .activity-review-redesign .metric strong { font-size: 22px; }

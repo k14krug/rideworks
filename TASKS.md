@@ -492,4 +492,6 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 **Controlling artifacts:** [AR-UI-01 approved design](docs/design/AR-UI-01-activity-review-redesign.md), [HTML concept](docs/mockups/activity-review-ui-concept.html), [implementation JIT](docs/tasks/AR-UI-01.md). Historical `activity-review.png` remains background, now superseded for the specific Ride Details layout by this approved concept.
 
+**Owner follow-up — 2026-10-11:** Power Curve appears above Workout Context and Current next ride. Implemented and verified across desktop/mobile on the existing draft PR; accepted data and Plan behavior are unchanged.
+
 **Execution and gates:** Start in Dex with `/TASK AR-UI-01` or `/AUTOTASK AR-UI-01` after refreshing `main`. Dex implements on a draft PR, checks native FIT, Strava API/retained stream, thin/unsupported and outdoor views, responsive desktop/320px mobile, keyboard/touch and preservation of PC-01/20-minute/Plan/evidence. **HARD — Analyst Gate 1** technical/UI review, then **HARD — Owner Gate 2** running visual acceptance. No merge/claim of completion before both. Phase 6 stays deferred.

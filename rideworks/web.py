@@ -223,8 +223,9 @@ def activity_review_layout(title, *, identity, metrics, chart, summary, best, ev
 {identity}<div class="review-actions"><a href="#ride-chart-section">Inspect ride ↓</a><a class="curve-jump" href="#power-curve-panel">Power Curve ↓</a></div>{metrics}</section>
 <nav class="review-section-nav" aria-label="Ride detail sections"><a href="#overview">Overview</a><a href="#ride-chart-section">Power &amp; HR</a><a href="#power-curve-panel">Power Curve</a><a href="#bests">Best Efforts</a><a href="#sources">Source Evidence</a></nav>
 <div class="review-layout"><div class="review-main" id="ride-chart-section">{chart}</div>
-{summary}<!-- review-workout-context --><!-- review-current-next --></div>
+{summary}</div>
 <!-- review-power-curve -->
+<div class="review-context-layout"><!-- review-workout-context --><!-- review-current-next --></div>
 <section class="review-best-efforts" id="bests" aria-labelledby="bests-title"><h2 id="bests-title">Best efforts</h2>{best}</section>
 <section class="panel review-evidence" id="sources" aria-labelledby="sources-title"><h2 id="sources-title">Source evidence &amp; calculations</h2>{evidence}</section>
 {payload}</div>''')

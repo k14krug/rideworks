@@ -9,8 +9,8 @@ Owner-approved visual reference implemented in the real RideWorks Activity Revie
   thin/unsupported and outdoor modes. A coherent hero and four source-labelled
   metrics precede local section links, the ride chart and real companion cards.
 - The overview places the large chart alongside Ride Summary on desktop, followed
-  by Workout Context and Current Next Ride. These stack in the same reading order
-  on smaller screens. Classification correction retains its original save action,
+  by the full-width Power Curve, then Workout Context and Current Next Ride.
+  These stack in the same reading order on smaller screens. Classification correction retains its original save action,
   nonce, timezone and activity-return semantics; current next ride uses the live
   Plan and never invents a historical recommendation or confirmed race.
 - Ride Power/HR charts are 380 CSS px on desktop and 320 px on phones. Independent
@@ -40,8 +40,13 @@ production page. Actual FIT, API-rich and thin full-page captures were produced 
 1440, 1024, 768, 390 and 320 CSS px. Private titles and screenshots remain local.
 
 The reference's hero, pale gradient, blue/teal hierarchy, stat strip, section links,
-chart/summary arrangement, context row, full-width curve and bottom disclosures
-are retained. Adaptations follow available evidence:
+chart/summary arrangement, full-width curve, context row and bottom disclosures
+are retained. Adaptations follow available evidence and the Owner’s explicit follow-up:
+
+- **Owner section-order update (2026-10-11):** Power Curve now appears above
+  Workout Context and Current next ride on desktop and mobile. This supersedes
+  the reference’s placement of the context cards before the curve; sources,
+  calculations, controls and review gates are unchanged.
 
 - Real global shell remains unchanged, including its mobile navigation. Mobile
   local navigation sticks at the top after the global shell scrolls out of view.
@@ -76,10 +81,13 @@ These are scoped implementation patterns, not an authorization for other pages:
 ## Verification
 
 Final verification: **445 Python tests**, five focused source-mode tests,
-**26,343 Chromium checks** (14,058 synthetic / 9,786 private review checks;
+**26,463 Chromium checks** (14,127 synthetic / 9,837 private review checks;
 1,945 existing Power Curve, 510 Training State, 14 accepted-page/touch and
 30 unchanged-page geometry/style checks). Zero browser errors. Aggregates are
 recorded in `checks.json` and `preservation.json`. Five focused source-mode tests supplement the full suite.
+The Owner section-order follow-up reran the full Python suite, both private and
+synthetic review browser matrices, and the fixed-clock preservation comparison.
+The review matrix now checks the requested physical section order at every width.
 Browser checks cover section/link targets and scroll clearance, unique IDs,
 expanded-source wrapping, sample/curve readouts, controls, exact period membership,
 keyboard, actual Chromium touchscreen, save/return and reduced-motion contexts.

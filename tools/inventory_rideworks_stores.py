@@ -21,6 +21,17 @@ def file_hash(path):
     return h.hexdigest()
 
 
+def cache_metadata(connection, tables):
+    """Fingerprint replaceable cached contents without publishing underlying evidence."""
+    result = {}
+    for table in ('performance_history','training_stress_cache','planning_classification_cache','power_curve_profiles'):
+        if table in tables:
+            rows = sorted([tuple(r) for r in connection.execute(f'SELECT * FROM "{table}"')],key=repr)
+            columns = [r[1] for r in connection.execute(f'PRAGMA table_info("{table}")')]
+            result[table] = dict(rows=len(rows),content_sha256=digest(rows),columns=columns)
+    return result
+
+
 def inspect(root):
     """Keep normal SQLite locking; refuse WAL rather than mutate shared-memory files."""
     root = Path(root).resolve()
@@ -77,6 +88,7 @@ def inspect(root):
                                             external_to_store=not path.is_relative_to(root),
                                             matches=actual==expected and path.stat().st_size==size))
         result['original_files'] = sum(p.is_file() for p in (root/'originals').rglob('*'))
+        result['cache_fingerprints'] = cache_metadata(conn, tables)
         result['identity_digests'] = {t:digest(v) for t,v in result['identities'].items()}
         result['state_digests'] = {t:digest(v) for t,v in result['state'].items()}
         conn.execute('ROLLBACK')
@@ -98,7 +110,7 @@ def main():
     for index,root in enumerate(a.data_dir,1):
         try:result=inspect(root)
         except (OSError, sqlite3.Error, ValueError) as error:
-            result=dict(path=str(root.resolve()),inspection_error=type(error).__name__)
+            result=dict(path=str(root.resolve()),inspection_error=type(error).__name__,private_reason=str(error))
         result['id']=f'S{index:02d}';results.append(result)
         print(f'{result["id"]}: inspected={"inspection_error" not in result}',flush=True)
     fd=os.open(a.private_output,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)

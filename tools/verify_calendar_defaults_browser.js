@@ -37,6 +37,7 @@ async page => {
       check(response.status()===200,'valid explicit zone');check(tab.url()===target,'explicit bookmark preserved');
       check(navigations===before+1,'no explicit-zone redirect');
       check(await tab.locator('html').getAttribute('data-display-timezone')===(key==='curve_tz'?'America/Los_Angeles':zone),'explicit display zone');
+      if(key==='curve_tz')check(JSON.parse(await tab.locator('#power-curve-data').textContent()).calendar_timezone===zone,'explicit curve calendar');
       if(javaScriptEnabled)for(const time of await tab.locator('[data-local-time]').all())check(await time.getAttribute('data-timezone')===(key==='curve_tz'?'America/Los_Angeles':zone),'explicit date display preserved');
     }
     for(const [path,key] of [['/','home_tz'],['/plan','plan_tz'],['/training-state','tz'],['/activities','tz'],['/settings','tz'],['/performance','curve_tz']]) {
@@ -46,5 +47,5 @@ async page => {
     }
     check(errors.length===0,'no browser errors '+JSON.stringify(errors));cases.push({javaScriptEnabled,timezoneId,navigations});await context.close();
   }
-  console.log(JSON.stringify({checks,cases}));
+  return {checks,cases};
 }

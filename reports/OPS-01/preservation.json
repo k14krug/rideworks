@@ -1,0 +1,11 @@
+{
+  "page_payloads_equal": true,
+  "model_cases": 6,
+  "page_states": 36,
+  "synthetic_originals": 2,
+  "all_tables_equal": true,
+  "table_count": 26,
+  "accepted_models_equal": true,
+  "original_hashes_sizes_mtimes_equal": true,
+  "approved_references_equal": true
+}

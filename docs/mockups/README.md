@@ -25,8 +25,10 @@ SHA-256:
 - `dashboard.png`: `229f4ab5b2e45361cbe0e293eca66618daef950692093138826fe64732aec2b4`
 
 
-## Owner-approved Activity Review concept (implementation pending)
+## Owner-approved Activity Review concept (implemented and accepted)
 
 - [`activity-review-ui-concept.html`](activity-review-ui-concept.html) — **Owner-approved visual direction** for the existing Activity Review / Ride Details page, 2026-10-11. The Owner reviewed it and said **“I like it, please make it so.”** This supersedes the older `activity-review.png` for Ride Details layout. Download/open as a standalone HTML file in Chromium to inspect the actual presentation (GitHub's source view does not execute the mockup). It includes **synthetic** graphs and ride values, functioning demonstration controls, a reorganized hierarchy, and CSS design tokens intended to inform later page-by-page improvements.
 
 **Review boundary:** This concept is approved as the controlling **Ride Details visual reference**, and its implementation is scoped in [AR-UI-01 design](../design/AR-UI-01-activity-review-redesign.md), [Dex JIT](../tasks/AR-UI-01.md), and [issue #29](https://github.com/k14krug/rideworks/issues/29). It is **not a production code drop, numerical model, final running-app acceptance, or permission for a site-wide restyle**. Dex must use the real RideWorks source/Power Curve, best-20, activity classification, Plan and stream components; all mock graphs and numbers are synthetic. Reusable tokens (hero/stat strip, section anchors, card spacing, responsive charts, evidence disclosures) are candidates for later per-page adoption, not a requirement to immediately change Home/Plan/Performance. Owner's running-app review remains required before final task acceptance.
+
+**Implementation acceptance:** [AR-UI-01 PR #30](https://github.com/k14krug/rideworks/pull/30) accepted 2026-10-11 after Owner compact-header review. These styling patterns may inform a later dashboard mockup, but that page needs its own scope and approval.

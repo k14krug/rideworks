@@ -1,0 +1,14 @@
+{
+  "review_modes_checked": 27,
+  "source_tables": 26,
+  "original_artifacts": 1422,
+  "fixed_clock": "2026-10-11T12:00:00-07:00",
+  "compared": true,
+  "accepted_models_equal": true,
+  "raw_payloads_summaries_calculations_provenance_equal": true,
+  "originals_preserved": true,
+  "original_modification_times_equal": true,
+  "approved_reference_hashes_equal": true,
+  "integrity": "ok",
+  "foreign_key_violations": 0
+}

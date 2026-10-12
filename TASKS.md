@@ -486,10 +486,16 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### AR-UI-01 — Activity Review visual redesign
 
-**Status:** **pending implementation** — Owner approved the [new interactive HTML concept](docs/mockups/activity-review-ui-concept.html) on 2026-10-11: **“I like it, please make it so.”** This approves design direction and authorizes a bounded presentation task; Dex has not yet been invoked. [Issue #29](https://github.com/k14krug/rideworks/issues/29).
+**Status:** **done — accepted 2026-10-11** at HARD — Analyst Gate 1 and HARD — Owner Gate 2 after final compact-header Owner review. [PR #30](https://github.com/k14krug/rideworks/pull/30), [issue #29](https://github.com/k14krug/rideworks/issues/29).
 
 **Scope:** Make the existing **Activity Review / Ride Details**, not the Activities list, visually follow the approved concept. New responsive hero and metrics, larger Power/HR chart, contextual Ride Summary/Workout Context/Current Next Ride, full-width existing PC-01 Power Curve and best-effort comparisons, with complete source/calculation disclosures in readable sections. Keep existing sources, chart calculations, source-policy and Plan behavior. Define candidate reusable design tokens but **do not** restyle other pages yet.
 
 **Controlling artifacts:** [AR-UI-01 approved design](docs/design/AR-UI-01-activity-review-redesign.md), [HTML concept](docs/mockups/activity-review-ui-concept.html), [implementation JIT](docs/tasks/AR-UI-01.md). Historical `activity-review.png` remains background, now superseded for the specific Ride Details layout by this approved concept.
 
+**Owner follow-up — 2026-10-11:** Power Curve appears above Workout Context and Current next ride. Implemented and verified across desktop/mobile on the existing draft PR; accepted data and Plan behavior are unchanged.
+
+**Owner compact-header follow-up — `/TASK AR-UI-01`, 2026-10-11:** Remove duplicate upper-right jump buttons and divider; reduce header padding/title/gradient treatment; consolidate redundant type/subtype wording; retain all four aligned metrics and five section links, with compact mobile 2×2 metrics. Target desktop header plus section navigation 190–220px where content permits. Preserve source modes, analysis, charts, controls and provenance. Before/after desktop/mobile comparison and regression verification complete on the existing draft PR; desktop header/navigation measures 212–217px in real source modes. Returned for review without merging.
+
 **Execution and gates:** Start in Dex with `/TASK AR-UI-01` or `/AUTOTASK AR-UI-01` after refreshing `main`. Dex implements on a draft PR, checks native FIT, Strava API/retained stream, thin/unsupported and outdoor views, responsive desktop/320px mobile, keyboard/touch and preservation of PC-01/20-minute/Plan/evidence. **HARD — Analyst Gate 1** technical/UI review, then **HARD — Owner Gate 2** running visual acceptance. No merge/claim of completion before both. Phase 6 stays deferred.
+
+**AR-UI-01 final acceptance evidence:** [Implementation report](reports/AR-UI-01/implementation.md): 445 Python tests, 24,304 Chromium checks, 212–217px desktop header/navigation, chart raised 149–195px, 27 fixed-clock source-mode parity comparisons and all source artifacts/accepted calculations preserved. Owner said “This looks good.” Dashboard redesign is a separate forthcoming task; Phase 6 deferred.

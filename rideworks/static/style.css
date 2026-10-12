@@ -507,3 +507,127 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .plan-feedback label, .plan-correction label { width:100%; }
   .plan-classification-exception { overflow-wrap:anywhere; }
 }
+
+/* AR-UI-01: candidate page language, scoped to Ride Details only. */
+.activity-review-redesign {
+  --rw-ink: #132b48; --rw-blue: #2563eb; --rw-teal: #0c9c92;
+  --rw-canvas: #f4f7fb; --rw-muted: #526780; --rw-stroke: #e0e8f1;
+  --rw-radius: 14px; --rw-padding: 24px;
+  --navy: var(--rw-ink); --blue: var(--rw-blue); --green: var(--rw-teal);
+  --muted: var(--rw-muted); --border: var(--rw-stroke);
+  color: var(--rw-ink); max-width: 1440px; margin: 6px auto 0;
+}
+.activity-review-redesign [hidden] { display: none !important; }
+.activity-review-redesign h1 { font-size: clamp(22px, 2vw, 28px); overflow-wrap: anywhere; }
+.activity-review-redesign h2 { font-size: 19px; letter-spacing: -.35px; }
+.activity-review-redesign p { line-height: 1.6; }
+.activity-review-redesign .panel { padding: var(--rw-padding); border-radius: var(--rw-radius); min-width: 0; box-shadow: 0 3px 15px rgb(22 45 78 / 4.5%); }
+.activity-review-redesign .review-hero { padding: 12px 22px; border: 1px solid #dde7f4; border-radius: 12px; background: #fff; }
+.activity-review-redesign .review-hero header { margin: 0; }
+.activity-review-redesign .breadcrumb { font-size: 11px; margin-bottom: 2px; }
+.activity-review-redesign .ride-heading { gap: 4px 12px; }
+.activity-review-redesign .title-origin { font-size: 12px; }
+.activity-review-redesign .ride-meta { font-size: 12px; margin-top: 4px; }
+.activity-review-redesign .meta-separator { margin: 0 6px; }
+.activity-review-redesign .metrics { gap: 0; margin: 10px 0 0; border-top: 0; padding-top: 0; }
+.activity-review-redesign .metric { display: flex; flex-direction: column; border: 0; border-right: 1px solid var(--rw-stroke); border-radius: 0; background: transparent; padding: 0 16px; min-width: 0; }
+.activity-review-redesign .metric > div { flex: 1; align-items: flex-start; }
+.activity-review-redesign .metric:first-child { padding-left: 0; }
+.activity-review-redesign .metric:last-child { border-right: 0; }
+.activity-review-redesign .metric .icon { width: 17px; height: 17px; }
+.activity-review-redesign .metric strong { padding: 0; margin-top: 4px; font-size: 22px; font-weight: 750; overflow-wrap: anywhere; }
+.activity-review-redesign .metric .metric-unavailable { font-size: 18px; }
+.activity-review-redesign .review-section-nav { position: sticky; top: 56px; z-index: 1; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0; margin: 6px 0 14px; background: var(--rw-canvas); border-bottom: 1px solid var(--rw-stroke); }
+.activity-review-redesign .review-section-nav a { font-size: 12px; padding: 7px 12px; min-height: 38px; color: var(--rw-muted); }
+.activity-review-redesign .review-section-nav a:hover,
+.activity-review-redesign .review-section-nav a:focus-visible { color: var(--rw-blue); background: #eaf1ff; }
+.activity-review-redesign :is(#overview, #ride-chart-section, #power-curve-panel, #bests, #sources) { scroll-margin-top: 138px; }
+.activity-review-redesign .review-layout { grid-template-columns: minmax(0, 1.9fr) minmax(290px, .83fr); grid-template-areas: 'chart summary'; gap: 18px; }
+.activity-review-redesign .review-context-layout { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(290px, .83fr); grid-template-areas: 'context next'; gap: 18px; margin: 22px 0; align-items: start; }
+.activity-review-redesign .review-main { grid-area: chart; }
+.activity-review-redesign .ride-summary { grid-area: summary; }
+.activity-review-redesign .activity-plan-context { grid-area: context; margin: 0; }
+.activity-review-redesign :is(.next-recommended, [data-calendar-timezone]) { grid-area: next; margin: 0; }
+.activity-review-redesign .chart-panel .panel-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; margin-bottom: 18px; }
+.activity-review-redesign .legend { flex-wrap: wrap; gap: 10px 16px; margin: 8px 0 14px; font-size: 12px; }
+.activity-review-redesign .legend label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; min-height: 28px; }
+.activity-review-redesign .legend input { width: 15px; height: 15px; accent-color: var(--rw-blue); margin: 0; }
+.activity-review-redesign .legend i { width: 20px; }
+.activity-review-redesign .hr-swatch { background: transparent; height: 0; border-top: 2px dashed var(--rw-teal); }
+.activity-review-redesign #ride-chart, .activity-review-redesign #chart-svg { height: 380px; }
+.activity-review-redesign #chart-svg text { font-size: 11px; }
+.activity-review-redesign .chart-hr { stroke-dasharray: 5 2; stroke-width: 1.8; }
+.activity-review-redesign .chart-power { stroke-width: 1.6; }
+.activity-review-redesign #sample-readout { font-weight: 600; line-height: 1.7; padding-top: 12px; min-height: 42px; }
+.activity-review-redesign .chart-footer { font-size: 11px; line-height: 1.6; }
+.activity-review-redesign .source-caption { margin-left: 0; font-size: 12px; line-height: 1.6; }
+.activity-review-redesign .ride-summary dl { display: block; border: 0; margin-top: 12px; }
+.activity-review-redesign .ride-summary dl > div { padding: 10px 0; }
+.activity-review-redesign .ride-summary dl > div:nth-child(odd) { border-right: 0; }
+.activity-review-redesign .ride-summary dd { white-space: normal; overflow-wrap: anywhere; text-align: right; }
+.activity-review-redesign .activity-plan-context > p { font-size: 13px; margin-top: 8px; }
+.activity-review-redesign .plan-correction { margin-top: 16px; }
+.activity-review-redesign .plan-correction :is(select, button) { min-height: 38px; border-radius: 8px; }
+.activity-review-redesign .recommended-type { font-size: 23px; margin: 10px 0 6px; }
+.activity-review-redesign .recommended-target { font-size: 14px; }
+.activity-review-redesign .recommended-reason { font-size: 13px; margin-top: 12px; }
+.activity-review-redesign .next-ride-date { font-size: 12px; line-height: 1.7; }
+.activity-review-redesign .power-curve-panel { margin: 22px 0; }
+.activity-review-redesign #power-curve-chart { height: 350px; }
+.activity-review-redesign .power-curve-panel[data-curve-empty="true"] #power-curve-chart { height: 0; min-height: 0; overflow: hidden; }
+.activity-review-redesign .curve-heading { gap: 16px; }
+.activity-review-redesign .curve-heading p { font-size: 12px; margin-top: 4px; }
+.activity-review-redesign .curve-series-controls { margin: 18px 0; }
+.activity-review-redesign .curve-series select { border-radius: 8px; min-height: 38px; }
+.activity-review-redesign .curve-inspection { gap: 18px; padding-top: 16px; }
+.activity-review-redesign .curve-inspection article { min-width: 0; }
+.activity-review-redesign #curve-help { font-size: 12px; }
+.activity-review-redesign .review-best-efforts { margin: 22px 0; }
+.activity-review-redesign .review-best-efforts > h2 { margin-bottom: 12px; }
+.activity-review-redesign .best-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: start; gap: 8px 24px; }
+.activity-review-redesign .best-panel > div:first-child { grid-column: 1; grid-row: 1; }
+.activity-review-redesign .best-panel > div:first-child p { margin-left: 0; font-size: 12px; }
+.activity-review-redesign .best-panel > .best-value { grid-column: 1; grid-row: 2; margin: 4px 0 0; font-size: 29px; }
+.activity-review-redesign .best-panel > .window-context { grid-column: 1; grid-row: 3; font-size: 12px; }
+.activity-review-redesign .best-panel > .source-caption { grid-column: 1; grid-row: 4; }
+.activity-review-redesign .recent-context { grid-column: 2; grid-row: 1 / 5; margin: 0; background: transparent; border: 0; border-left: 1px solid var(--rw-stroke); border-radius: 0; padding: 0 0 0 24px; }
+.activity-review-redesign .recent-values { gap: 12px 24px; margin-top: 12px; }
+.activity-review-redesign .recent-values strong { font-size: 23px; }
+.activity-review-redesign .recent-heading h3 { font-size: 15px; }
+.activity-review-redesign .review-evidence > h2 { margin-bottom: 14px; }
+.activity-review-redesign .review-evidence :is(details, .thin-sources) { border: 0; box-shadow: none; border-radius: 0; margin: 0; max-width: none; padding: 0; }
+.activity-review-redesign .review-evidence details { border-top: 1px solid var(--rw-stroke); padding: 0 0 8px; }
+.activity-review-redesign .review-evidence summary { font-size: 13px; padding: 14px 0 6px; font-weight: 650; }
+.activity-review-redesign details dl { margin: 12px 0; }
+.activity-review-redesign details dl > div { grid-template-columns: minmax(0, 35%) minmax(0, 1fr); }
+.activity-review-redesign :is(dt, dd, p, a) { overflow-wrap: anywhere; }
+.activity-review-redesign .review-unavailable { min-height: 220px; }
+.activity-review-redesign .review-best-unavailable { padding: 18px 0; }
+@media (max-width: 1100px) {
+  .activity-review-redesign { --rw-padding: 20px; }
+  .activity-review-redesign .review-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'chart' 'summary'; }
+  .activity-review-redesign .review-context-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'context' 'next'; }
+  .activity-review-redesign .review-hero { padding: 12px 18px; }
+  .activity-review-redesign .metric { padding-left: 12px; padding-right: 12px; }
+  .activity-review-redesign .metric strong { font-size: 22px; }
+}
+@media (max-width: 620px) {
+  .activity-review-redesign { --rw-padding: 18px; margin-top: 0; }
+  .activity-review-redesign .review-hero { padding: 14px 16px; }
+  .activity-review-redesign .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 0; }
+  .activity-review-redesign .metric { padding: 0 12px; }
+  .activity-review-redesign .metric:nth-child(2) { border: 0; }
+  .activity-review-redesign .metric:nth-child(3) { padding-left: 0; }
+  .activity-review-redesign .metric > div { gap: 6px; font-size: 11px; }
+  .activity-review-redesign .metric strong { font-size: 22px; }
+  .activity-review-redesign .metric .metric-unavailable { font-size: 16px; }
+  .activity-review-redesign .review-section-nav { top: 0; gap: 0; margin-bottom: 16px; }
+  .activity-review-redesign .review-section-nav a { padding: 7px 8px; font-size: 11px; }
+  .activity-review-redesign :is(#overview, #ride-chart-section, #power-curve-panel, #bests, #sources) { scroll-margin-top: 110px; }
+  .activity-review-redesign #ride-chart, .activity-review-redesign #chart-svg { height: 320px; }
+  .activity-review-redesign #power-curve-chart { height: 320px; }
+  .activity-review-redesign .best-panel { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .activity-review-redesign .recent-context { grid-column: 1; grid-row: 5; padding: 16px 0 0; border: 0; border-top: 1px solid var(--rw-stroke); margin-top: 12px; }
+  .activity-review-redesign details dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .activity-review-redesign .curve-inspection { gap: 12px; }
+}

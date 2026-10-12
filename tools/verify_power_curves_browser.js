@@ -2,7 +2,7 @@
    Screenshots stay ignored here; only synthetic captures may be copied to reports. */
 async (page) => {
   const base=new URL(page.url()).origin;
-  const synthetic=base.endsWith(':8783');
+  const synthetic=base.endsWith(':8783') || new URL(page.url()).searchParams.get('synthetic')==='1';
   const capture=synthetic?'synthetic':'private';
   let checks=0;const errors=[];
   page.on('pageerror',e=>errors.push(e.name));

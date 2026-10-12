@@ -1,0 +1,681 @@
+{
+  "python": {
+    "full_suite_passed": 445,
+    "focused_source_mode_tests_passed": 5
+  },
+  "browser": {
+    "review_synthetic": {
+      "checks": 14127,
+      "modes": [
+        "native",
+        "nativeEmpty",
+        "api",
+        "outdoor",
+        "hrOnly",
+        "thin",
+        "powerOnly"
+      ],
+      "widths": [
+        1440,
+        1024,
+        768,
+        390,
+        320
+      ],
+      "touchscreen": true,
+      "errors": []
+    },
+    "review_private": {
+      "checks": 9837,
+      "modes": [
+        "native",
+        "thin",
+        "api",
+        "outdoor"
+      ],
+      "widths": [
+        1440,
+        1024,
+        768,
+        390,
+        320
+      ],
+      "touchscreen": true,
+      "errors": []
+    },
+    "power_curve_private": {
+      "checks": 1331,
+      "source": "private",
+      "desktop": 1440,
+      "mobile": [
+        390,
+        320
+      ],
+      "period_combinations": 25,
+      "errors": []
+    },
+    "power_curve_synthetic": {
+      "checks": 614,
+      "source": "synthetic",
+      "desktop": 1440,
+      "mobile": [
+        390,
+        320
+      ],
+      "period_combinations": 25,
+      "errors": []
+    },
+    "accepted_pages_and_touch": {
+      "checks": 14,
+      "touchscreen": true,
+      "accepted_pages": true,
+      "native_review": true
+    },
+    "training_state": {
+      "checks": 510,
+      "passed": true,
+      "ranges": 4,
+      "lineToggles": 3,
+      "multiRide": true,
+      "unscored": true,
+      "noRecord": true,
+      "keyboard": true,
+      "phone": true,
+      "touch": true,
+      "stableReview": true,
+      "floatingHover": true,
+      "hoverPersistence": true,
+      "hoverAllRanges": true
+    },
+    "unrelated_page_computed_styles": {
+      "checks": 30,
+      "accepted_page_computed_styles_equal": true,
+      "widths": [
+        1440,
+        390,
+        320
+      ]
+    },
+    "total_checks": 26463
+  },
+  "widths": [
+    1440,
+    1024,
+    768,
+    390,
+    320
+  ],
+  "private_screenshots_committed": false,
+  "javascript_syntax": "passed",
+  "diff_whitespace": "passed",
+  "review_gate": "HARD \u2014 Analyst Gate 1; Owner Gate 2 pending",
+  "owner_section_order": "Ride chart and summary; Power Curve; Workout Context and Current next ride; Best Efforts; Source Evidence",
+  "header_refinement": {
+    "invocation": "/TASK AR-UI-01",
+    "before_head": "bc778f2",
+    "header_target_desktop_css_px": [
+      190,
+      220
+    ],
+    "review_synthetic": {
+      "checks": 14298,
+      "modes": [
+        "native",
+        "nativeEmpty",
+        "api",
+        "outdoor",
+        "hrOnly",
+        "thin",
+        "powerOnly"
+      ],
+      "widths": [
+        1440,
+        1024,
+        768,
+        390,
+        320
+      ],
+      "headers": [
+        {
+          "mode": "native",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "native",
+          "width": 1024,
+          "headerAndNav": 208.78125,
+          "chartTop": 302.78125
+        },
+        {
+          "mode": "native",
+          "width": 768,
+          "headerAndNav": 263.28125,
+          "chartTop": 357.28125
+        },
+        {
+          "mode": "native",
+          "width": 390,
+          "headerAndNav": 351.46875,
+          "chartTop": 676.46875
+        },
+        {
+          "mode": "native",
+          "width": 320,
+          "headerAndNav": 406.5625,
+          "chartTop": 731.5625
+        },
+        {
+          "mode": "nativeEmpty",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "nativeEmpty",
+          "width": 320,
+          "headerAndNav": 406.5625,
+          "chartTop": 731.5625
+        },
+        {
+          "mode": "api",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "api",
+          "width": 1024,
+          "headerAndNav": 208.78125,
+          "chartTop": 302.78125
+        },
+        {
+          "mode": "api",
+          "width": 768,
+          "headerAndNav": 223.78125,
+          "chartTop": 317.78125
+        },
+        {
+          "mode": "api",
+          "width": 390,
+          "headerAndNav": 380.0625,
+          "chartTop": 705.0625
+        },
+        {
+          "mode": "api",
+          "width": 320,
+          "headerAndNav": 415.25,
+          "chartTop": 740.25
+        },
+        {
+          "mode": "outdoor",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "outdoor",
+          "width": 320,
+          "headerAndNav": 396.0625,
+          "chartTop": 721.0625
+        },
+        {
+          "mode": "hrOnly",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "hrOnly",
+          "width": 320,
+          "headerAndNav": 415.25,
+          "chartTop": 740.25
+        },
+        {
+          "mode": "thin",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "thin",
+          "width": 1024,
+          "headerAndNav": 208.78125,
+          "chartTop": 302.78125
+        },
+        {
+          "mode": "thin",
+          "width": 768,
+          "headerAndNav": 241.28125,
+          "chartTop": 335.28125
+        },
+        {
+          "mode": "thin",
+          "width": 390,
+          "headerAndNav": 343.96875,
+          "chartTop": 668.96875
+        },
+        {
+          "mode": "thin",
+          "width": 320,
+          "headerAndNav": 407.75,
+          "chartTop": 732.75
+        },
+        {
+          "mode": "powerOnly",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "powerOnly",
+          "width": 320,
+          "headerAndNav": 407.75,
+          "chartTop": 732.75
+        }
+      ],
+      "touchscreen": true,
+      "errors": []
+    },
+    "review_private": {
+      "checks": 9962,
+      "modes": [
+        "native",
+        "thin",
+        "api",
+        "outdoor"
+      ],
+      "widths": [
+        1440,
+        1024,
+        768,
+        390,
+        320
+      ],
+      "headers": [
+        {
+          "mode": "native",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "native",
+          "width": 1024,
+          "headerAndNav": 230.78125,
+          "chartTop": 324.78125
+        },
+        {
+          "mode": "native",
+          "width": 768,
+          "headerAndNav": 274.375,
+          "chartTop": 368.375
+        },
+        {
+          "mode": "native",
+          "width": 390,
+          "headerAndNav": 389.46875,
+          "chartTop": 714.46875
+        },
+        {
+          "mode": "native",
+          "width": 320,
+          "headerAndNav": 424.65625,
+          "chartTop": 749.65625
+        },
+        {
+          "mode": "thin",
+          "width": 1440,
+          "headerAndNav": 211.578125,
+          "chartTop": 305.578125
+        },
+        {
+          "mode": "thin",
+          "width": 1024,
+          "headerAndNav": 203.78125,
+          "chartTop": 297.78125
+        },
+        {
+          "mode": "thin",
+          "width": 768,
+          "headerAndNav": 241.28125,
+          "chartTop": 335.28125
+        },
+        {
+          "mode": "thin",
+          "width": 390,
+          "headerAndNav": 314.46875,
+          "chartTop": 639.46875
+        },
+        {
+          "mode": "thin",
+          "width": 320,
+          "headerAndNav": 371.65625,
+          "chartTop": 696.65625
+        },
+        {
+          "mode": "api",
+          "width": 1440,
+          "headerAndNav": 216.578125,
+          "chartTop": 310.578125
+        },
+        {
+          "mode": "api",
+          "width": 1024,
+          "headerAndNav": 208.78125,
+          "chartTop": 302.78125
+        },
+        {
+          "mode": "api",
+          "width": 768,
+          "headerAndNav": 251.28125,
+          "chartTop": 345.28125
+        },
+        {
+          "mode": "api",
+          "width": 390,
+          "headerAndNav": 351.46875,
+          "chartTop": 676.46875
+        },
+        {
+          "mode": "api",
+          "width": 320,
+          "headerAndNav": 442.75,
+          "chartTop": 767.75
+        },
+        {
+          "mode": "outdoor",
+          "width": 1440,
+          "headerAndNav": 211.578125,
+          "chartTop": 305.578125
+        },
+        {
+          "mode": "outdoor",
+          "width": 320,
+          "headerAndNav": 352.46875,
+          "chartTop": 677.46875
+        }
+      ],
+      "touchscreen": true,
+      "errors": []
+    },
+    "unrelated_page_computed_styles": {
+      "checks": 30,
+      "accepted_page_computed_styles_equal": true,
+      "widths": [
+        1440,
+        390,
+        320
+      ]
+    },
+    "accepted_pages_and_touch": {
+      "checks": 14,
+      "touchscreen": true,
+      "accepted_pages": true,
+      "native_review": true
+    },
+    "total_rerun_checks": 24304,
+    "comparisons": [
+      {
+        "source": "synthetic",
+        "mode": "native",
+        "width": 1440,
+        "before_header_and_nav": 334.109375,
+        "after_header_and_nav": 216.578125,
+        "chart_moves_up": 125.53125
+      },
+      {
+        "source": "synthetic",
+        "mode": "native",
+        "width": 1024,
+        "before_header_and_nav": 357.703125,
+        "after_header_and_nav": 208.78125,
+        "chart_moves_up": 156.921875
+      },
+      {
+        "source": "synthetic",
+        "mode": "native",
+        "width": 768,
+        "before_header_and_nav": 458.171875,
+        "after_header_and_nav": 263.28125,
+        "chart_moves_up": 202.890625
+      },
+      {
+        "source": "synthetic",
+        "mode": "native",
+        "width": 390,
+        "before_header_and_nav": 521.28125,
+        "after_header_and_nav": 351.46875,
+        "chart_moves_up": 169.8125
+      },
+      {
+        "source": "synthetic",
+        "mode": "native",
+        "width": 320,
+        "before_header_and_nav": 577.671875,
+        "after_header_and_nav": 406.5625,
+        "chart_moves_up": 171.109375
+      },
+      {
+        "source": "synthetic",
+        "mode": "api",
+        "width": 1440,
+        "before_header_and_nav": 357.296875,
+        "after_header_and_nav": 216.578125,
+        "chart_moves_up": 148.71875
+      },
+      {
+        "source": "synthetic",
+        "mode": "api",
+        "width": 1024,
+        "before_header_and_nav": 380.890625,
+        "after_header_and_nav": 208.78125,
+        "chart_moves_up": 180.109375
+      },
+      {
+        "source": "synthetic",
+        "mode": "api",
+        "width": 768,
+        "before_header_and_nav": 445.859375,
+        "after_header_and_nav": 223.78125,
+        "chart_moves_up": 230.078125
+      },
+      {
+        "source": "synthetic",
+        "mode": "api",
+        "width": 390,
+        "before_header_and_nav": 553.5625,
+        "after_header_and_nav": 380.0625,
+        "chart_moves_up": 173.5
+      },
+      {
+        "source": "synthetic",
+        "mode": "api",
+        "width": 320,
+        "before_header_and_nav": 609.546875,
+        "after_header_and_nav": 415.25,
+        "chart_moves_up": 194.296875
+      },
+      {
+        "source": "synthetic",
+        "mode": "thin",
+        "width": 1440,
+        "before_header_and_nav": 376.484375,
+        "after_header_and_nav": 216.578125,
+        "chart_moves_up": 167.90625
+      },
+      {
+        "source": "synthetic",
+        "mode": "thin",
+        "width": 1024,
+        "before_header_and_nav": 374.078125,
+        "after_header_and_nav": 208.78125,
+        "chart_moves_up": 173.296875
+      },
+      {
+        "source": "synthetic",
+        "mode": "thin",
+        "width": 768,
+        "before_header_and_nav": 456.546875,
+        "after_header_and_nav": 241.28125,
+        "chart_moves_up": 223.265625
+      },
+      {
+        "source": "synthetic",
+        "mode": "thin",
+        "width": 390,
+        "before_header_and_nav": 509.359375,
+        "after_header_and_nav": 343.96875,
+        "chart_moves_up": 165.390625
+      },
+      {
+        "source": "synthetic",
+        "mode": "thin",
+        "width": 320,
+        "before_header_and_nav": 595.234375,
+        "after_header_and_nav": 407.75,
+        "chart_moves_up": 187.484375
+      },
+      {
+        "source": "private",
+        "mode": "native",
+        "width": 1440,
+        "before_header_and_nav": 403.171875,
+        "after_header_and_nav": 216.578125,
+        "chart_moves_up": 194.59375
+      },
+      {
+        "source": "private",
+        "mode": "native",
+        "width": 1024,
+        "before_header_and_nav": 388.3125,
+        "after_header_and_nav": 230.78125,
+        "chart_moves_up": 165.53125
+      },
+      {
+        "source": "private",
+        "mode": "native",
+        "width": 768,
+        "before_header_and_nav": 503.25,
+        "after_header_and_nav": 274.375,
+        "chart_moves_up": 236.875
+      },
+      {
+        "source": "private",
+        "mode": "native",
+        "width": 390,
+        "before_header_and_nav": 581.0625,
+        "after_header_and_nav": 389.46875,
+        "chart_moves_up": 191.59375
+      },
+      {
+        "source": "private",
+        "mode": "native",
+        "width": 320,
+        "before_header_and_nav": 647.75,
+        "after_header_and_nav": 424.65625,
+        "chart_moves_up": 223.09375
+      },
+      {
+        "source": "private",
+        "mode": "thin",
+        "width": 1440,
+        "before_header_and_nav": 362.734375,
+        "after_header_and_nav": 211.578125,
+        "chart_moves_up": 159.15625
+      },
+      {
+        "source": "private",
+        "mode": "thin",
+        "width": 1024,
+        "before_header_and_nav": 348.28125,
+        "after_header_and_nav": 203.78125,
+        "chart_moves_up": 152.5
+      },
+      {
+        "source": "private",
+        "mode": "thin",
+        "width": 768,
+        "before_header_and_nav": 426.65625,
+        "after_header_and_nav": 241.28125,
+        "chart_moves_up": 193.375
+      },
+      {
+        "source": "private",
+        "mode": "thin",
+        "width": 390,
+        "before_header_and_nav": 521.046875,
+        "after_header_and_nav": 314.46875,
+        "chart_moves_up": 206.578125
+      },
+      {
+        "source": "private",
+        "mode": "thin",
+        "width": 320,
+        "before_header_and_nav": 557.84375,
+        "after_header_and_nav": 371.65625,
+        "chart_moves_up": 186.1875
+      },
+      {
+        "source": "private",
+        "mode": "api",
+        "width": 1440,
+        "before_header_and_nav": 357.296875,
+        "after_header_and_nav": 216.578125,
+        "chart_moves_up": 148.71875
+      },
+      {
+        "source": "private",
+        "mode": "api",
+        "width": 1024,
+        "before_header_and_nav": 354.890625,
+        "after_header_and_nav": 208.78125,
+        "chart_moves_up": 154.109375
+      },
+      {
+        "source": "private",
+        "mode": "api",
+        "width": 768,
+        "before_header_and_nav": 473.359375,
+        "after_header_and_nav": 251.28125,
+        "chart_moves_up": 230.078125
+      },
+      {
+        "source": "private",
+        "mode": "api",
+        "width": 390,
+        "before_header_and_nav": 523.671875,
+        "after_header_and_nav": 351.46875,
+        "chart_moves_up": 172.203125
+      },
+      {
+        "source": "private",
+        "mode": "api",
+        "width": 320,
+        "before_header_and_nav": 637.046875,
+        "after_header_and_nav": 442.75,
+        "chart_moves_up": 194.296875
+      },
+      {
+        "source": "private",
+        "mode": "outdoor",
+        "width": 1440,
+        "before_header_and_nav": 362.734375,
+        "after_header_and_nav": 211.578125,
+        "chart_moves_up": 159.15625
+      },
+      {
+        "source": "private",
+        "mode": "outdoor",
+        "width": 320,
+        "before_header_and_nav": 537.046875,
+        "after_header_and_nav": 352.46875,
+        "chart_moves_up": 184.578125
+      }
+    ],
+    "before_after_desktop_mobile_captures_compared": true,
+    "private_screenshots_committed": false,
+    "rest_of_activity_review_unchanged": true
+  }
+}

@@ -55,8 +55,8 @@ async (page) => {
   check(JSON.stringify(await next())===JSON.stringify(planned),'current Activity Review same live next');
   check(await page.locator('#review-next-heading').textContent()==='Next Recommended Ride','latest review label');
   check(await page.locator('.activity-plan-context').textContent().then(t=>t.includes('No recorded intent')),'intent not fabricated');
-  const placement=await page.locator('.activity-planning').evaluate(el=>({plan:el.offsetTop,chart:document.querySelector('.review-layout')?.offsetTop}));
-  check(placement.chart && placement.plan<placement.chart,'next ride prominent before chart');
+  const placement=await page.locator('.next-recommended').evaluate(el=>({plan:el.getBoundingClientRect().top,curve:document.querySelector('#power-curve-panel')?.getBoundingClientRect().bottom,bests:document.querySelector('#bests')?.getBoundingClientRect().top}));
+  check(placement.curve && placement.plan>placement.curve && placement.plan<placement.bests,'Owner order: Power Curve, current next ride, best efforts');
   await page.screenshot({path:'output/playwright/p501-v2-review-desktop.png'});
   await open('/activities/'+original.latest_hard.activity_id);
   check(await page.locator('#review-next-heading').textContent()==='Current next ride','historic review live current label');

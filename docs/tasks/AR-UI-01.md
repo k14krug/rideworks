@@ -1,6 +1,6 @@
 # AR-UI-01 — Implement approved Activity Review redesign
 
-**Status:** pending implementation; **Owner-approved visual concept** 2026-10-11.
+**Status:** **done — accepted 2026-10-11**, HARD — Analyst Gate 1 and HARD — Owner Gate 2 accepted after final compact-header review. [PR #30](https://github.com/k14krug/rideworks/pull/30).
 **Task type:** Scoped user-interface / interaction redesign, not changes to activity evidence, analysis, source ingestion, Performance, planner or Phase 6.
 **Objective:** Bring the **real** Activity Review / Ride Details view into the visual hierarchy, responsiveness and clarity approved in `docs/mockups/activity-review-ui-concept.html`, without losing any existing truthful analytical behavior.
 
@@ -75,3 +75,9 @@ Dex will push a **draft AR-UI-01 PR**, code and tests, plus `reports/AR-UI-01/im
 Pause if a proposed visual change requires changing numerical calculations, losing currently inspectable provenance, fabricating absent fields, breaking source-mode layouts, altering planner intent/classification semantics, changing chart period rules or touching original files. Present a narrow proposed resolution. A responsive CSS bug, component rearrangement or small JS behavior issue is routine implementation work, **not** another research round.
 
 **Start:** A permitted explicit `/TASK AR-UI-01` or `/AUTOTASK AR-UI-01` after refreshing `main`; use the existing approved concept and current real application code.
+
+## 8. Final acceptance — 2026-10-11
+
+**Both hard gates accepted.** The Owner reviewed the refined running Activity Review and stated **“This looks good. Now I'd like to do the same thing with the dashboard.”** That follows the Owner-requested removal of duplicate header buttons/divider and 212–217px desktop header. Analyst reviewed PR #30 code and [implementation report](../../reports/AR-UI-01/implementation.md): Dex reported 445 Python tests, 24,304 Chromium checks, source/metric parity across 27 fixed-clock review modes, preservation of all 26 store tables/1,422 original artifacts and accepted analytical models, plus explicit native FIT/API/thin/outdoor, mobile and keyboard/touch coverage. This review relies on Dex's private-store verification report rather than claiming a separate run of the private source archive.
+
+**Delivered** is a visual-only change, with more prominent real Power/HR charts, full-width PC-01 curve, compact summary/context cards and grouped source evidence. The approved HTML supersedes the older PNG for this page only. No new numerical/source/planner policy accepted. Merge PR #30 and close issue #29; future Home restyling is a separate task and Phase 6 remains deferred.

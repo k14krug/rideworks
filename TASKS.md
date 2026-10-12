@@ -513,6 +513,10 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-01 — One authoritative RideWorks data store
 
+**Latest Owner direction (2026-10-12; supersedes older destination references below):** **Do not convert to Flask now**. Keep current stdlib web application. Move the active `local_data/p2-05-review` complete SQLite/originals/Strava state to **top-level `data/` inside the RideWorks checkout**, explicitly **not `instance/` and not `~/.rideworks`**. Normal launch must use it automatically; ignore top-level `/data/` in Git. Delete known obsolete `local_data` review/test directories in a single batch without new 85-source reconciliation. Keep the active old source for rollback until the new store is accepted, then finish cleanup. Owner uses existing backups. [Controlling JIT §8](docs/tasks/OPS-01.md); no Flask conversion or further exploratory work.
+
+
+
 **Status:** in_progress — Stage A implemented under `/AUTOTASK OPS-01`, ready for HARD — Analyst Gate 1 on [draft PR #34](https://github.com/k14krug/rideworks/pull/34), 2026-10-12. [Issue #33](https://github.com/k14krug/rideworks/issues/33). Read-only inventory and synthetic verification complete; no migration, data promotion or cleanup has occurred. Stage A is the approved `America/Los_Angeles` server-default fix plus **read-only** candidate-store inventory. Report to HARD — Analyst Gate 1, then owner chooses actual source/deployment host/destination at HARD — Owner Gate 2 before any store move.
 
 **Purpose:** Promote RideWorks from task-specific `local_data/<task>` verification copies to **one stable everyday store** outside the repository, while keeping SQLite, preserved original ride data, source provenance, historical metrics and private Strava tokens/settings intact. Existing default `~/.rideworks` is the recommended destination; Owner has not yet agreed or selected an authoritative source.

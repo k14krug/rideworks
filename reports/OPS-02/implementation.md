@@ -2,7 +2,7 @@
 
 Implemented on `task/ops-02-nginx-runtime` from refreshed `main` at `16934bd`,
 including the Owner's HTTP-only correction in the Analyst's JIT and issue #35.
-Ready for **HARD — Analyst review**. Owner deployment acceptance follows;
+[Draft PR #36](https://github.com/k14krug/rideworks/pull/36) is ready for **HARD — Analyst review**. Owner deployment acceptance follows;
 the task remains `in_progress` and is not authorized to merge or close yet.
 
 ## Result

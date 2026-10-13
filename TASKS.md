@@ -528,7 +528,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-02 — nginx proxy compatibility and framework-neutral runtime settings
 
-**Status:** in_progress; ready for HARD — Analyst review on `task/ops-02-nginx-runtime`.
+**Status:** in_progress; ready for HARD — Analyst review on `task/ops-02-nginx-runtime`, [draft PR #36](https://github.com/k14krug/rideworks/pull/36).
 
 **Purpose:** Support the Owner's HTTP-only private home-LAN nginx reverse proxy using a configured public origin and use `RUN_PORT`/`DEBUG` in place of misleading Flask-named runtime keys.
 

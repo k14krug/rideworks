@@ -1,10 +1,9 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** OPS-02 — nginx proxy compatibility and framework-neutral runtime settings.
-**State:** ready_for_review.
-**Branch:** `task/ops-02-nginx-runtime`; [draft PR #36](https://github.com/k14krug/rideworks/pull/36), [issue #35](https://github.com/k14krug/rideworks/issues/35).
-**Scope:** Corrected [OPS-02 JIT](docs/tasks/OPS-02.md): HTTP-only private home-LAN nginx, optional configured HTTP/HTTPS `PUBLIC_ORIGIN`, strict Host/Origin/nonce checks, loopback backend, trusted browser OAuth callback, `RUN_PORT`/`DEBUG` names and deployment docs. No TLS requirement.
-**Verification:** 93 focused tests and all 474 regression tests passed, including live ephemeral HTTP LAN Host/Origin and fake OAuth checks. [Implementation report](reports/OPS-02/implementation.md). No production store, credentials or live `.env` changes; actual Owner nginx/provider-domain acceptance untested.
-**Next action:** HARD — Analyst review of the HTTP/configuration boundary and verification. Owner confirms deployed HTTP nginx URL, Settings/Plan actions and Strava behavior after technical review; no merge/close yet.
-**Last completed task:** OPS-01 migration accepted and merged as [PR #34](https://github.com/k14krug/rideworks/pull/34). Private rollback source remains retained; no cleanup is part of OPS-02.
+**Last completed task:** **OPS-02 — HTTP-only home-LAN nginx compatibility and runtime configuration.** Analyst reviewed and accepted the implementation in [PR #36](https://github.com/k14krug/rideworks/pull/36) at `8cf79e1`; Owner expressly directed merge to `main` without requiring production-deployment testing first (2026-10-12). [Issue #35](https://github.com/k14krug/rideworks/issues/35).
+**Delivered:** Optional `PUBLIC_ORIGIN` supporting HTTP private-LAN nginx, exact Host/Origin/nonce checks, unchanged backend loopback binding, safe browser Strava callback construction and existing token preservation, and `RUN_PORT`/`DEBUG` runtime settings. HTTPS remains optional, not required. Existing SQLite data and analytics unchanged.
+**Verification:** Dex reports 93 focused tests and all 474 regression tests passed using disposable stores, synthetic HTTP proxy requests and fake OAuth. [Implementation report](reports/OPS-02/implementation.md). Analyst inspected the code and evidence, but did not independently exercise the live server.
+**Deployment follow-up (not a merge gate):** Actual home-LAN nginx/systemd setup and Strava callback-domain acceptance have not been tested. When the updated app is deployed, confirm public `Host` forwarding, correct `PUBLIC_ORIGIN` (HTTP, LAN hostname/IP and any external port), systemd `RUN_PORT`, and Settings/Plan POSTs. Existing Strava connections require no reauthorization. Diagnose actual provider restrictions only if browser OAuth reconnect is needed.
+**Prior task:** OPS-01 production data migration accepted and merged in [PR #34](https://github.com/k14krug/rideworks/pull/34). Protected private rollback source was retained; no local cleanup is implied by this merge.
+**Next task:** None automatically started; Phase 6 remains deferred.

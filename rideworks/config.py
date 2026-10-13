@@ -74,7 +74,7 @@ def startup_config(data_dir=None, port=None, *, repo_root=None, environ=None):
     if port is not None:
         selected['FLASK_RUN_PORT'] = port
     _dotenv(repository_root() if repo_root is None else repo_root, selected)
-    raw_port = str(selected.get('FLASK_RUN_PORT', '8765')).strip()
+    raw_port = str(selected.get('FLASK_RUN_PORT', '8766')).strip()
     if not raw_port.isascii() or not raw_port.isdecimal() or not 1 <= int(raw_port) <= 65535:
         raise ConfigurationError('FLASK_RUN_PORT / serve --port must be an integer from 1 to 65535')
     raw_debug = str(selected.get('FLASK_DEBUG', '0')).strip().lower()

@@ -796,6 +796,8 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
 
 
 def serve(data_dir=None, port=8765, *, debug=False):
+    if not (resolve_data_dir(data_dir) / 'rideworks.sqlite3').is_file():
+        raise RideWorksError('Selected RideWorks store is missing. Restore your data or select an existing store with --data-dir. For a new installation, import a ride first.')
     with create_server(data_dir, port, debug=debug) as server:
         print(f'RideWorks: http://127.0.0.1:{server.server_port}/ (Ctrl+C to stop)', flush=True)
         if debug:

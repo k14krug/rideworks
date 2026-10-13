@@ -29,11 +29,26 @@ class ConfigTests(unittest.TestCase):
     def test_missing_env_keeps_established_defaults(self):
         config = self.settings()
         self.assertIsNone(config.data_dir)
-        self.assertEqual(config.port, 8765)
+        self.assertEqual(config.port, 8766)
         self.assertFalse(config.debug)
         with patch.dict(os.environ, {}, clear=True):
             from rideworks.store import resolve_data_dir
-            self.assertEqual(resolve_data_dir(config.data_dir), Path('~/.rideworks').expanduser().resolve())
+            self.assertEqual(resolve_data_dir(config.data_dir), Path(__file__).resolve().parents[1] / 'data')
+
+    def test_project_default_is_independent_of_cwd_and_missing_server_does_not_create(self):
+        from rideworks.store import resolve_data_dir
+        from rideworks.web import serve
+        from rideworks.errors import RideWorksError
+        previous=Path.cwd()
+        try:
+            os.chdir(self.root)
+            with patch.dict(os.environ,{},clear=True):
+                self.assertEqual(resolve_data_dir(),Path(__file__).resolve().parents[1]/'data')
+            missing=self.root/'missing-store'
+            with self.assertRaisesRegex(RideWorksError,'store is missing'):
+                serve(missing,8766)
+            self.assertFalse(missing.exists())
+        finally:os.chdir(previous)
 
     def test_supported_values_quotes_comments_and_export(self):
         config = self.settings('''# local settings

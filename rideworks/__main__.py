@@ -13,7 +13,7 @@ from .store import Store
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="rideworks")
-    parser.add_argument("--data-dir", help="Data location (overrides RIDEWORKS_DATA_DIR and ~/.rideworks)")
+    parser.add_argument("--data-dir", help="Data location (overrides RIDEWORKS_DATA_DIR and project-root data/)")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("import-fit", help="Preserve and import one FIT/FIT.GZ").add_argument("path")
     commands.add_parser("import-strava-export", help="Import historical activities from a Strava ZIP or extracted root").add_argument("path")
@@ -30,7 +30,7 @@ def main(argv=None):
     repair.add_argument('--targets',required=True,help='Private JSON mapping of Strava IDs to established RideWorks Activity IDs')
     commands.add_parser('strava-disconnect', help='Revoke/remove local Strava authorization; retain history')
     serve = commands.add_parser("serve", help="Open the local RideWorks browser application")
-    serve.add_argument("--port", type=int, help="Loopback port (overrides FLASK_RUN_PORT; default: 8765)")
+    serve.add_argument("--port", type=int, help="Loopback port (overrides FLASK_RUN_PORT; default: 8766)")
     args = parser.parse_args(argv)
     try:
         config = startup_config(args.data_dir, getattr(args, 'port', None))

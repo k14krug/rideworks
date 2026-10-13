@@ -327,7 +327,7 @@ class DataDirectoryTests(unittest.TestCase):
                 self.assertEqual(resolve_data_dir(), Path(temporary))
                 self.assertEqual(resolve_data_dir('/tmp/explicit-rideworks'), Path('/tmp/explicit-rideworks'))
             with patch.dict(os.environ, {}, clear=True):
-                self.assertEqual(resolve_data_dir(), Path('~/.rideworks').expanduser().resolve())
+                self.assertEqual(resolve_data_dir(), Path(__file__).resolve().parents[1] / 'data')
 
 
 if __name__ == '__main__':

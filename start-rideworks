@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+rideworks_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec "$rideworks_root/.venv/bin/python" "$rideworks_root/tools/launch_rideworks.py"

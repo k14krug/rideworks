@@ -153,7 +153,7 @@ class Settings:
 <div><dt>App credentials</dt><dd id="strava-credentials">{'Configured' if credentials else 'Missing'}</dd></div>
 <div><dt>Last successful sync</dt><dd id="strava-last-sync">{last_time}</dd></div></dl>
 {setup}{notice}{outcome}<div class="strava-actions">{actions}</div>
-<p class="strava-manual-note">Sync runs only when you choose Sync now. It does not run continuously.</p></section>{self.goal_content(query)}</div>'''
+<p class="strava-manual-note">Sync runs only when you choose Sync now. It does not run continuously.</p></section>{self.goal_content(query)}<section class="panel"><h2>Data store</h2><p>Your activity history, originals and local settings are stored here:</p><p id="active-data-dir"><code>{escape(str(self.data_dir))}</code></p></section></div>'''
 
     @staticmethod
     def redirect(location='/settings'):

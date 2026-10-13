@@ -1,5 +1,7 @@
 # OPS-01 Stage A — review package
 
+Current follow-up: [project-root data promotion and cleanup](promotion.md). The later JIT §8 source/target decision and promotion evidence supersede this Stage A report’s selection deferrals.
+
 Invocation: `/AUTOTASK OPS-01`, 2026-10-12. Controlling JIT: [OPS-01](../../docs/tasks/OPS-01.md). Branch: `task/ops-01-production-readiness`; [draft PR #34](https://github.com/k14krug/rideworks/pull/34), [issue #33](https://github.com/k14krug/rideworks/issues/33).
 
 Stage A implements the approved timezone default and inventories candidate stores read-only. **Stop at HARD — Analyst Gate 1.** The source, deployment host and destination remain unselected. No promotion, permanent copy, rollback snapshot, migration, cleanup, credential reset, startup redirection or new backup subsystem was performed.

@@ -50,6 +50,17 @@ The approved source remains protected for rollback; original ZIP/FIT input archi
 
 Rollback: stop the new server and explicitly launch the protected old source. Its complete originals/SQLite/private sidecars remain available; no additional archive or scheduled backup job was created. Current docs list the exact production files for the Owner's existing backup strategy, including database consistency and secret handling.
 
+## Owner-directed final research cleanup
+
+After the Owner explicitly requested removing the remaining old research clutter,
+removed **15 additional obsolete research/empty directories** and **two old logs**,
+reclaiming approximately **1568.7 MiB**. This includes the old reconciliation
+snapshot, temporary plotting packages, upstream reference checkout and retired
+research outputs. Only original inputs, current OPS-01 private evidence and the
+protected rollback source directories remain under local-data. Home and Activities
+still return 200. No source archive, current production data or rollback copy was
+removed; Gate 3/4 disposition remains unchanged.
+
 ## Review needed
 
 **Analyst Gate 3:** Review the one-source/target evidence, safe default/startup and missing-store behavior, launcher/Settings changes and authorized cleanup. **Owner Gate 4:** Open the desktop shortcut and confirm familiar history, goal, correction and Strava state. Until Owner acceptance, retain the old source. After both gates, complete the already-authorized removal of that source with writers stopped; do not declare OPS-01 accepted or merge early. Phase 6 remains deferred.

@@ -25,5 +25,11 @@
   },
   "launcher_restart_from_other_cwd": true,
   "windows_desktop_shortcut_created": true,
-  "protected_source_retained": true
+  "protected_source_retained": true,
+  "owner_followup_cleanup": {
+    "additional_obsolete_directories_removed": 15,
+    "old_logs_removed": 2,
+    "approx_allocated_bytes_removed": 1644920832,
+    "home_activities_http_200": true
+  }
 }

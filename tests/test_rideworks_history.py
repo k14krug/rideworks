@@ -126,8 +126,9 @@ class HistoryTests(unittest.TestCase):
         self.export([row()])
         for q in ('page=-1', 'page=x', 'page=' + '9' * 1000, 'page=0', 'sort=DROP+TABLE',
                   'type=unknown', 'from=bogus', 'to=2024-99-99',
-                  'from=2025-01-01&to=2024-01-01', '&'.join('x=1' for _ in range(21))):
+                  'from=2025-01-01&to=2024-01-01'):
             self.assertIn('Activities', self.html('/activities?' + q))
+        self.assertEqual(self.app.get('/activities?'+'&'.join('x=1' for _ in range(21)))[0],400)
         self.assertIn('No matching activities', self.html('/activities?q=absent'))
         self.assertIn('0–0 of 0', self.html('/activities?q=absent'))
 
@@ -237,12 +238,12 @@ class HistoryTests(unittest.TestCase):
             self.assertEqual(result['rows'][0]['date_day'],'2024-07-01')
         self.assertEqual(self.store.activity_history(),before)
 
-    def test_invalid_or_missing_timezone_never_guesses_absolute_filter_day(self):
+    def test_invalid_explicit_timezone_never_guesses_absolute_filter_day(self):
         self.export([row('1',date='2024-01-02T03:00:00+00:00'), row('2',date='2024-01-02T03:00:00')])
         for zone in ('', '../UTC', '/etc/passwd', 'NoSuch/Timezone', '<script>'):
             query='from=2024-01-02&to=2024-01-02&tz='+quote(zone)
             self.assertEqual(browse(self.store,query)['count'],1)
-            self.assertIn('browser timezone',self.html('/activities?'+query))
+            self.assertEqual(self.app.get('/activities?'+query)[0],400)
         self.assertEqual(browse(self.store,'from=2024-01-02&to=2024-01-02&tz=UTC')['count'],2)
 
     def test_date_is_dedicated_sibling_region_with_local_time_hook(self):

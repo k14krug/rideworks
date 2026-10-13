@@ -12,6 +12,7 @@ local_data/
 strava-inventory-output/
 
 # RideWorks local runtime/build artifacts
+/data/
 .venv/
 *.egg-info/
 build/

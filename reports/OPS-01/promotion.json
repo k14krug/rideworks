@@ -1,0 +1,35 @@
+{
+  "promotion": {
+    "integrity_and_foreign_keys": true,
+    "all_table_counts_equal": true,
+    "table_count": 26,
+    "activities": 1443,
+    "identities_source_observations_user_state_sync_caches_equal": true,
+    "verified_originals": 1422,
+    "private_sidecars_equal_and_private": true,
+    "source_database_mtime_unchanged": true
+  },
+  "cleanup": {
+    "deleted_store_directories": 85,
+    "approx_allocated_bytes_removed": 20810174464,
+    "source_retained": true,
+    "archive_inputs_retained": true,
+    "obsolete_test_run_remainders_removed": 15
+  },
+  "browser": {
+    "checks": 26,
+    "pages": 6,
+    "all_http_200": true,
+    "strava_connected": true,
+    "project_default": true
+  },
+  "launcher_restart_from_other_cwd": true,
+  "windows_desktop_shortcut_created": true,
+  "protected_source_retained": true,
+  "owner_followup_cleanup": {
+    "additional_obsolete_directories_removed": 15,
+    "old_logs_removed": 2,
+    "approx_allocated_bytes_removed": 1644920832,
+    "home_activities_http_200": true
+  }
+}

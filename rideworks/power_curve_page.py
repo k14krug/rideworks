@@ -1,14 +1,15 @@
 """Shared Power Curve panel and exact cached comparison data."""
 from html import escape
 import json
-from datetime import timezone
 
 from .goals import query_zone
 from .power_curve import comparison
 
 
 def panel(store, nonce, *, activity_id=None, query=''):
-    zone = query_zone(query,'curve_tz') or timezone.utc
+    zone = query_zone(query,'curve_tz')
+    if zone is None:
+        return '<section class="panel"><h2>Power curve</h2><p>Invalid timezone. Supply one valid curve_tz timezone or omit it to use America/Los_Angeles.</p></section>'
     data = comparison(store,activity_id=activity_id,zone=zone)
     payload = json.dumps(data, ensure_ascii=True, allow_nan=False).replace('<','\\u003c').replace('&','\\u0026')
     activity = activity_id is not None
@@ -38,7 +39,7 @@ def panel(store, nonce, *, activity_id=None, query=''):
 <article><h3 id="curve-duration"></h3><strong id="curve-difference"></strong><p>Calculated at the selected duration. Lines connect evaluated anchors; intervening durations are not exact results.</p></article></div>
 <p id="curve-help">Hover, touch or use arrow keys to inspect. Each period point may come from a different qualifying Virtual Ride. Missing windows are unavailable, not zero. Comparisons describe recorded efforts, not FTP or readiness.</p>
 <details class="curve-method"><summary>Power Curve method &amp; coverage</summary><p>Highest arithmetic mean over exactly d observed nonnegative watt samples at consecutive one-second timestamps. Missing samples, gaps, duplicate/backwards times and verified distinct active intervals split windows. Terminal stop observations may be valid endpoints; unverified timers cannot clip recorded samples. Outdoor power, CSV/summary watts and estimated stress do not create curves. File watt evidence takes precedence over validated high-resolution, full-length API fallback. Competing supported file sources are ambiguous at that duration.</p>
-<p>Exact anchors: every second through 30, then a common grid with approximately 7% duration spacing (rounded up to integer seconds) plus familiar durations including 5 and 20 minutes and hour-plus efforts. No fixed long-duration cap; curves end at supported anchors. Raw averages and integer sums are inspectable. Ties use the earliest source window, then earliest contributing activity start and Activity ID. Period membership is [start, end), in absolute time; calendar-year bounds use the browser timezone. Activity prior 12 months uses calendar subtraction in UTC. Undated/unknown-zone activities cannot establish period membership.</p>
+<p>Exact anchors: every second through 30, then a common grid with approximately 7% duration spacing (rounded up to integer seconds) plus familiar durations including 5 and 20 minutes and hour-plus efforts. No fixed long-duration cap; curves end at supported anchors. Raw averages and integer sums are inspectable. Ties use the earliest source window, then earliest contributing activity start and Activity ID. Period membership is [start, end), in absolute time; calendar-year bounds use the selected timezone. Activity prior 12 months uses calendar subtraction in UTC. Undated/unknown-zone activities cannot establish period membership.</p>
 <p>Method: {data['method']} · Grid: {data['grid']}. Profiles use retained source observations and update through normal sync or the explicit update above. No raw source calculation occurs when inspecting or changing periods.</p></details>
 <noscript>Enable JavaScript to inspect the Power Curve. Stored source evidence and the existing 20-minute results remain available.</noscript>
 <script type="application/json" id="power-curve-data">{payload}</script><script src="/static/power_curve.js" defer></script></section>'''

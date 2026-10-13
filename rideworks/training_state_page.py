@@ -16,9 +16,9 @@ HELP = '''<details class="training-help"><summary>How these numbers work</summar
 
 def training_page(store, query=''):
     zone=query_zone(query)
-    header='<header data-calendar-timezone="tz"><h1>Training State</h1><p>Your training trend and the rides behind it.</p></header>'
+    header='<header><h1>Training State</h1><p>Your training trend and the rides behind it.</p></header>'
     if zone is None:
-        return shell('Training State',header+'<p>Enable JavaScript to use your browser’s local calendar.</p>'+HELP,active='training',page_class='training-redesign')
+        return shell('Training State',header+'<p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p>'+HELP,active='training',page_class='training-redesign')
     data=training_state(store,zone.key)
     if not data['days']:
         return shell('Training State',header+'<section class="panel"><h2>No usable training stress yet</h2><p>Recorded rides remain available in Activities. Training State needs qualified power with dated FTP or usable measured HR and active duration.</p><a href="/activities">Open Activities</a></section>'+HELP,active='training',page_class='training-redesign')

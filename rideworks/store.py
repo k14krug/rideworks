@@ -309,7 +309,8 @@ COMMIT;
 
 def resolve_data_dir(data_dir=None) -> Path:
     """Resolve once; default does not depend on the working directory."""
-    selected = data_dir if data_dir is not None else os.environ.get("RIDEWORKS_DATA_DIR", "~/.rideworks")
+    selected = data_dir if data_dir is not None else os.environ.get(
+        "RIDEWORKS_DATA_DIR", Path(__file__).resolve().parent.parent / "data")
     return Path(selected).expanduser().resolve()
 
 

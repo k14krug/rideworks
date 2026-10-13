@@ -1,5 +1,34 @@
 # RideWorks
 
+## Everyday startup and private data
+
+Open the **RideWorks** desktop shortcut, or open the executable `start-rideworks`
+in the checkout. It starts the existing loopback server and opens
+`http://127.0.0.1:8766/`; reopening the launcher uses the already-running store.
+No Python command, store selection or framework setup is needed for daily use.
+
+The default store is **top-level `data/` beside `pyproject.toml`**, independent
+of the working directory. Settings shows the active data folder. This is distinct
+from packaged `rideworks/data/` reference resources. A missing established store
+stops startup with a restore/select-store message; it never opens a blank history.
+For a genuinely new installation, an explicit `import-fit`/`import-strava-export`
+command creates a store. Tests use explicit temporary/disposable directories.
+CLI and environment data-directory overrides remain available for those cases.
+
+Include the entire production `data/` folder in the Owner's existing backup system:
+`rideworks.sqlite3`, `originals/`, `.strava-tokens.json`, `.strava-settings.json`,
+and the tracked athlete/reference CSV resources. Include any SQLite `-wal`/`-shm`
+sidecars if present, and take a consistent database snapshot or stop the app for
+file-based backups. Protect the ignored checkout `.env` separately for app
+credentials. `rideworks.log` and `.staging` are transient; `.strava.lock` is a
+runtime lock, not a credential. No new scheduled backup system is provided.
+
+During OPS-01 acceptance the unchanged `local_data/p2-05-review` source remains
+rollback: stop the new app and explicitly launch that source if needed. Remove
+it only after Owner acceptance of the new everyday store. Old research instructions
+below describe historical phases; their task-specific store paths are not daily
+launch instructions.
+
 P1-01 uses Python 3.10+, standard-library SQLite, and `fitdecode==0.11.0`.
 It runs independently of the retired Strava application and its dependencies.
 From the repository root:
@@ -14,7 +43,7 @@ python3 -m venv .venv
 
 The installed `rideworks` command provides the same interface. Place the optional
 `--data-dir /path/to/private-data` before the subcommand. Directory precedence is
-explicit argument, `RIDEWORKS_DATA_DIR`, then `~/.rideworks`. Relative explicit
+explicit argument, `RIDEWORKS_DATA_DIR`, then project-root `data/`. Relative explicit
 paths resolve at invocation; the default is independent of the working directory.
 Originals and the SQLite database are private runtime data; keep them out of Git.
 
@@ -173,8 +202,8 @@ of the launch directory. Installed wheels without a checkout do not look for
 
 | Setting | Precedence / default | Meaning |
 | --- | --- | --- |
-| Data directory | `--data-dir` > exported `RIDEWORKS_DATA_DIR` > repository `.env` > `~/.rideworks` | Applies to all CLI commands. Original/source data stays private. |
-| Server port | `serve --port` > exported `FLASK_RUN_PORT` > repository `.env` > `8765` | Decimal integer 1–65535; always binds to `127.0.0.1`. |
+| Data directory | `--data-dir` > exported `RIDEWORKS_DATA_DIR` > repository `.env` > project-root `data/` | Applies to all CLI commands. Original/source data stays private. |
+| Server port | `serve --port` > exported `FLASK_RUN_PORT` > repository `.env` > `8766` | Decimal integer 1–65535; always binds to `127.0.0.1`. |
 | Request diagnostics | exported `FLASK_DEBUG` > repository `.env` > off | Accepts 0/1, false/true, no/yes or off/on, case-insensitively. |
 
 `FLASK_DEBUG` retains the familiar variable name but enables only server-console
@@ -725,7 +754,7 @@ at `/activities`; Activity Review URLs remain `/activities/<id>`. The brand link
 opens Home. Old root browser-filter bookmarks redirect to the matching
 `/activities` query.
 
-Set, update or clear the current browser-local year's **Annual cycling mileage
+Set, update or clear the current rider-local year's **Annual cycling mileage
 goal** in Settings. Targets are explicitly in miles, finite and positive, at
 most 100,000 mi. There is no default target and no generic goal engine. Schema 7
 adds only year, target miles and update time; previous-year targets remain
@@ -738,8 +767,8 @@ then current API summary distance. Unspecified CSV distance units are excluded;
 known zero remains zero. Missing distance/date and source contribution counts
 are inspectable in Mileage evidence & calendar boundaries.
 
-Home's `home_tz` query is set from the browser timezone before final aggregation;
-Settings uses `tz`. Neither substitutes server-local time. YTD includes January
+Home defaults to `America/Los_Angeles`; explicit `home_tz` and Settings `tz`
+overrides remain supported without browser redirects. YTD includes January
 1 through the current instant. Recent Mileage combines This Week (actual miles
 since local Monday) and Last 7 Days (today and the six preceding local dates),
 including the neutral comparison with the preceding seven days. The dashboard

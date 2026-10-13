@@ -1,0 +1,25 @@
+{
+  "checks": 640,
+  "cases": [
+    {
+      "javaScriptEnabled": true,
+      "timezoneId": "UTC",
+      "navigations": 25
+    },
+    {
+      "javaScriptEnabled": true,
+      "timezoneId": "Asia/Tokyo",
+      "navigations": 25
+    },
+    {
+      "javaScriptEnabled": false,
+      "timezoneId": "UTC",
+      "navigations": 24
+    },
+    {
+      "javaScriptEnabled": false,
+      "timezoneId": "Asia/Tokyo",
+      "navigations": 24
+    }
+  ]
+}

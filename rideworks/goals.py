@@ -6,6 +6,9 @@ from urllib.parse import parse_qs
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
+DEFAULT_TIMEZONE = 'America/Los_Angeles'
+
+
 def browser_zone(name):
     if not isinstance(name, str) or not name or len(name) > 128:
         raise ValueError('A valid browser timezone is required.')
@@ -26,7 +29,7 @@ def target_miles(text):
 
 def query_zone(query, key='tz'):
     try:
-        values = parse_qs(query, max_num_fields=20).get(key, [])
+        values = parse_qs(query, keep_blank_values=True, max_num_fields=20).get(key, [DEFAULT_TIMEZONE])
         return browser_zone(values[0]) if len(values) == 1 else None
     except ValueError:
         return None

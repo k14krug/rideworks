@@ -221,7 +221,7 @@ class DashboardTests(TestCase):
 
     def test_home_browser_route_and_old_filter_redirect_preserve_query(self):
         self.assertIn('<h1>Home</h1>',self.app.get('/')[2].decode())
-        self.assertIn('browser timezone',self.app.get('/?home_tz=bad')[2].decode())
+        self.assertEqual(self.app.get('/?home_tz=bad')[0],400)
         html=self.app.get('/?home_tz=UTC')[2].decode()
         for heading in ('This Week','Last 7 Days','Current 42-day best','Latest eligible 20-minute ride','Mileage Progress','20-minute Performance'):
             self.assertIn(heading,html)

@@ -513,7 +513,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-01 — One authoritative RideWorks data store
 
-**Status:** in_progress — ready for **HARD — Analyst Gate 3** on [draft PR #34](https://github.com/k14krug/rideworks/pull/34), 2026-10-12. Gates 1/2 cleared; Owner Gate 4 pending. [Issue #33](https://github.com/k14krug/rideworks/issues/33).
+**Status:** in_progress — **HARD — Analyst Gate 3 ACCEPTED** 2026-10-12 from reviewed code, promoted-store reports and focused tests; **HARD — Owner Gate 4 PENDING** live-app acceptance. [Draft PR #34](https://github.com/k14krug/rideworks/pull/34), [issue #33](https://github.com/k14krug/rideworks/issues/33). No merge or rollback-source deletion before Owner acceptance.
 
 **Purpose:** One everyday SQLite store at repository-root `data/`, using the existing non-Flask application, trusted originals, provenance, historical metrics and private Strava state. This is the Owner's final location decision, superseding older outside-repository recommendations.
 

@@ -7,10 +7,13 @@
 ## Requirements Used
 
 - [OPS-01](OPS-01.md) and accepted PR #34: repository-root `data/`, immutable original evidence, existing standard-library HTTP server, loopback binding and normal `serve` command.
-- Owner's 2026-10-12 production report and explicit requests: fix HTTP 403 `Invalid local host.` with nginx, support `RUN_PORT` from the systemd `EnvironmentFile`, rename `FLASK_DEBUG` to `DEBUG`, and update `.env.example`.
+- Owner's 2026-10-12 production report and explicit requests: fix HTTP 403 `Invalid local host.` with nginx, support `RUN_PORT` from the systemd `EnvironmentFile`, rename `FLASK_DEBUG` to `DEBUG`, and update `.env.example`. **Owner clarification:** the production server is HTTP-only, privately hosted on the home LAN; HTTPS is not used or required. The prior HTTPS-only brief was an Analyst assumption and is superseded.
 - [AGENTS.md](../../AGENTS.md): private single-rider application, bounded changes, privacy, tests and review gates.
 
 ## Execution Control
+
+**Owner correction while Dex is implementing:** This task is **for an HTTP-only private home network behind nginx**. Do not make HTTPS mandatory, add a TLS setup task, or change accepted database migration scope. Dex must refresh this corrected JIT and issue #35 before finalizing its implementation or evidence. The public-facing origin may be an HTTP LAN name or address.
+
 
 **Allowed Invocation:** `/TASK or /AUTOTASK`.
 
@@ -30,17 +33,17 @@
 
 ### 2. Explicit trusted public origin
 
-- Add optional `PUBLIC_ORIGIN` for the HTTPS public application origin (scheme, DNS host and optional external port, no path/query/fragment). Validate at startup; reject malformed/untrusted forms and fail safely.
+- Add optional `PUBLIC_ORIGIN` for the **browser-facing LAN origin, supporting both `http://` and `https://`** (scheme, hostname or LAN IP address, optional external port, no path/query/fragment/userinfo). HTTP must be accepted and tested; HTTPS is optional, **not a prerequisite**. Validate at startup; reject malformed/untrusted forms and fail safely.
 - Continue binding the Python backend to `127.0.0.1` (never automatically `0.0.0.0`).
 - Permit exact public `Host` derived from configured `PUBLIC_ORIGIN` in addition to the existing local hosts. Match the expected external host/port with normal default-port semantics; reject other hosts, malformed Host values, and deceptive suffixes. Do not trust `X-Forwarded-Host` or `X-Forwarded-Proto` as independent authorization signals.
 - Accept only the exact public `Origin` on Settings and Plan state-changing actions, along with the existing loopback origins; retain nonce/CSRF, input validation and existing action constraints. Reject spoofed Origin values, missing or unexpected origin as before. No blanket allow-all.
-- Browser Strava Connect must use the configured public HTTPS callback URL when `PUBLIC_ORIGIN` is provided; otherwise keep current loopback behavior. Construct callback address only from trusted configuration, never untrusted request headers. Preserve CLI-based loopback OAuth and existing state handling. Include a deployment note that Strava's authorized callback domain must agree with the selected public host.
+- Browser Strava Connect must use the configured browser-facing callback origin (HTTP **or** HTTPS) when `PUBLIC_ORIGIN` is provided, **provided Strava accepts the configured callback domain**; otherwise preserve the current loopback behavior. Construct callback address only from trusted configuration, never untrusted request headers. Preserve CLI-based loopback OAuth, current connected credentials/state, and existing callback checks; do not force reauthorization. Strava documents that `redirect_uri` must match its app callback domain and explicitly whitelists `localhost` and `127.0.0.1`; it does not establish that every private LAN hostname/IP is supported. If an actual provider restriction blocks a LAN callback, report it as a separate narrow blocker rather than enforcing HTTPS or inventing a bypass.
 - Do not introduce new sessions, auth providers, web server frameworks or proxy-trust middleware.
 
 ### 3. Documentation and deployment
 
-- Update `.env.example` to show `RUN_PORT=8766`, `DEBUG=0`, commented optional `PUBLIC_ORIGIN=https://rideworks.example.com`; keep credentials out of version control.
-- Document typical same-host nginx `proxy_pass http://127.0.0.1:<RUN_PORT>` and host forwarding, with port consistency and TLS on nginx.
+- Update `.env.example` to show `RUN_PORT=8766`, `DEBUG=0`, commented optional `PUBLIC_ORIGIN=http://rideworks.lan` (illustrative name only; Owner uses their actual LAN hostname/IP and external port as needed); keep credentials out of version control.
+- Document same-host nginx `proxy_pass http://127.0.0.1:<RUN_PORT>` and the forwarded browser-visible `Host`, including external port if used. **Do not require TLS/HTTPS at nginx.** HTTP to nginx is the Owner's chosen trusted home-LAN deployment; no internet-exposure assumption.
 - Document systemd `ExecStart=.../python -m rideworks serve` **without** `--port` so configured `RUN_PORT` takes effect. Do not imply systemd dynamically expands an env variable in arbitrary command syntax.
 - Update README/CLI messages and test names that incorrectly refer to Flask for the current app. Avoid cosmetic rewriting of historical evidence.
 
@@ -49,7 +52,7 @@
 - Unit configuration tests for selected `RUN_PORT`/`DEBUG` from exported environment and `.env`, precedence, invalid syntax, default port, no environment mutation and unrelated legacy values.
 - Live ephemeral-loopback HTTP integration tests with normal local host, allowed public host, denied arbitrary/suffix/malformed host, allowed public POST Origin with valid nonce, denied foreign/missing Origin, and existing local POST behavior.
 - Test Settings, Plan, dashboard/routes and Strava auth redirect/callback under both public and local configuration, with fake credentials/network. Verify no leaking secrets, paths, activity source data or tokens.
-- Test nginx-like upstream `Host` where public HTTPS uses the normal external port, including when it differs from internal `RUN_PORT`.
+- Test nginx-like upstream `Host` and POST `Origin` using **HTTP browser-facing origins as the primary production scenario**, including default external port 80, explicit nondefault external port, and external port differing from internal `RUN_PORT`. Optional HTTPS regression is useful but cannot replace HTTP coverage.
 - Run focused and existing regression tests and make a compact report. Do not run real Strava auth/sync or modify production data as a test.
 - Explicitly state what was *not* directly exercised on Owner's private nginx/server deployment.
 

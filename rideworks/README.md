@@ -160,7 +160,8 @@ Open the printed URL, normally `http://127.0.0.1:8765/`, and select a ride in
 Activities. The stable review URL is `/activities/<activity-id>`. Stop with
 Ctrl+C and run the same server command to reopen the activity without importing
 again. Use `serve --port 8767` to choose a different local port. The server binds
-only to `127.0.0.1`; it has no account, upload or remote-hosting workflow.
+only to `127.0.0.1`; for the current private LAN deployment, see the nginx section
+below. There is no account or upload workflow.
 
 The browser application uses Python's standard-library HTTP server, server-rendered
 HTML and packaged local CSS/JavaScript/SVG. No retired application imports,
@@ -203,21 +204,23 @@ of the launch directory. Installed wheels without a checkout do not look for
 | Setting | Precedence / default | Meaning |
 | --- | --- | --- |
 | Data directory | `--data-dir` > exported `RIDEWORKS_DATA_DIR` > repository `.env` > project-root `data/` | Applies to all CLI commands. Original/source data stays private. |
-| Server port | `serve --port` > exported `FLASK_RUN_PORT` > repository `.env` > `8766` | Decimal integer 1–65535; always binds to `127.0.0.1`. |
-| Request diagnostics | exported `FLASK_DEBUG` > repository `.env` > off | Accepts 0/1, false/true, no/yes or off/on, case-insensitively. |
+| Server port | `serve --port` > exported `RUN_PORT` > repository `.env` > `8766` | Decimal integer 1–65535; always binds to `127.0.0.1`. |
+| Request diagnostics | exported `DEBUG` > repository `.env` > off | Accepts 0/1, false/true, no/yes or off/on, case-insensitively. |
+| Browser-facing origin | exported `PUBLIC_ORIGIN` > repository `.env` > local access only | HTTP or HTTPS scheme, hostname/IP and optional external port; no path, trailing slash, query, fragment or userinfo. |
 
-`FLASK_DEBUG` retains the familiar variable name but enables only server-console
-GET status and response timing. Errors report the exception class without private
+`DEBUG` enables only server-console request method, status and response timing.
+Errors report the exception class without private
 paths, query strings, credentials or tracebacks in the browser. There is **no
-Flask debugger or automatic reloader**; restart the server to pick up Python
-changes. No Flask dependency was introduced.
+interactive debugger or automatic reloader**; restart the server to pick up Python
+changes. The former Flask-named port/debug keys are ignored; update your process
+environment or `.env` to `RUN_PORT` and `DEBUG`.
 
-Only these three keys are read. Exported variables are not overwritten and the
+Only these four startup keys are read. Exported variables are not overwritten and the
 process environment is not mutated. The small file reader accepts `KEY=value`,
 optional `export `, single/double quotes, blank lines and `#` comments. Quote
 values with spaces or literal `#`. There is no shell execution, interpolation,
 variable expansion or multiline syntax. Unrelated legacy settings are ignored.
-The last file assignment wins. Selected invalid port/debug values fail before
+The last file assignment wins. Selected invalid port/debug/origin values fail before
 the server binds; higher-priority CLI/exported values bypass overridden file
 values. An empty data directory is rejected rather than treated as the checkout.
 Relative data-directory paths retain the existing resolution at invocation.
@@ -228,6 +231,79 @@ another data directory or port. With the example values, this shorthand also wor
 ```bash
 .venv/bin/python -m rideworks serve
 ```
+
+## Private home-LAN nginx deployment (HTTP)
+
+The Owner's production deployment uses HTTP on a trusted home network. HTTPS
+and TLS configuration are not required. Keep nginx and RideWorks on the same
+host; the Python backend continues listening only on `127.0.0.1`.
+
+Set the browser's actual origin in your private environment file, for example:
+
+```dotenv
+RUN_PORT=8766
+DEBUG=0
+PUBLIC_ORIGIN=http://rideworks.lan
+```
+
+`rideworks.lan` is illustrative: use your actual LAN hostname or IP. If the
+browser uses `http://192.168.1.20:8080`, set exactly that origin instead.
+HTTPS also works if independently configured, but is optional. DNS names are
+case-normalized; explicit default ports (`:80` for HTTP, `:443` for HTTPS) are
+omitted from the normalized origin. IPv6 literals must use brackets. Empty or
+malformed origins fail startup. Omit `PUBLIC_ORIGIN` for the original local-only
+behavior. Only the configured public origin and existing local origins can
+submit forms, and each action still requires its valid nonce.
+
+In your existing nginx `server` block, forward the browser-visible Host and
+leave the browser's Origin unchanged:
+
+```nginx
+listen 80;
+server_name rideworks.lan;
+
+location / {
+    proxy_pass http://127.0.0.1:8766;
+    proxy_set_header Host $http_host;
+}
+```
+
+Use the selected `RUN_PORT` in `proxy_pass`. `$http_host` preserves an external
+port such as `:8080`; that port belongs in `PUBLIC_ORIGIN` and need not equal
+the backend port. The [nginx proxy documentation](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header)
+describes Host forwarding. RideWorks checks Host against local addresses or the
+configured public host/port; default external ports may be explicit or omitted.
+Other or duplicate Host/Origin headers are rejected. `X-Forwarded-Host` and
+`X-Forwarded-Proto` do not grant access or change OAuth URLs. No Origin rewriting
+is necessary.
+
+For an existing systemd service, a service section can use:
+
+```ini
+[Service]
+WorkingDirectory=/srv/rideworks
+EnvironmentFile=/srv/rideworks/.env
+ExecStart=/srv/rideworks/.venv/bin/python -m rideworks serve
+```
+
+Adjust the paths for your installation. systemd loads `EnvironmentFile` entries
+into the process environment, which takes precedence over the repository file.
+See systemd's [environment file documentation](https://github.com/systemd/systemd/blob/main/man/systemd.exec.xml).
+Keep `--port` out of `ExecStart` so `RUN_PORT` applies; do not put shell variable
+expansion in the executable path. Restart the service after changing settings.
+The desktop `start-rideworks` launcher still explicitly uses port **8766**.
+
+Existing Strava tokens remain connected; configuring the origin does not force
+reauthorization. Browser Connect uses `<PUBLIC_ORIGIN>/strava/callback` when
+configured, otherwise the existing loopback callback. Set Strava's Authorization
+Callback Domain to the selected hostname/IP (host only), **if Strava accepts
+it**. [Strava's authentication documentation](https://developers.strava.com/docs/authentication/)
+requires redirect URI domain agreement and explicitly permits localhost and
+127.0.0.1; it does not confirm support for every private LAN hostname/IP. A real
+provider rejection needs a separate callback-domain diagnosis, not a TLS change
+or bypass. CLI `strava-connect` continues using its loopback callback. Local
+tests use fake Strava responses and cannot establish provider acceptance of
+your private domain.
 
 ## Current activity titles and future source-title finding
 
@@ -586,10 +662,13 @@ exists, the command preserves it; add/update the two entries there while keeping
 your other settings. Exported environment variables still override `.env`.
 Keep credential values and tokens local.
 
-In Strava's **Authorization Callback Domain** field, enter exactly **`127.0.0.1`**
+For local review with `PUBLIC_ORIGIN` omitted, in Strava's **Authorization Callback
+Domain** field enter **`127.0.0.1`**
 (host only, without a scheme, port or path). RideWorks supplies the full redirect
 URI **`http://127.0.0.1:8771/strava/callback`** for the review app below. The web
-callback always uses the running app's port; no second callback server is needed.
+callback uses the running app's port in this local mode; no second callback server
+is needed. With `PUBLIC_ORIGIN` set, browser Connect uses that configured origin
+instead; see the nginx deployment section for callback-domain requirements.
 Strava's [authentication documentation](https://developers.strava.com/docs/authentication/)
 allows this loopback redirect; its [setup guide](https://developers.strava.com/docs/getting-started/)
 describes the host-only callback-domain field.
@@ -634,7 +713,9 @@ Secondary CLI maintenance/recovery commands remain supported:
 
 The CLI connect command opens a temporary loopback callback on port 8772 by default
 (`--callback-port` changes it), waits up to three minutes, and emits aggregate JSON.
-The Strava callback-domain setting remains `127.0.0.1` for both workflows.
+The CLI always uses loopback, independently of `PUBLIC_ORIGIN`. Strava explicitly
+permits localhost/127.0.0.1 redirects; configured LAN browser callbacks still need
+provider callback-domain acceptance.
 
 Sync is explicit and sequential. The initial `after` is midnight UTC on the
 latest stored export calendar day, minus **three days**. This is a conservative

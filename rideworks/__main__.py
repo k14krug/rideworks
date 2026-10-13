@@ -30,13 +30,13 @@ def main(argv=None):
     repair.add_argument('--targets',required=True,help='Private JSON mapping of Strava IDs to established RideWorks Activity IDs')
     commands.add_parser('strava-disconnect', help='Revoke/remove local Strava authorization; retain history')
     serve = commands.add_parser("serve", help="Open the local RideWorks browser application")
-    serve.add_argument("--port", type=int, help="Loopback port (overrides FLASK_RUN_PORT; default: 8766)")
+    serve.add_argument("--port", type=int, help="Loopback port (overrides RUN_PORT; default: 8766)")
     args = parser.parse_args(argv)
     try:
         config = startup_config(args.data_dir, getattr(args, 'port', None))
         if args.command == "serve":
             from .web import serve as serve_web
-            serve_web(config.data_dir, config.port, debug=config.debug)
+            serve_web(config.data_dir, config.port, debug=config.debug, public_origin=config.public_origin)
             return 0
         if args.command in ('strava-connect','sync-strava','strava-disconnect','repair-strava-summaries'):
             from .config import ConfigurationError, strava_credentials

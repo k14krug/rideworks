@@ -1,13 +1,15 @@
 """Optional repository-local startup settings, without mutating the environment."""
 
 from dataclasses import dataclass
+import ipaddress
 import os
 from pathlib import Path
+import re
 import shlex
 
 from .errors import RideWorksError
 
-KEYS = frozenset({'FLASK_DEBUG', 'FLASK_RUN_PORT', 'RIDEWORKS_DATA_DIR'})
+KEYS = frozenset({'DEBUG', 'RUN_PORT', 'RIDEWORKS_DATA_DIR', 'PUBLIC_ORIGIN'})
 STRAVA_KEYS = frozenset({'STRAVA_CLIENT_ID', 'STRAVA_CLIENT_SECRET'})
 
 
@@ -20,6 +22,38 @@ class StartupConfig:
     data_dir: str | None
     port: int
     debug: bool
+    public_origin: str | None = None
+
+
+def normalize_public_origin(value):
+    """One explicitly configured HTTP(S) origin; never infer it from headers."""
+    if value is None:
+        return None
+    error = 'PUBLIC_ORIGIN must be an HTTP or HTTPS origin with a hostname/IP and optional port, without path, query, fragment or userinfo'
+    match = re.fullmatch(r'(http|https)://(\[[0-9a-fA-F:.]+\]|[a-zA-Z0-9.-]+)(?::([0-9]{1,5}))?', value)
+    if match is None:
+        raise ConfigurationError(error)
+    scheme, host, raw_port = match.groups()
+    if host.startswith('['):
+        try:
+            host = f'[{ipaddress.IPv6Address(host[1:-1])}]'
+        except ValueError:
+            raise ConfigurationError(error) from None
+    else:
+        labels = host.split('.')
+        if len(host) > 253 or any(re.fullmatch(r'[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?', label) is None for label in labels):
+            raise ConfigurationError(error)
+        if labels[-1].isdigit():
+            try:
+                host = str(ipaddress.IPv4Address(host))
+            except ValueError:
+                raise ConfigurationError(error) from None
+        host = host.lower()
+    port = int(raw_port) if raw_port is not None else (80 if scheme == 'http' else 443)
+    if not 1 <= port <= 65535:
+        raise ConfigurationError(error)
+    suffix = '' if port == (80 if scheme == 'http' else 443) else f':{port}'
+    return f'{scheme}://{host}{suffix}'
 
 
 def repository_root():
@@ -72,18 +106,19 @@ def startup_config(data_dir=None, port=None, *, repo_root=None, environ=None):
     if data_dir is not None:
         selected['RIDEWORKS_DATA_DIR'] = data_dir
     if port is not None:
-        selected['FLASK_RUN_PORT'] = port
+        selected['RUN_PORT'] = port
     _dotenv(repository_root() if repo_root is None else repo_root, selected)
-    raw_port = str(selected.get('FLASK_RUN_PORT', '8766')).strip()
+    raw_port = str(selected.get('RUN_PORT', '8766')).strip()
     if not raw_port.isascii() or not raw_port.isdecimal() or not 1 <= int(raw_port) <= 65535:
-        raise ConfigurationError('FLASK_RUN_PORT / serve --port must be an integer from 1 to 65535')
-    raw_debug = str(selected.get('FLASK_DEBUG', '0')).strip().lower()
+        raise ConfigurationError('RUN_PORT / serve --port must be an integer from 1 to 65535')
+    raw_debug = str(selected.get('DEBUG', '0')).strip().lower()
     if raw_debug not in ('0', '1', 'false', 'true', 'no', 'yes', 'off', 'on'):
-        raise ConfigurationError('FLASK_DEBUG must be 0/1, false/true, no/yes or off/on')
+        raise ConfigurationError('DEBUG must be 0/1, false/true, no/yes or off/on')
     chosen_data = selected.get('RIDEWORKS_DATA_DIR')
     if chosen_data is not None and not str(chosen_data).strip():
         raise ConfigurationError('RIDEWORKS_DATA_DIR / --data-dir must not be empty')
-    return StartupConfig(chosen_data, int(raw_port), raw_debug in ('1', 'true', 'yes', 'on'))
+    public_origin = normalize_public_origin(selected.get('PUBLIC_ORIGIN'))
+    return StartupConfig(chosen_data, int(raw_port), raw_debug in ('1', 'true', 'yes', 'on'), public_origin)
 
 
 def strava_credentials(*, repo_root=None, environ=None):

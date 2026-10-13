@@ -528,8 +528,10 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-02 — nginx proxy compatibility and framework-neutral runtime settings
 
-**Status:** pending; implementation not invoked.
+**Status:** **done — implementation accepted by Analyst and Owner authorized immediate merge to `main` on 2026-10-12.** [PR #36](https://github.com/k14krug/rideworks/pull/36), [issue #35](https://github.com/k14krug/rideworks/issues/35). Actual home-LAN nginx deployment and Strava LAN callback-domain support remain unverified; they are not represented as passed acceptance tests.
 
-**Purpose:** Support the Owner's production HTTPS nginx reverse proxy using a configured public origin and use `RUN_PORT`/`DEBUG` in place of misleading Flask-named runtime keys.
+**Purpose:** Support the Owner's HTTP-only private home-LAN nginx reverse proxy using a configured public origin and use `RUN_PORT`/`DEBUG` in place of misleading Flask-named runtime keys.
 
-**Acceptance:** [OPS-02 JIT](docs/tasks/OPS-02.md), [issue #35](https://github.com/k14krug/rideworks/issues/35). Keep backend loopback-only; preserve strict Host/Origin/CSRF checks and safe Strava OAuth callbacks. Focused and regression tests plus Analyst and Owner gates required. Separate from accepted OPS-01.
+**Acceptance:** [OPS-02 JIT](docs/tasks/OPS-02.md), [issue #35](https://github.com/k14krug/rideworks/issues/35). The Analyst accepted reviewed code at PR head `8cf79e1` after inspection and Dex's 93 focused / 474 regression test report. The Owner explicitly directed merging to `main` without treating live deployment as a merge gate; this supersedes the JIT's earlier Owner deployment gate for **merge timing only**. Keep backend loopback-only and strict Host/Origin/nonce checks. Separate from accepted OPS-01.
+
+**Implementation evidence:** [Report](reports/OPS-02/implementation.md): 93 focused and all 474 regression tests passed. HTTP LAN hostname/IP, default/custom external ports, strict Host/Origin/nonce checks and fake browser OAuth verified; backend remains loopback-only. `RUN_PORT`/`DEBUG`, example and nginx/systemd documentation updated. Actual private deployment and provider callback-domain acceptance have not been tested; no production data or live secrets were changed. Verify normal HTTP nginx access and Settings/Plan actions after deploying the merged code, and investigate provider callback restrictions if reconnecting Strava is ever needed.

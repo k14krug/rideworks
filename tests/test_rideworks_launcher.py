@@ -22,11 +22,13 @@ class LauncherTests(unittest.TestCase):
     def test_relative_override_is_resolved_once_before_child_changes_cwd(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'rideworks.sqlite3').touch()
-            with patch.object(launcher,'startup_config',return_value=StartupConfig('relative-test',8766,False)),patch.object(launcher,'resolve_data_dir',return_value=root),patch.object(launcher,'running',side_effect=[False,True]),patch.object(launcher.subprocess,'Popen') as start,patch.object(launcher,'webbrowser'),patch.object(launcher.shutil,'which',return_value=None):
+            with patch.object(launcher,'startup_config',return_value=StartupConfig('relative-test',8766,False)) as config,patch.object(launcher,'resolve_data_dir',return_value=root),patch.object(launcher,'running',side_effect=[False,True]),patch.object(launcher.subprocess,'Popen') as start,patch.object(launcher,'webbrowser'),patch.object(launcher.shutil,'which',return_value=None):
                 start.return_value.poll.return_value=None
                 launcher.main()
                 args=start.call_args.args[0]
                 self.assertEqual(args[args.index('--data-dir')+1],str(root))
+                self.assertEqual(args[args.index('--port')+1], '8766')
+                config.assert_called_once_with(port=8766)
 
 
 if __name__=='__main__':unittest.main()

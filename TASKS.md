@@ -524,3 +524,12 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Verification / acceptance:** [Promotion report](reports/OPS-01/promotion.md): 61 focused tests and 26 promoted-store browser assertions, six main routes and restart from another CWD passed. Stage A 453/640 evidence retained. Analyst Gate 3 accepted; Owner says the production migration is complete for practical purposes and directs closing/merging OPS-01. The old `local_data/p2-05-review` source was preserved for rollback in the implementation; repository merge cannot remove it from the Owner's machine. Any final private-local cleanup is a separate local action. Existing backups remain Owner-managed. No Flask conversion, repeated multi-store audit, new backup system or Phase 6.
 
 **Post-deployment follow-up:** Nginx-forwarded public `Host` is currently rejected with HTTP 403; Settings/Plan Origin checks and Strava OAuth redirect also assume loopback. Rename `FLASK_RUN_PORT` to `RUN_PORT` and `FLASK_DEBUG` to `DEBUG` throughout runtime/config/docs/tests. These changes are not implemented by OPS-01 and must not be described as shipped.
+
+
+### OPS-02 — nginx proxy compatibility and framework-neutral runtime settings
+
+**Status:** pending; implementation not invoked.
+
+**Purpose:** Support the Owner's production HTTPS nginx reverse proxy using a configured public origin and use `RUN_PORT`/`DEBUG` in place of misleading Flask-named runtime keys.
+
+**Acceptance:** [OPS-02 JIT](docs/tasks/OPS-02.md), [issue #35](https://github.com/k14krug/rideworks/issues/35). Keep backend loopback-only; preserve strict Host/Origin/CSRF checks and safe Strava OAuth callbacks. Focused and regression tests plus Analyst and Owner gates required. Separate from accepted OPS-01.

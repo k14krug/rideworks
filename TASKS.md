@@ -528,8 +528,10 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-02 — nginx proxy compatibility and framework-neutral runtime settings
 
-**Status:** pending; implementation not invoked.
+**Status:** in_progress; ready for HARD — Analyst review on `task/ops-02-nginx-runtime`.
 
-**Purpose:** Support the Owner's production HTTPS nginx reverse proxy using a configured public origin and use `RUN_PORT`/`DEBUG` in place of misleading Flask-named runtime keys.
+**Purpose:** Support the Owner's HTTP-only private home-LAN nginx reverse proxy using a configured public origin and use `RUN_PORT`/`DEBUG` in place of misleading Flask-named runtime keys.
 
 **Acceptance:** [OPS-02 JIT](docs/tasks/OPS-02.md), [issue #35](https://github.com/k14krug/rideworks/issues/35). Keep backend loopback-only; preserve strict Host/Origin/CSRF checks and safe Strava OAuth callbacks. Focused and regression tests plus Analyst and Owner gates required. Separate from accepted OPS-01.
+
+**Implementation evidence:** [Report](reports/OPS-02/implementation.md): 93 focused and all 474 regression tests passed. HTTP LAN hostname/IP, default/custom external ports, strict Host/Origin/nonce checks and fake browser OAuth verified; backend remains loopback-only. `RUN_PORT`/`DEBUG`, example and nginx/systemd documentation updated. Actual private deployment and provider callback-domain acceptance remain for Owner review; no production data or live secrets changed.

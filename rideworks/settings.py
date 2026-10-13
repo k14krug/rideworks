@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlencode
 from .config import ConfigurationError, strava_credentials
 from .errors import RideWorksError
 from .goals import annual_goal, browser_zone, query_zone, set_annual_goal
+from .http_access import HTTPAccess
 from .performance import rebuild_performance
 from .store import Store
 from .strava import (ApiClient, ApiError, AuthenticationError, OperationBusyError, TokenFile, authorization_url,
@@ -25,7 +26,7 @@ NOTICES = {
     'disconnected': 'Strava disconnected. Your activity history is retained.',
     'unconfirmed': 'Local Strava connection removed; remote revocation was not confirmed. Check your Strava app settings.',
     'credentials': 'Configure your Strava app credentials in the local .env, then try again.',
-    'authorization': 'Authorization needs attention. Reconnect and grant activity:read_all using the original Strava account. If Strava cannot return here, check that its Authorization Callback Domain is 127.0.0.1.',
+    'authorization': 'Authorization needs attention. Reconnect and grant activity:read_all using the original Strava account.',
     'sync_failed': 'Sync could not complete. Check your connection and stored export boundary, then try a later manual sync. Activity history and the successful-sync checkpoint were not advanced.',
     'rate_limited': 'Strava rate limit reached. Sync stopped without retry; try a later manual sync.',
     'busy': 'Another Strava operation is running. Wait for it to finish before trying again.',
@@ -46,6 +47,7 @@ class Settings:
         self.notice = None
         self.goal_notice = None
         self.port = 8765
+        self.access = HTTPAccess()
 
     def configured(self):
         try:
@@ -145,8 +147,9 @@ class Settings:
             actions += action('sync', 'Sync now') if connected else action('connect', 'Reconnect Strava' if attention else 'Connect Strava')
         if connected or token_file.path.exists():
             actions += action('disconnect', 'Disconnect', secondary=True)
-        setup = '' if credentials else '<p>Set STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in the ignored local <code>.env</code>, then reload Settings. Use <code>127.0.0.1</code> as the Strava Authorization Callback Domain.</p>'
-        message = 'Authorization timed out. Reconnect and check that the Strava Authorization Callback Domain is 127.0.0.1.' if expired else self.notice
+        domain = self.access.callback_domain
+        setup = '' if credentials else f'<p>Set STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in the ignored local <code>.env</code>, then reload Settings. Use <code>{escape(domain)}</code> as the Strava Authorization Callback Domain.</p>'
+        message = f'Authorization timed out. Reconnect and check that the Strava Authorization Callback Domain is {domain}.' if expired else self.notice
         notice = f'<p role="status" id="strava-notice">{escape(message)}</p>' if message else ''
         return f'''<header><h1>Settings</h1></header><div class="settings-panels"><section class="panel strava-settings" aria-labelledby="strava-heading">
 <h2 id="strava-heading">Strava</h2><dl><div><dt>Connection</dt><dd id="strava-connection">{status}</dd></div>
@@ -173,9 +176,10 @@ class Settings:
         else:
             name = 'sync_failed'
         self.notice = NOTICES[name]  # Never render exception text or request/response bodies.
+        if name == 'authorization':
+            self.notice += f' If Strava cannot return here, check that its Authorization Callback Domain is {self.access.callback_domain}.'
 
     def post(self, path, body, origin):
-        origins = {f'http://127.0.0.1:{self.port}', f'http://localhost:{self.port}'}
         goal_action = path == '/settings/annual-goal'
         try:
             values = parse_qs(body.decode('ascii'), max_num_fields=3 if goal_action else 2,
@@ -184,7 +188,7 @@ class Settings:
             valid = len(supplied) == 1 and secrets.compare_digest(supplied[0].encode(), self.nonce.encode())
         except (ValueError, UnicodeError):
             valid = False
-        if origin not in origins or not valid:
+        if not self.access.allows_origin(origin, self.port) or not valid:
             return 403, {}, b'Invalid Settings action. Reload Settings and try again.'
         if goal_action and (set(values) not in ({'nonce','tz','target_miles'},{'nonce','tz','clear'}) or any(len(v)!=1 for v in values.values())):
             return 400, {}, b'Invalid annual goal form. Reload Settings and try again.'
@@ -236,7 +240,7 @@ class Settings:
                         with TokenFile(self.data_dir).lock():
                             state = secrets.token_urlsafe(32)
                             self.pending = state, time.monotonic() + 180
-                            return self.redirect(authorization_url(client.client_id, f'http://127.0.0.1:{self.port}/strava/callback', state))
+                            return self.redirect(authorization_url(client.client_id, self.access.callback_url(self.port), state))
                     result = sync(store, client)
                     self.remember({'attention': result.get('stream_authorization_attention',False), 'successful_at': result['before'],
                                    **{k: result[k] for k in COUNTS},**{k:result.get(k,0) for k in STREAM_COUNTS},

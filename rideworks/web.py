@@ -13,6 +13,7 @@ from uuid import UUID
 from .analysis import analyze_activity
 from .errors import RideWorksError
 from .goals import DEFAULT_TIMEZONE, query_zone
+from .http_access import HTTPAccess
 from .history import SORTS, browse, presentation
 from .recent_context import recent_context
 from .store import Store, resolve_data_dir
@@ -594,9 +595,11 @@ def performance_page(store, nonce='', query=''):
 
 class Application:
     """Local routes; each evidence request gets a short-lived Store snapshot."""
-    def __init__(self, data_dir=None, *, settings_factory=Settings):
+    def __init__(self, data_dir=None, *, settings_factory=Settings, public_origin=None):
+        access = HTTPAccess(public_origin)
         self.data_dir = resolve_data_dir(data_dir)
         self.settings = settings_factory(self.data_dir)
+        self.settings.access = access
         with Store(self.data_dir):
             pass
 
@@ -673,12 +676,11 @@ class Application:
     def post(self,path,body,origin):
         if not path.startswith('/plan/'):
             return self.settings.post(path,body,origin)
-        origins={f'http://127.0.0.1:{self.settings.port}',f'http://localhost:{self.settings.port}'}
         try:
             values=parse_qs(body.decode('ascii'),max_num_fields=6,strict_parsing=True)
             if any(len(v)!=1 for v in values.values()): raise ValueError
             values={k:v[0] for k,v in values.items()}
-            if origin not in origins or not secrets.compare_digest(values.get('nonce','').encode(),self.settings.nonce.encode()):
+            if not self.settings.access.allows_origin(origin, self.settings.port) or not secrets.compare_digest(values.get('nonce','').encode(),self.settings.nonce.encode()):
                 return 403,{},b'Invalid Plan action. Reload Plan and try again.'
             from .goals import browser_zone
             from .planning import confirm_intent,set_classification,set_feedback
@@ -731,8 +733,8 @@ class Application:
         return 404, 'text/html', shell('Activity not found', '<header><h1>Activity not found</h1><p>Return to <a href="/activities">Activities</a> to open an imported ride.</p></header>').encode()
 
 
-def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Settings):
-    app = Application(data_dir, settings_factory=settings_factory)
+def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Settings, public_origin=None):
+    app = Application(data_dir, settings_factory=settings_factory, public_origin=public_origin)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -745,8 +747,8 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
             started = perf_counter()
             headers = {}
             try:
-                allowed_hosts = {f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'}
-                if self.headers.get('Host') not in allowed_hosts:
+                hosts = self.headers.get_all('Host', [])
+                if len(hosts) != 1 or not app.settings.access.allows_host(hosts[0], self.server.server_port):
                     status, content_type, body = 403, 'text/plain', b'Invalid local host.'
                 elif method == 'POST':
                     size = self.headers.get('Content-Length', '')
@@ -755,7 +757,9 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
                     elif self.headers.get_content_type() != 'application/x-www-form-urlencoded':
                         status, content_type, body = 415, 'text/plain', b'Use the Settings form.'
                     else:
-                        status, headers, body = app.post(urlsplit(self.path).path, self.rfile.read(int(size)), self.headers.get('Origin'))
+                        origins = self.headers.get_all('Origin', [])
+                        origin = origins[0] if len(origins) == 1 else None
+                        status, headers, body = app.post(urlsplit(self.path).path, self.rfile.read(int(size)), origin)
                         content_type = 'text/plain'
                 elif urlsplit(self.path).path == '/strava/callback':
                     status, headers, body = app.settings.callback(urlsplit(self.path).query)
@@ -795,13 +799,13 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
     return server
 
 
-def serve(data_dir=None, port=8765, *, debug=False):
+def serve(data_dir=None, port=8765, *, debug=False, public_origin=None):
     if not (resolve_data_dir(data_dir) / 'rideworks.sqlite3').is_file():
         raise RideWorksError('Selected RideWorks store is missing. Restore your data or select an existing store with --data-dir. For a new installation, import a ride first.')
-    with create_server(data_dir, port, debug=debug) as server:
+    with create_server(data_dir, port, debug=debug, public_origin=public_origin) as server:
         print(f'RideWorks: http://127.0.0.1:{server.server_port}/ (Ctrl+C to stop)', flush=True)
         if debug:
-            print('Request diagnostics enabled (FLASK_DEBUG); no debugger or reloader.', flush=True)
+            print('Request diagnostics enabled (DEBUG); no debugger or reloader.', flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

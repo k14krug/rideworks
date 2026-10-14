@@ -535,3 +535,14 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Acceptance:** [OPS-02 JIT](docs/tasks/OPS-02.md), [issue #35](https://github.com/k14krug/rideworks/issues/35). The Analyst accepted reviewed code at PR head `8cf79e1` after inspection and Dex's 93 focused / 474 regression test report. The Owner explicitly directed merging to `main` without treating live deployment as a merge gate; this supersedes the JIT's earlier Owner deployment gate for **merge timing only**. Keep backend loopback-only and strict Host/Origin/nonce checks. Separate from accepted OPS-01.
 
 **Implementation evidence:** [Report](reports/OPS-02/implementation.md): 93 focused and all 474 regression tests passed. HTTP LAN hostname/IP, default/custom external ports, strict Host/Origin/nonce checks and fake browser OAuth verified; backend remains loopback-only. `RUN_PORT`/`DEBUG`, example and nginx/systemd documentation updated. Actual private deployment and provider callback-domain acceptance have not been tested; no production data or live secrets were changed. Verify normal HTTP nginx access and Settings/Plan actions after deploying the merged code, and investigate provider callback restrictions if reconnecting Strava is ever needed.
+
+
+### FTP-01 — Database-owned FTP history and editable 20-minute chart
+
+**Status:** pending — Owner authorized the direction on 2026-10-14; **Gate 0 HARD — Analyst (Astra) review required before coding**. [Issue #37](https://github.com/k14krug/rideworks/issues/37). [FTP-01 JIT](docs/tasks/FTP-01.md).
+
+**Purpose:** Move the Owner's 66 historical FTP entries from two active CSV files into authoritative editable SQLite history, remove both FTP CSVs permanently from the active application when migration completes, and integrate the Dex-created 20-minute-power vs FTP visualization with selectable orange/gray points, editable watt/date suggestions, and add/edit/delete historical FTP.
+
+**Integration:** Training State and Planning must consume DB FTP, including correct derived-cache invalidation and next-page recomputation. Validate production-store copy and leave originals untouched.
+
+**Execution:** First `/TASK FTP-01` is **review-only**. Dex must run Astra as an independent analyst against current code and the JIT, publish its assessment, and STOP; no coding or CSV removal before Owner/Analyst accepts the findings and revises/authorizes the JIT. Later implementation needs a fresh authorized `/TASK`. Phase 6 remains deferred.

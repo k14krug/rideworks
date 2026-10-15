@@ -2,9 +2,12 @@
 
 **Product:** RideWorks.
 **Current task:** FTP-01 — Database-owned historical FTP and interactive comparison. [Issue #37](https://github.com/k14krug/rideworks/issues/37).
-**State:** **blocked for targeted Astra review of clarified product requirements**, not authorized for further Gate 1 coding until cleared.
-**Owner clarification (2026-10-14):** **All entries are simply historical FTP values.** Original imported values are the starting 66 entries, not a privileged or read-only class. Later manually selected/adjusted entries belong to that same chronological history. The main action is inserting intermediate date/watt values; inserting must leave prior entries unchanged. No special imported-vs-supplemental classes, provenance UI, immutable anchor policy, duplicate original dataset or elaborate edit audit.
-**Revised JIT:** [docs/tasks/FTP-01.md](docs/tasks/FTP-01.md). Earlier [Astra Gate 0 findings](reports/FTP-01/astra-gate-0-review.md) remain valid for bootstrap safety, consumers, cache coherence and verification, but product assumptions requiring origin-based classes are superseded.
-**Next action:** Dex refreshes main, checks whether Gate 1 implementation has already begun and identifies conflicting work. Ask Astra for **brief targeted delta review** of the corrected single-history model; return findings and STOP for Analyst clearance before resumed Gate 1 storage/consumer implementation. Do not rerun broad research.
-**Gate restrictions:** No Gate 2 graph UI yet; no live production DB write/bootstrap, deployment or CSV removal without later authorization. First migrate current production successfully and verify rollback before final DB-only cutover. All three FTP CSVs removed at completion, no archival copy.
+**State:** ready_for_review — focused Astra delta review complete; Gate 1 coding remains paused pending renewed Analyst authorization.
+**Branch:** `task/ftp-01-timeline-review`, based on refreshed `main` at `a1a5ae9`.
+**Implementation check:** No Gate 1 code has started. Implementation paths are unchanged from the original reviewed code; no obsolete anchor/two-class implementation needs removal.
+**Review:** [Focused Astra findings](reports/FTP-01/astra-single-timeline-delta-review.md). The single historical timeline and intermediate insertion contract is technically coherent; no unresolved product decision blocks Gate 1 after Analyst reauthorization. Preserve persistent initialization state, marker-based bootstrap replay after later insertions, and coherent history/cache snapshots. Boundary insertion and correction UI choices can wait until needed.
+**Controlling contract:** [Current Analyst JIT](docs/tasks/FTP-01.md) and latest issue #37 clarification: all entries share one timeline, insertion leaves existing dates/watts untouched, no origin-based classes or duplicated original dataset/audit ledger. Initial Gate 0 product assumptions are superseded.
+**Verification:** Focused text/code/Git/GitHub review only; no tests, application execution or migration. Documentation-only changes; database and three FTP CSV integrity checked.
+**Next action:** Analyst reviews the focused findings and explicitly reauthorizes Gate 1 storage/consumer work. Resume only through a fresh `/TASK FTP-01`; stop again at its HARD — Analyst gate before Gate 2.
+**Restrictions:** No Gate 2 UI, live DB write/bootstrap, deployment or CSV removal in this invocation. Later promotion and retirement require the JIT's staged authorizations.
 **Last completed task:** OPS-02 accepted/merged. Phase 6 deferred.

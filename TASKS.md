@@ -539,8 +539,10 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### FTP-01 — Database-owned FTP history and editable 20-minute chart
 
-**Status:** blocked for a **focused Astra delta review of the updated Owner intent**, before Gate 1 implementation. [Issue #37](https://github.com/k14krug/rideworks/issues/37); [revised Analyst JIT](docs/tasks/FTP-01.md); [initial Astra report](reports/FTP-01/astra-gate-0-review.md).
+**Status:** in_progress — focused Astra delta review complete, **ready for Analyst review** on `task/ftp-01-timeline-review`; Gate 1 coding remains paused. [Focused findings](reports/FTP-01/astra-single-timeline-delta-review.md). [Issue #37](https://github.com/k14krug/rideworks/issues/37); [revised Analyst JIT](docs/tasks/FTP-01.md); [initial Astra report](reports/FTP-01/astra-gate-0-review.md).
 
 **Product contract:** **One historical FTP timeline** in SQLite, with all entries equal regardless of origin. Migrate the existing 66 settings as initial records; add new intermediate date/value entries (higher or lower) from selected orange/gray 20-minute-power points or manually. Insertion does not change any existing FTP date or watts. **No imported-vs-added categories, immutable-anchor distinction or elaborate history/audit subsystem.** Date-effective history feeds Training State, Planning, Home and Activity Review.
 
 **Execution:** Dex first reports whether incompatible Gate 1 code has already started and obtains a **targeted Astra/Analyst review** of the simpler single-timeline storage, explicit migration/replay and cache plan. Stop for Analyst authorization; then implement Gate 1 storage/consumers only, with HARD — Analyst review before Gate 2 graph/UI. Owner explicitly authorizes live DB promotion and final removal of all three FTP CSVs later. No automatic FTP estimator or Phase 6.
+
+**Focused review outcome (2026-10-15):** Astra finds the single-history/intermediate-insertion contract technically coherent, with no unresolved product decision blocking Gate 1 after renewed Analyst authorization. Implementation must preserve initialization state across restart, use the bootstrap marker without resetting later insertions, and read history/cache context consistently. No Gate 1 implementation has started; only review/lifecycle documentation changed. Stop for Analyst clearance.

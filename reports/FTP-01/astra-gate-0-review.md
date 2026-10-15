@@ -1,7 +1,9 @@
 # FTP-01 Gate 0 — independent Astra review
 
-**Reviewer:** Astra, independent analyst (GPT-6 Astra), explicitly requested by the Owner.  
-**Reviewed:** 2026-10-14; branch `task/ftp-01-astra-review`, implementation/base commit `a85ff5ae41492c346a7386a61e0c5461526695a6`; `docs/tasks/FTP-01.md` at that commit. Lifecycle-only working edits to `TASKS.md` and `STATUS.md` were present.  
+**Reviewer:** Astra, independent analyst (GPT-6 Astra), explicitly requested by the Owner.
+
+**Reviewed:** 2026-10-14; branch `task/ftp-01-astra-review`, implementation/base commit `a85ff5ae41492c346a7386a61e0c5461526695a6`; `docs/tasks/FTP-01.md` at that commit. Lifecycle-only working edits to `TASKS.md` and `STATUS.md` were present.
+
 **Disposition:** The objective is feasible and fits RideWorks. **The brief is not ready to authorize implementation.** Accept or amend the recommendations below, resolve the identified product/rollout choices, and have the Analyst commit a revised brief before a fresh `/TASK FTP-01`. This report neither changes that brief nor grants implementation authority.
 
 ## Review scope and evidence

@@ -89,6 +89,11 @@ def power_chart(performance, zone):
 
 
 def home_page(store, query=''):
+    with store._transaction(write=True):
+        return _home_page(store, query)
+
+
+def _home_page(store, query=''):
     zone = query_zone(query,'home_tz')
     if zone is None:
         return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel"><h2>Cycling mileage and Performance</h2><p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')

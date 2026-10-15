@@ -116,6 +116,11 @@ def classify_activity(store, snapshot, row, result, *, cache_result=True):
 
 
 def completed_history(store, zone_name, *, as_of):
+    with store._transaction(write=True):
+        return _completed_history(store, zone_name, as_of=as_of)
+
+
+def _completed_history(store, zone_name, *, as_of):
     results, _ = ride_results(store,zone_name,as_of=as_of)
     by_id = {r['activity_id']:r for r in results}
     history = []; undated = dict(total=0,recent=0)
@@ -228,7 +233,7 @@ def plan(store, zone_name, *, as_of=None):
     zone = browser_zone(zone_name); as_of = as_of or datetime.now(timezone.utc)
     if as_of.tzinfo is None: raise ValueError('Planner as-of must be absolute.')
     today = as_of.astimezone(zone).date()
-    with store._transaction():
+    with store._transaction(write=True):
         history, undated = completed_history(store,zone_name,as_of=as_of)
         row = store.connection.execute('SELECT successful_at FROM strava_sync_state WHERE singleton=1').fetchone()
         synced = datetime.fromtimestamp(row[0],timezone.utc) if row else None
@@ -243,7 +248,7 @@ def plan(store, zone_name, *, as_of=None):
             known_absence = bool(synced and synced<=as_of and day<synced.astimezone(zone).date())
             state = 'recorded activity' if day.isoformat() in recorded else 'assumed rest for planning (no recorded ride)' if known_absence else 'no recorded ride; sync does not establish rest'
             recent_days.append(dict(day=day.isoformat(),state=state))
-        ftp, digest = ftp_history()
+        ftp, digest = ftp_history(store)
         current_ftp = ftp_on(ftp,as_of.astimezone(ZoneInfo(FTP_CALENDAR)).date().isoformat())
         intent = store.connection.execute('SELECT * FROM planning_intents WHERE day=? AND timezone=? ORDER BY confirmed_at DESC,intent_id DESC LIMIT 1',(today.isoformat(),zone_name)).fetchone()
     return result | dict(today=today.isoformat(),timezone=zone_name,as_of=as_of.isoformat(),sync_at=synced.isoformat() if synced else None,
@@ -293,6 +298,11 @@ def confirm_intent(store,zone_name,*,as_of=None,expected_day=None,expected_categ
 
 
 def activity_context(store, activity_id, *, as_of=None):
+    with store._transaction():
+        return _activity_context(store, activity_id, as_of=as_of)
+
+
+def _activity_context(store, activity_id, *, as_of=None):
     """Only a real pre-ride confirmation can establish intended-versus-actual."""
     as_of=as_of or datetime.now(timezone.utc)
     snapshot=store.activity_history(activity_id)[0];row=presentation(snapshot)
@@ -304,7 +314,7 @@ def activity_context(store, activity_id, *, as_of=None):
     # Shared source calculation; no retrospective suggestions are persisted.
     if start>as_of: return result
     athlete_day=start.astimezone(ZoneInfo(FTP_CALENDAR)).date().isoformat()
-    history,_=ftp_history()
+    history,_=ftp_history(store)
     ride=calculate_ride(store,snapshot,row,ftp_on(history,athlete_day),hr_context(athlete_day))
     result['classification']=classify_activity(store,snapshot,row,ride,cache_result=False)
     intents=store.connection.execute('SELECT * FROM planning_intents WHERE confirmed_at<? ORDER BY confirmed_at DESC,intent_id DESC',(start.isoformat(),)).fetchall()

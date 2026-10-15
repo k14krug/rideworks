@@ -318,6 +318,26 @@ def _now():
     return datetime.now(timezone.utc).isoformat()
 
 
+MIGRATION_11 = """
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS ftp_history (
+    effective_date TEXT PRIMARY KEY,
+    watts INTEGER NOT NULL CHECK(typeof(watts)='integer' AND watts>0)
+);
+CREATE TABLE IF NOT EXISTS ftp_history_state (
+    singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+    initialization TEXT NOT NULL CHECK(initialization IN ('ready','migration_needed')),
+    revision INTEGER NOT NULL CHECK(revision>=0),
+    bootstrap_checksum TEXT
+);
+INSERT OR IGNORE INTO ftp_history_state
+    SELECT singleton,initialization,0,NULL FROM ftp_initialization_pending;
+DROP TABLE ftp_initialization_pending;
+PRAGMA user_version = 11;
+COMMIT;
+"""
+
+
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
     with path.open("rb") as stream:
@@ -348,10 +368,16 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10):
+        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
+            if version < 11:
+                new_store = version == 0 and not self.connection.execute("SELECT 1 FROM sqlite_master WHERE type='table'").fetchone()
+                self.connection.execute('BEGIN IMMEDIATE')
+                self.connection.execute('CREATE TABLE IF NOT EXISTS ftp_initialization_pending (singleton INTEGER PRIMARY KEY CHECK(singleton=1), initialization TEXT NOT NULL)')
+                self.connection.execute('INSERT OR IGNORE INTO ftp_initialization_pending VALUES (1,?)', ('ready' if new_store else 'migration_needed',))
+                self.connection.commit()
             if version == 0:
                 self.connection.executescript(SCHEMA)
                 version = 1
@@ -381,6 +407,9 @@ class Store:
                 version = self.connection.execute('PRAGMA user_version').fetchone()[0]
             if version == 9:
                 self.connection.executescript(MIGRATION_10)
+                version = 10
+            if version == 10:
+                self.connection.executescript(MIGRATION_11)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

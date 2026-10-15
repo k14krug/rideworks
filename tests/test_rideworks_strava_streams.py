@@ -367,5 +367,5 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(check.execute('PRAGMA user_version').fetchone()[0],5)
             self.assertEqual(check.execute("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'strava_stream_%'").fetchone()[0],0)
         with Store(root) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],10)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],11)
             self.assertEqual(tuple(migrated.connection.execute('SELECT * FROM activities').fetchone()),('synthetic-activity','synthetic-created'))

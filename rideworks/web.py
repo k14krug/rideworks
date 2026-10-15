@@ -617,7 +617,7 @@ class Application:
         curve_invalid = (path == '/performance' or path.startswith('/activities/')) and query_zone(url.query, 'curve_tz') is None
         if zone is None or curve_invalid:
             return 400, 'text/html', shell('Invalid timezone', '<h1>Invalid timezone</h1><p>Supply one valid timezone or omit the timezone parameter to use America/Los_Angeles.</p>').encode()
-        with Store(self.data_dir) as store:
+        with Store(self.data_dir) as store, store._transaction(write=True):
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':

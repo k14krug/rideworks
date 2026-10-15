@@ -5,13 +5,9 @@ original/source evidence remains authoritative. No network access occurs here.
 """
 from collections import Counter, defaultdict
 from bisect import bisect_right
-import csv
 from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
-from importlib.resources import files
-from pathlib import Path
 from zoneinfo import ZoneInfo
-import io
 import json
 import math
 
@@ -55,36 +51,10 @@ def epoch(value):
         return None
 
 
-def ftp_history(source_path=None):
-    """Load the packaged approved source, or an explicitly updated dated record.
-
-    A path must be supplied deliberately by the caller; source content rather
-    than record count identifies it and invalidates derived caches.
-    """
-    payload = Path(source_path).read_bytes() if source_path is not None else files('rideworks').joinpath('data/strava_ftp_history.csv').read_bytes()
-    reader = csv.DictReader(io.StringIO(payload.decode()))
-    if reader.fieldnames != ['effective_from_date', 'effective_until_date_exclusive', 'ftp_watts']:
-        raise IntegrityError('FTP source columns changed; Analyst review required')
-    rows = list(reader)
-    previous = None
-    for i, row in enumerate(rows):
-        try:
-            start = date.fromisoformat(row['effective_from_date'])
-            end = row['effective_until_date_exclusive'] or None
-            watts = int(row['ftp_watts'])
-            if end is not None:
-                date.fromisoformat(end)
-            if None in row or start.isoformat() != row['effective_from_date']:
-                raise ValueError('Malformed FTP row')
-        except (ValueError, TypeError) as exc:
-            raise IntegrityError('Invalid FTP effective intervals') from exc
-        if watts <= 0 or (previous and start <= previous) or end != (rows[i+1]['effective_from_date'] if i+1 < len(rows) else None):
-            raise IntegrityError('Invalid FTP effective intervals')
-        row.update(ftp_watts=watts, effective_until_date_exclusive=end)
-        previous = start
-    if not rows:
-        raise IntegrityError('FTP history is empty')
-    return rows, sha256(payload).hexdigest()
+def ftp_history(store):
+    from .ftp_history import snapshot
+    current = snapshot(store)
+    return current['rows'], current['signature']
 
 
 def ftp_on(rows, day, absolute=True):
@@ -96,7 +66,7 @@ def ftp_on(rows, day, absolute=True):
                 value=None if uncertain or result is None else result['ftp_watts'],
                 interval=result, calendar_date=day,
                 calendar_timezone=FTP_CALENDAR if absolute else 'source date; timezone unknown',
-                source='Owner-provided Strava UI historical FTP setting')
+                source='RideWorks dated FTP history')
 
 
 def hr_context(day, history=None):
@@ -678,13 +648,14 @@ def calculate_ride(store, snapshot, row, ftp, settings):
                 hr_candidates=candidates, ftp=ftp, hr_settings=settings)
 
 
-def ride_results(store, zone_name, *, as_of=None, hr_history=None, ftp_source=None):
+def ride_results(store, zone_name, *, as_of=None, hr_history=None):
     zone=browser_zone(zone_name); as_of=as_of or datetime.now(timezone.utc)
     if as_of.tzinfo is None:
         raise ValueError('Training State as-of must be absolute')
-    today=as_of.astimezone(zone).date(); history,digest=ftp_history(ftp_source)
+    today=as_of.astimezone(zone).date()
     rows=[]; excluded=Counter()
     with store._transaction(write=True):
+        history,digest=ftp_history(store)
         for snapshot in store.activity_history():
             row=presentation(snapshot)
             if row['activity_type'] not in ('Ride','Virtual Ride'):
@@ -761,8 +732,8 @@ def daily_series(rides, today):
     return rows
 
 
-def training_state(store, zone_name, *, as_of=None, hr_history=None, ftp_source=None):
-    rides,context=ride_results(store,zone_name,as_of=as_of,hr_history=hr_history,ftp_source=ftp_source)
+def training_state(store, zone_name, *, as_of=None, hr_history=None):
+    rides,context=ride_results(store,zone_name,as_of=as_of,hr_history=hr_history)
     days=daily_series(rides,context['today'])
     return context|dict(days=days,coverage=dict(rides=len(rides),scored=sum(r['selected']['stress'] is not None for r in rides),
                        selected_classes=dict(Counter(r['selected']['status'] for r in rides)),

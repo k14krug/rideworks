@@ -119,8 +119,9 @@ def file_evidence(native, screeners):
 
 
 def diagnose(store, as_of):
-    zone=ZoneInfo('America/Los_Angeles');history,_=ftp_history();screeners=screens();rides=[];all_model_rides=[];cache_checks=0
+    zone=ZoneInfo('America/Los_Angeles');screeners=screens();rides=[];all_model_rides=[];cache_checks=0
     with store._transaction():
+        history,_=ftp_history(store)
         for snapshot in store.activity_history():
             row=presentation(snapshot)
             if row['activity_type'] not in ('Ride','Virtual Ride') or not row['start_time']:continue

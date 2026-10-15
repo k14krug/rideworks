@@ -3,7 +3,7 @@
 **Product:** RideWorks.
 **Current task:** FTP-01 — Database-owned historical FTP and interactive comparison. [Issue #37](https://github.com/k14krug/rideworks/issues/37).
 **State:** ready_for_review — focused Astra delta review complete; Gate 1 coding remains paused pending renewed Analyst authorization.
-**Branch:** `task/ftp-01-timeline-review`, based on refreshed `main` at `a1a5ae9`.
+**Branch:** `task/ftp-01-timeline-review`; [draft PR #39](https://github.com/k14krug/rideworks/pull/39), based on refreshed `main` at `a1a5ae9`.
 **Implementation check:** No Gate 1 code has started. Implementation paths are unchanged from the original reviewed code; no obsolete anchor/two-class implementation needs removal.
 **Review:** [Focused Astra findings](reports/FTP-01/astra-single-timeline-delta-review.md). The single historical timeline and intermediate insertion contract is technically coherent; no unresolved product decision blocks Gate 1 after Analyst reauthorization. Preserve persistent initialization state, marker-based bootstrap replay after later insertions, and coherent history/cache snapshots. Boundary insertion and correction UI choices can wait until needed.
 **Controlling contract:** [Current Analyst JIT](docs/tasks/FTP-01.md) and latest issue #37 clarification: all entries share one timeline, insertion leaves existing dates/watts untouched, no origin-based classes or duplicated original dataset/audit ledger. Initial Gate 0 product assumptions are superseded.

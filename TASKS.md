@@ -539,7 +539,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### FTP-01 — Database-owned FTP history and editable 20-minute chart
 
-**Status:** in_progress — Owner authorized bounded `/AUTOTASK` on 2026-10-15 for **Gate 1 and Gate 2 as SOFT gates**, each requiring separately documented Astra fresh-context technical review and all JIT verification. Gates 3/4 retain HARD — Owner controls. [FTP-01 JIT](docs/tasks/FTP-01.md); [issue #37](https://github.com/k14krug/rideworks/issues/37); [focused Astra design review](reports/FTP-01/astra-single-timeline-delta-review.md).
+**Status:** in_progress — **ready_for_review at Gate 3 — HARD Owner**. Gates 1 and 2 passed implementation, verification and distinct fresh-context Astra technical review. [Draft PR #41](https://github.com/k14krug/rideworks/pull/41); [FTP-01 JIT](docs/tasks/FTP-01.md); [issue #37](https://github.com/k14krug/rideworks/issues/37). No live promotion, active CSV removal, merge or final acceptance.
 
 **Product contract:** **One historical FTP timeline** in SQLite. Migrate the existing 66 settings as ordinary starting records; add intermediate date/value entries (higher or lower) from orange/gray 20-minute power points or manually, without overwriting existing entries. No origin-based categories, immutable anchors or elaborate audit framework. Training State, Planning, Home and Activity Review consume coherent DB FTP.
 
@@ -547,4 +547,6 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 **Earlier reviews:** Initial design review PR #38 and focused single-timeline Astra review PR #39 were accepted; no Gate 1 code had started when checked.
 
-**Gate 1 evidence:** Storage/consumers at `662e954`; [verification](reports/FTP-01/gate-1-implementation.md), [affirmative fresh-context Astra review](reports/FTP-01/astra-gate-1-technical-review.md). All required Gate 1 checks passed; `/AUTOTASK` proceeds to Gate 2 in isolated unreleased checkout, with active sources and production unchanged. [Draft PR #41](https://github.com/k14krug/rideworks/pull/41).
+**Gate 1 evidence:** Storage/consumers at `662e954`; [verification](reports/FTP-01/gate-1-implementation.md), [affirmative fresh-context Astra review](reports/FTP-01/astra-gate-1-technical-review.md). All required Gate 1 checks passed before Gate 2 began in the isolated unreleased checkout. [Draft PR #41](https://github.com/k14krug/rideworks/pull/41).
+
+**Gate 2 evidence:** Chart/editor and retirement staging at `832eac0`; [implementation/tests](reports/FTP-01/gate-2-implementation.md), [affirmative fresh-context Astra review](reports/FTP-01/astra-gate-2-technical-review.md). 488 tests/70 browser assertions and installed-package/private-copy checks passed. Safe preview on port 8875 uses a separate 66-entry copy without OAuth credentials. Stop for Owner preview and explicit live authorization under the [runbook](reports/FTP-01/promotion-runbook.md). A new ride synced into production after rehearsal; production is still schema 10 without FTP tables and future cutover must use its current state, never a rehearsal replacement.

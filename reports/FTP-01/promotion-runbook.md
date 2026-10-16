@@ -9,6 +9,8 @@
 - Approved original import sources, still available in the active checkout: `data/athlete/strava_ftp_history.csv` and `rideworks/data/strava_ftp_history.csv`, both SHA-256 `cb990c18e969d0d12f1d524bea22cf8b596746171f179f6241748394b87ad073`. They contain the same 66 entries. The retired root `ftp-history.csv` is not an import source.
 - Proposed new code: the exact Owner-approved final commit of PR #41, checked out separately from the active release. Record that commit in the cutover evidence. Do not substitute an unreviewed moving branch.
 
+The October 16 handoff check found a new synced Activity after the rehearsal snapshot, while production remains schema 10 without FTP tables. This reinforces the requirement to use a fresh production backup and the actual current store at cutover; preview/rehearsal copies must never replace it.
+
 ## Authorized cutover sequence (future work)
 
 1. Confirm explicit Owner authorization for the target database, code revision, backup location, active CSV removal and launch method. Record the running service/launcher and all database writers. Stop only those writers, including manual sync; verify they remain stopped. This runbook does not assume a systemd unit name or change nginx configuration.

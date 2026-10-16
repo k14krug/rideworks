@@ -863,11 +863,25 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .ftp-grid { stroke: #d5d9df; stroke-width: 1; }
 .ftp-step { stroke: #2563eb; stroke-width: 2; }
 .ftp-entry { fill: #2563eb; stroke: white; stroke-width: 1.5; }
-.ftp-dot { cursor: pointer; stroke-width: 2; }
+.ftp-point { cursor: pointer; outline: none; }
+.ftp-hit { fill: transparent; pointer-events: all; }
+.ftp-dot { pointer-events: none; stroke-width: 1; }
+.ftp-point:focus .ftp-dot { stroke: #111827; stroke-width: 1.5; }
 .ftp-dot.above { fill: #c45d10; stroke: #c45d10; }
 .ftp-dot.below { fill: #6b7280; stroke: #6b7280; }
 .ftp-dot.unavailable { fill: white; stroke: #713f91; }
-.ftp-dot:hover { stroke: #111827; stroke-width: 3; }
+.ftp-navigator-wrap { margin: 2px 0 10px; }
+.ftp-navigator-wrap p { margin: 4px 0; color: var(--muted); font-size: 12px; }
+#ftp-navigator { display: block; width: 100%; height: 86px; touch-action: none; user-select: none; }
+.ftp-nav-base { stroke: #cbd1d9; stroke-width: 1; }
+.ftp-nav-ftp { stroke: #2563eb; stroke-width: 2; }
+.ftp-nav-dot { fill: #88909a; opacity: .2; }
+.ftp-nav-dot.above { fill: #c45d10; opacity: .34; }
+.ftp-nav-dot.unavailable { fill: white; stroke: #713f91; stroke-width: .7; opacity: .3; }
+.ftp-nav-selection { fill: #2563eb; fill-opacity: .09; stroke: #2563eb; stroke-width: 1; cursor: grab; }
+.ftp-nav-handle { fill: #fff; stroke: #2563eb; stroke-width: 2; cursor: ew-resize; }
+.ftp-nav-handle:focus { stroke: #111827; stroke-width: 3; }
+.ftp-nav-pan { cursor: grab; }
 .ftp-table { overflow-x: auto; }
 .ftp-table table { width: 100%; border-collapse: collapse; }
 .ftp-table th, .ftp-table td { padding: 10px; text-align: left; border-bottom: 1px solid #d5d9df; }

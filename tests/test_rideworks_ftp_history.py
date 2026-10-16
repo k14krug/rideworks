@@ -49,7 +49,7 @@ class HistoryTests(TestCase):
             before=snapshot(store)
             for d,w,revision in [('2020-06-01',300,before['revision']),('2020-05-01',220,0),
                                   ('2020-05-01',True,before['revision']),('2020-05-01',0,before['revision']),
-                                  ('2020-5-1',200,before['revision']),('2019-01-01',200,before['revision']),
+                                  ('2020-5-1',200,before['revision']),
                                   ('2021-01-01',200,before['revision'])]:
                 with self.assertRaises(ValueError):add_entry(store,d,w,expected_revision=revision)
                 self.assertEqual(snapshot(store),before)
@@ -58,6 +58,28 @@ class HistoryTests(TestCase):
             self.assertEqual(ftp_on(before['rows'],'2020-12-31')['value'],250)
             self.assertEqual(ftp_on(before['rows'],'2020-09-01',False)['status'],'date_uncertain')
         with Store(self.target) as store:self.assertEqual(snapshot(store),before)
+
+    def test_new_earliest_entry_preserves_history_and_leaves_earlier_dates_unknown(self):
+        with Store(self.target) as store:
+            seed_ftp(store,[('2020-07-18',180),('2021-01-01',205)])
+            before=snapshot(store)
+            after=add_entry(store,'2020-03-10',162,expected_revision=before['revision'])
+            self.assertEqual([(r['effective_from_date'],r['ftp_watts']) for r in after['rows']],
+                             [('2020-03-10',162),('2020-07-18',180),('2021-01-01',205)])
+            self.assertEqual(ftp_on(after['rows'],'2020-03-09')['status'],'unknown_prehistory')
+            self.assertIsNone(ftp_on(after['rows'],'2020-03-09')['value'])
+            self.assertEqual(ftp_on(after['rows'],'2020-03-10')['value'],162)
+            self.assertEqual(ftp_on(after['rows'],'2020-07-17')['value'],162)
+            self.assertEqual(ftp_on(after['rows'],'2020-07-18')['value'],180)
+            self.assertEqual([(r['effective_from_date'],r['ftp_watts']) for r in before['rows']],
+                             [('2020-07-18',180),('2021-01-01',205)])
+            with self.assertRaisesRegex(ValueError,'already exists'):
+                add_entry(store,'2020-03-10',170,expected_revision=after['revision'])
+            with self.assertRaisesRegex(ValueError,'After-last'):
+                add_entry(store,'2021-01-02',210,expected_revision=after['revision'])
+            with self.assertRaisesRegex(ValueError,'changed'):
+                add_entry(store,'2020-02-01',155,expected_revision=before['revision'])
+            self.assertEqual(snapshot(store),after)
 
     def test_validated_bootstrap_parity_replay_after_insertion(self):
         pairs=validated_sources(self.source,self.mirror)

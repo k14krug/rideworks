@@ -648,13 +648,15 @@ def calculate_ride(store, snapshot, row, ftp, settings):
                 hr_candidates=candidates, ftp=ftp, hr_settings=settings)
 
 
-def ride_results(store, zone_name, *, as_of=None, hr_history=None):
+def ride_results(store, zone_name, *, as_of=None, hr_history=None,
+                 cache_writes=None):
     zone=browser_zone(zone_name); as_of=as_of or datetime.now(timezone.utc)
     if as_of.tzinfo is None:
         raise ValueError('Training State as-of must be absolute')
     today=as_of.astimezone(zone).date()
-    rows=[]; excluded=Counter()
-    with store._transaction(write=True):
+    rows=[]; excluded=Counter(); own_cache_writes=cache_writes is None
+    pending_cache_writes=[] if own_cache_writes else cache_writes
+    with store._transaction():
         history,digest=ftp_history(store)
         for snapshot in store.activity_history():
             row=presentation(snapshot)
@@ -679,10 +681,16 @@ def ride_results(store, zone_name, *, as_of=None, hr_history=None):
                 result=json.loads(saved[1])
             else:
                 result=calculate_ride(store,snapshot,row,ftp,settings)
-                store.connection.execute('''INSERT INTO training_stress_cache VALUES (?,?,?) ON CONFLICT(activity_id)
-                    DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
-                    (row['activity_id'],signature,json.dumps(result,sort_keys=True,allow_nan=False)))
+                pending_cache_writes.append((row['activity_id'],signature,
+                    json.dumps(result,sort_keys=True,allow_nan=False)))
             rows.append(result|dict(day=day.isoformat(),title=row['title'],timezone_unknown=not row['absolute_time']))
+        # Do not take SQLite's WAL writer slot after the first ride. Calculate
+        # the complete result set on one coherent read snapshot, then batch the
+        # replaceable cache writes once no further ride calculations remain.
+        if own_cache_writes and pending_cache_writes:
+            store.connection.executemany('''INSERT INTO training_stress_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+                DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
+                pending_cache_writes)
     return rows, dict(today=today.isoformat(),timezone=zone_name,as_of=as_of.isoformat(),excluded=dict(excluded),
                       ftp_source_sha256=digest,version=VERSION,power_source_policy=POWER_SOURCE_POLICY,model_method=MODEL_METHOD,
                       session_power_method=SESSION_POWER_METHOD,session_power_policy=SESSION_POWER_POLICY,session_power_reference_commit=SESSION_REFERENCE_COMMIT,

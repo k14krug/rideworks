@@ -119,12 +119,22 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(before,after);self.assertEqual(result['integrity'],['ok'])
         self.assertTrue(result['sidecars']['.strava-tokens.json']);self.assertNotIn('must not parse',json.dumps(result))
 
-    def test_wal_and_journal_are_refused_without_creating_sidecars(self):
+    def test_wal_snapshot_is_read_only_and_journals_or_unverifiable_sidecars_are_refused(self):
         db=self.root/'rideworks.sqlite3'
         (self.root/'rideworks.sqlite3-journal').touch()
         with self.assertRaises(ValueError):self.tool.inspect(self.root)
         (self.root/'rideworks.sqlite3-journal').unlink()
-        with sqlite3.connect(db) as conn:conn.execute('PRAGMA journal_mode=WAL')
-        before={p.name:p.stat().st_mtime_ns for p in self.root.iterdir() if p.is_file()}
-        with self.assertRaises(ValueError):self.tool.inspect(self.root)
-        self.assertEqual(before,{p.name:p.stat().st_mtime_ns for p in self.root.iterdir() if p.is_file()})
+        conn=sqlite3.connect(db)
+        self.addCleanup(conn.close)
+        self.assertEqual(conn.execute('PRAGMA journal_mode=WAL').fetchone()[0],'wal')
+        conn.execute('PRAGMA wal_autocheckpoint=0')
+        conn.execute('CREATE TABLE inventory_wal_probe(value TEXT)')
+        conn.execute("INSERT INTO inventory_wal_probe VALUES ('present in WAL snapshot')")
+        conn.commit()
+        before=self.tool.source_manifest(db)
+        result=self.tool.inspect(self.root)
+        self.assertEqual(result['journal_mode'],'wal')
+        self.assertEqual(result['counts']['inventory_wal_probe'],1)
+        self.assertEqual(before,self.tool.source_manifest(db))
+        self.assertEqual(result['database_metadata_unchanged'],True)
+        self.assertCountEqual(result['journal_sidecars_after'],['-wal','-shm'])

@@ -48,8 +48,11 @@ def add_entry(store, effective_date, watts, *, expected_revision):
         if existing:
             raise ValueError(f"An FTP entry already exists on {effective_date}: {existing['ftp_watts']} W.")
         rows = current['rows']
-        if not rows or not rows[0]['effective_from_date'] < effective_date < rows[-1]['effective_from_date']:
-            raise ValueError('Choose a date between existing FTP entries. Extending history requires an Owner decision.')
+        if not rows:
+            raise ValueError('Add FTP history before inserting an intermediate entry.')
+        if not (effective_date < rows[0]['effective_from_date'] or
+                rows[0]['effective_from_date'] < effective_date < rows[-1]['effective_from_date']):
+            raise ValueError('Choose a date before the first FTP entry or between existing entries. After-last extension is not available.')
         store.connection.execute('INSERT INTO ftp_history VALUES (?,?)',(effective_date,watts))
         store.connection.execute('UPDATE ftp_history_state SET revision=revision+1 WHERE singleton=1')
         return snapshot(store)

@@ -364,6 +364,11 @@ class Store:
         self.staging = self.data_dir / ".staging"
         self.staging.mkdir(exist_ok=True, mode=0o700)
         self.connection = sqlite3.connect(self.data_dir / "rideworks.sqlite3", isolation_level=None)
+        # Dynamic pages can retain coherent read snapshots while calculating.
+        # WAL allows ordinary writers to commit alongside those readers.
+        journal_mode = self.connection.execute("PRAGMA journal_mode").fetchone()[0]
+        if journal_mode.lower() != "wal":
+            self.connection.execute("PRAGMA journal_mode=WAL")
         self.connection.row_factory = sqlite3.Row
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")

@@ -1,0 +1,38 @@
+{
+  "purpose": "Disposable SQLite concurrency verification for FTP-01 Gate 3",
+  "source_data": "Synthetic FIT activities and synthetic FTP history only",
+  "journal_mode": "WAL",
+  "training_state_cold_multiride_get": {
+    "elapsed_seconds": 0.0767,
+    "calculation_attempts": 4,
+    "scenario": "Two-ride cold /training-state GET paused after the second calculation, after the first ride had completed. No stress-cache rows had been written. A concurrent FTP history insertion committed before the request resumed.",
+    "concurrent_ftp_write_seconds": 0.0028,
+    "result": "The complete stale-snapshot cache batch was rolled back; GET retried both rides from a fresh snapshot, returned HTTP 200, and cached the current 250 W FTP results with nonempty signatures."
+  },
+  "plan_cold_multiride_get": {
+    "elapsed_seconds": 0.0628,
+    "classification_attempts": 4,
+    "scenario": "Two-ride cold /plan GET paused at the second classification after all ride calculations. Neither stress nor classification cache had been written. A concurrent FTP history insertion committed before the request resumed.",
+    "concurrent_ftp_write_seconds": 0.0033,
+    "result": "The stale cache batch was rolled back; GET retried from a fresh snapshot, returned HTTP 200, and saved two current-FTP stress results and two classification results with nonempty signatures."
+  },
+  "home_cold_multiride_get": {
+    "elapsed_seconds": 0.0813,
+    "classification_attempts": 4,
+    "scenario": "Two-ride cold Home GET paused at classification two, after the first classification calculation had completed. Both cache tables were empty and a concurrent FTP history insertion committed while the second classification was paused.",
+    "concurrent_ftp_write_seconds": 0.0034,
+    "result": "Home now computes Plan and flushes its deferred stress/classification batches before the Home-only Training State summary. The stale snapshot batch rolled back; GET retried, returned HTTP 200, and committed two stress and two classification rows with current-FTP signatures. Training State summary then read the populated cache."
+  },
+  "rollback_journal_baseline": {
+    "scenario": "A long read snapshot held while a second connection attempted a normal FTP write with a 100 ms busy timeout.",
+    "elapsed_seconds": 0.103,
+    "result": "SQLite raised database is locked; deferred reads alone do not allow a rollback-journal writer to commit alongside the long calculation."
+  },
+  "verification": {
+    "full_suite": "494 tests passed",
+    "focused_concurrency": "Training State, Plan, and Home two-ride GET regressions passed; Home write took 0.0034 s during classification #2 and the GET retried coherently",
+    "prehistory_integration": "A synthetic Nov 8 2024 FIT ride changed from FTP-unavailable to below threshold at 190 W after adding 190 W effective Nov 8; prior Nov 7 remained unknown; prior FTP rows were preserved; stress method/value, daily stress/fitness/fatigue, Plan history, and cache signatures refreshed",
+    "browser": "npx --offline --yes --package @playwright/cli playwright-cli --session ftp01check run-code --filename tools/verify_ftp_browser.js; 107 assertions passed on the disposable copy with 1,029 candidates (135 above, 744 at/below, 150 FTP-unavailable), 71 FTP rows before the test insertion",
+    "source_db_inspection": "WAL inventory regression verifies a coherent private copy includes committed WAL content and source database, WAL, and SHM contents/metadata remain unchanged. Unsupported journal/sidecar states are refused."
+  }
+}

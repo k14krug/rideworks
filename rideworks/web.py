@@ -5,6 +5,7 @@ from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import secrets
+import sqlite3
 from pathlib import Path
 from time import perf_counter
 from urllib.parse import parse_qs, urlsplit
@@ -604,6 +605,17 @@ class Application:
             pass
 
     def get(self, target):
+        try:
+            return self._get_once(target)
+        except sqlite3.OperationalError as exc:
+            # With WAL, a page that computes a cache from an older read
+            # snapshot can lose the write-upgrade race. Retry once from a new
+            # coherent snapshot after the concurrent writer has committed.
+            if 'locked' not in str(exc).lower():
+                raise
+            return self._get_once(target)
+
+    def _get_once(self, target):
         url = urlsplit(target)
         path = url.path
         if self.legacy_browser_target(target):
@@ -617,7 +629,9 @@ class Application:
         curve_invalid = (path == '/performance' or path.startswith('/activities/')) and query_zone(url.query, 'curve_tz') is None
         if zone is None or curve_invalid:
             return 400, 'text/html', shell('Invalid timezone', '<h1>Invalid timezone</h1><p>Supply one valid timezone or omit the timezone parameter to use America/Los_Angeles.</p>').encode()
-        with Store(self.data_dir) as store, store._transaction(write=True):
+        # Dynamic GETs need a stable read snapshot, but should not reserve
+        # SQLite's single-writer slot before page calculations have completed.
+        with Store(self.data_dir) as store, store._transaction():
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':

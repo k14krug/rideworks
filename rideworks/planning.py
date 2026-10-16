@@ -70,7 +70,8 @@ def stimulus(times, powers, ftp):
     return info | dict(category='Uncertain',hard=False,reason='Observed evidence does not clearly distinguish the training stimulus. Correct the category if known.')
 
 
-def classify_activity(store, snapshot, row, result, *, cache_result=True):
+def classify_activity(store, snapshot, row, result, *, cache_result=True,
+                      cache_writes=None):
     correction = store.connection.execute('SELECT * FROM planning_classifications WHERE activity_id=?',(row['activity_id'],)).fetchone()
     if correction:
         return dict(category=correction['category'],hard=correction['category'] in HARD,
@@ -109,19 +110,24 @@ def classify_activity(store, snapshot, row, result, *, cache_result=True):
                           title_hint=hint,source=source,version=CLASSIFIER,
                           race_metadata_source=api[0]['source']['source_id'] if reported_race else None)
     if cache_result:
-        store.connection.execute('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
-            DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
-            (row['activity_id'],signature,json.dumps(outcome,sort_keys=True)))
+        entry=(row['activity_id'],signature,json.dumps(outcome,sort_keys=True))
+        if cache_writes is None:
+            store.connection.execute('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+                DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',entry)
+        else:
+            cache_writes.append(entry)
     return outcome
 
 
 def completed_history(store, zone_name, *, as_of):
-    with store._transaction(write=True):
+    with store._transaction():
         return _completed_history(store, zone_name, as_of=as_of)
 
 
 def _completed_history(store, zone_name, *, as_of):
-    results, _ = ride_results(store,zone_name,as_of=as_of)
+    stress_cache_writes=[];classification_cache_writes=[]
+    results, _ = ride_results(store,zone_name,as_of=as_of,
+                              cache_writes=stress_cache_writes)
     by_id = {r['activity_id']:r for r in results}
     history = []; undated = dict(total=0,recent=0)
     today=as_of.astimezone(browser_zone(zone_name)).date()
@@ -142,9 +148,20 @@ def _completed_history(store, zone_name, *, as_of):
         if not row['absolute_time']:
             uncertain_date(row); continue  # No assumed rider-local conversion of unknown source zones.
         history.append(dict(activity_id=row['activity_id'],day=result['day'],start_time=row['start_time'],
-            title=row['title'],classification=classify_activity(store,snapshot,row,result),
+            title=row['title'],classification=classify_activity(store,snapshot,row,result,
+                cache_writes=classification_cache_writes),
             duration=row['duration'],average_power=average_power(row)[0],
             stress=result['selected'],ftp=result['ftp']))
+    # Training stress and classification misses are committed together only
+    # after every ride has been calculated on this same read snapshot.
+    if stress_cache_writes:
+        store.connection.executemany('''INSERT INTO training_stress_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+            DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
+            stress_cache_writes)
+    if classification_cache_writes:
+        store.connection.executemany('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+            DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
+            classification_cache_writes)
     return sorted(history,key=lambda r:(r['start_time'],r['activity_id'])), undated
 
 
@@ -233,7 +250,7 @@ def plan(store, zone_name, *, as_of=None):
     zone = browser_zone(zone_name); as_of = as_of or datetime.now(timezone.utc)
     if as_of.tzinfo is None: raise ValueError('Planner as-of must be absolute.')
     today = as_of.astimezone(zone).date()
-    with store._transaction(write=True):
+    with store._transaction():
         history, undated = completed_history(store,zone_name,as_of=as_of)
         row = store.connection.execute('SELECT successful_at FROM strava_sync_state WHERE singleton=1').fetchone()
         synced = datetime.fromtimestamp(row[0],timezone.utc) if row else None

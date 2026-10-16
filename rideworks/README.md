@@ -17,7 +17,7 @@ CLI and environment data-directory overrides remain available for those cases.
 
 Include the entire production `data/` folder in the Owner's existing backup system:
 `rideworks.sqlite3`, `originals/`, `.strava-tokens.json`, `.strava-settings.json`,
-and the tracked athlete/reference CSV resources. Include any SQLite `-wal`/`-shm`
+and the approved reference resources. Historical FTP now resides in SQLite; see the FTP-01 promotion notes below. Include any SQLite `-wal`/`-shm`
 sidecars if present, and take a consistent database snapshot or stop the app for
 file-based backups. Protect the ignored checkout `.env` separately for app
 credentials. `rideworks.log` and `.staging` are transient; `.strava.lock` is a
@@ -904,10 +904,9 @@ Home retains its existing content and adds a subordinate Training State link.
 accepted source evidence. Qualified Performance-v2 power eligibility is consumed
 without changing that policy. It selects calculated recorded power, FIT-only
 small-gap estimates, adequately covering HR estimates ahead of partial power,
-partial observed power, or unavailable. Dated FTP comes from the byte-identical
-packaged copy of the approved 66-entry CSV; `data/athlete/` remains the authority.
-Future source updates must update the packaged copy and preserve provenance.
-Pre-2019-07-18 FTP remains unknown. Historical settings use the accepted
+partial observed power, or unavailable. Dated FTP comes from the single SQLite history. There is no packaged CSV fallback; all entries have equal standing regardless of when they were added.
+Manual dated changes update this database timeline and its revision; no CSV copy is updated.
+FTP before the earliest history entry remains unknown. Historical settings use the accepted
 America/Los_Angeles athlete calendar, independently of browser display timezone. Optional accepted dated HR contexts may be
 passed as `hr_history`; otherwise the approved 58/158/143 retrospective assumptions
 apply, with the fixed 1.92 coefficient. No generic athlete profile engine is added.
@@ -997,3 +996,22 @@ observed stop endpoints and cannot be stitched; unverified timers do not clip
 valid recorded samples. Outdoor and summary/estimated watts cannot supply
 these curves. Existing Performance, Training State and planning calculations
 are preserved. See `reports/PC-01/implementation.md` for review evidence.
+
+
+## Historical FTP (FTP-01)
+
+The unreleased FTP-01 implementation stores effective date and positive integer watts in SQLite schema 11. Each value applies until the next entry. All entries share one timeline; there are no imported/supplemental classes. Intermediate insertion preserves existing dates and watts. History/revision signatures invalidate FTP-dependent caches; retained power measurements and saved Planning intents are unchanged.
+
+A genuinely new store has empty valid history. An upgraded existing store reports that explicit FTP migration is needed until initialized. Do not start the new release against the live store before Owner-approved promotion. Schema setup is not bootstrap, and old code cannot read the new schema.
+
+The explicit import command requires a target and both approved old-release source files:
+
+```bash
+python -m rideworks.ftp_history --target-dir /path/to/private-copy \
+  --source /path/to/old-release/data/athlete/strava_ftp_history.csv \
+  --mirror /path/to/old-release/rideworks/data/strava_ftp_history.csv
+```
+
+Input equality, known checksum and interval structure are validated before target construction. Entries and completion state commit together. Completed replay is a no-op even after intermediate insertion. No runtime page silently imports files. The retired root FTP CSV is never an input.
+
+This branch stages removal of all three FTP CSVs and the obsolete loader; the active release's files remain available until the separate authorized cutover. Follow the [reviewable promotion/rollback runbook](../reports/FTP-01/promotion-runbook.md). Recovery restores matching code and database; never decrement the schema version or substitute an old rehearsal database for current production.

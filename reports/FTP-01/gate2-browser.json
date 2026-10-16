@@ -1,0 +1,18 @@
+{
+  "checks": 70,
+  "eligible_points": 1029,
+  "initial_entries": 66,
+  "final_entries": 67,
+  "categories": {
+    "above": 69,
+    "below": 810,
+    "unavailable": 150
+  },
+  "widths": [
+    1440,
+    768,
+    390,
+    320
+  ],
+  "result": "PASS"
+}

@@ -90,8 +90,7 @@ def main():
         assert store.connection.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
         assert not store.connection.execute('PRAGMA foreign_key_check').fetchall()
     state['references']={name:sha256((a.code_root/name).read_bytes()).hexdigest() for name in (
-        'data/athlete/strava_ftp_history.csv','rideworks/data/strava_ftp_history.csv',
-        'data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv')}
+        'data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv',)}
     state=json.loads(json.dumps(state,default=str))
     if a.compare:
         before=json.loads(a.snapshot.read_text())

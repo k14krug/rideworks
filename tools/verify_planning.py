@@ -110,7 +110,7 @@ def main():
         assert performance_history(store)==performance
         assert fingerprint(args.data_dir)==before
         originals=preservation(args.data_dir,args.baseline_dir)
-        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in ('data/athlete/strava_ftp_history.csv','rideworks/data/strava_ftp_history.csv','data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv')}
+        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in ('data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv',)}
         with Store(args.data_dir) as reopened:assert plan(reopened,zone,as_of=now)==initial
         aggregate=dict(planner=initial['version'],classifier=initial['classifier'],as_of=args.as_of,
             three_hard_horizon_verified=True,displayed_dates=length,hard_offsets=[r['offset'] for r in initial['days'] if r['hard']],

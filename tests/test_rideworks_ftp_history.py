@@ -1,5 +1,8 @@
 """FTP lifecycle, transactional failure/replay and synthetic timeline invariants."""
 from pathlib import Path
+from datetime import date, timedelta
+from hashlib import sha256
+import csv
 import sqlite3
 import tempfile
 from unittest import TestCase
@@ -11,13 +14,20 @@ from rideworks.ftp_history import snapshot, add_entry, bootstrap, validated_sour
 from rideworks.training_state import ftp_on
 from ftp_fixture import seed_ftp
 
-SOURCE=Path('data/athlete/strava_ftp_history.csv')
-MIRROR=Path('rideworks/data/strava_ftp_history.csv')
 
 class HistoryTests(TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.target=Path(self.temp.name)/'store'
+        # Generated fictional bootstrap data; no personal source dataset in tests.
+        self.source=Path(self.temp.name)/'source.csv';self.mirror=Path(self.temp.name)/'mirror.csv'
+        days=[(date(2019,1,1)+timedelta(days=30*i)).isoformat() for i in range(66)]
+        with self.source.open('w',newline='') as handle:
+            writer=csv.writer(handle);writer.writerow(['effective_from_date','effective_until_date_exclusive','ftp_watts'])
+            writer.writerows((d,days[i+1] if i+1<len(days) else '',200+i%3) for i,d in enumerate(days))
+        self.mirror.write_bytes(self.source.read_bytes())
+        approved=patch('rideworks.ftp_history.APPROVED_SHA256',sha256(self.source.read_bytes()).hexdigest())
+        approved.start();self.addCleanup(approved.stop)
 
     def test_new_empty_and_existing_empty_upgrade_survive_restart(self):
         for _ in range(2):
@@ -49,36 +59,36 @@ class HistoryTests(TestCase):
             self.assertEqual(ftp_on(before['rows'],'2020-09-01',False)['status'],'date_uncertain')
         with Store(self.target) as store:self.assertEqual(snapshot(store),before)
 
-    def test_approved_bootstrap_parity_replay_after_insertion(self):
-        pairs=validated_sources(SOURCE,MIRROR)
-        result=bootstrap(self.target,SOURCE,MIRROR)
+    def test_validated_bootstrap_parity_replay_after_insertion(self):
+        pairs=validated_sources(self.source,self.mirror)
+        result=bootstrap(self.target,self.source,self.mirror)
         self.assertTrue(result['imported']);self.assertEqual(len(result['rows']),66)
         self.assertEqual([(r['effective_from_date'],r['ftp_watts']) for r in result['rows']],pairs)
         with Store(self.target) as store:
             changed=add_entry(store,'2020-01-03',211,expected_revision=1)
-        replay=bootstrap(self.target,SOURCE,MIRROR)
+        replay=bootstrap(self.target,self.source,self.mirror)
         self.assertFalse(replay.pop('imported'));self.assertEqual(replay,changed)
 
     def test_invalid_inputs_do_not_create_target_or_change_schema(self):
         wrong=Path(self.temp.name)/'bad.csv';wrong.write_text('not an approved input')
-        with self.assertRaises(IntegrityError):bootstrap(self.target,wrong,MIRROR)
+        with self.assertRaises(IntegrityError):bootstrap(self.target,wrong,self.mirror)
         self.assertFalse(self.target.exists())
-        with self.assertRaises(FileNotFoundError):bootstrap(self.target,SOURCE,wrong.parent/'missing')
+        with self.assertRaises(FileNotFoundError):bootstrap(self.target,self.source,wrong.parent/'missing')
         self.assertFalse(self.target.exists())
 
     def test_failure_after_rows_and_marker_rolls_back_and_retries(self):
         with Store(self.target):pass
         with patch('rideworks.ftp_history.snapshot',side_effect=RuntimeError('injected after marker')):
-            with self.assertRaises(RuntimeError):bootstrap(self.target,SOURCE,MIRROR)
+            with self.assertRaises(RuntimeError):bootstrap(self.target,self.source,self.mirror)
         with Store(self.target) as store:
             self.assertEqual(snapshot(store)['rows'],[])
             self.assertEqual(snapshot(store)['revision'],0)
             self.assertIsNone(store.connection.execute('SELECT bootstrap_checksum FROM ftp_history_state').fetchone()[0])
-        self.assertTrue(bootstrap(self.target,SOURCE,MIRROR)['imported'])
+        self.assertTrue(bootstrap(self.target,self.source,self.mirror)['imported'])
 
     def test_nonempty_unmarked_target_refuses_merge(self):
         with Store(self.target) as store:seed_ftp(store)
-        with self.assertRaisesRegex(IntegrityError,'refusing to merge'):bootstrap(self.target,SOURCE,MIRROR)
+        with self.assertRaisesRegex(IntegrityError,'refusing to merge'):bootstrap(self.target,self.source,self.mirror)
 
     def test_schema_migration_failure_is_atomic_and_initial_identity_survives(self):
         from rideworks import store as module
@@ -115,3 +125,23 @@ class HistoryTests(TestCase):
                 with self.assertRaises(sqlite3.OperationalError):
                     add_entry(second,'2020-01-01',210,expected_revision=before['revision'])
             self.assertEqual(snapshot(first),before)
+
+    def test_malformed_validated_payloads_leave_target_absent(self):
+        valid=self.source.read_text()
+        cases=[valid.replace('200','0',1),valid.replace('2019-01-01','2019-1-1',1),
+               valid.replace('2019-01-31','2019-01-30',1),
+               '\n'.join(valid.splitlines()[:-1])+'\n']
+        for content in cases:
+            self.source.write_text(content);self.mirror.write_bytes(self.source.read_bytes())
+            with patch('rideworks.ftp_history.APPROVED_SHA256',sha256(self.source.read_bytes()).hexdigest()):
+                with self.assertRaises(IntegrityError):bootstrap(self.target,self.source,self.mirror)
+            self.assertFalse(self.target.exists())
+
+    def test_conflicting_completion_marker_stops_without_changing_history(self):
+        bootstrap(self.target,self.source,self.mirror)
+        with Store(self.target) as store:
+            before=snapshot(store)
+            store.connection.execute("UPDATE ftp_history_state SET bootstrap_checksum='conflicting'")
+        with self.assertRaisesRegex(IntegrityError,'Conflicting'):
+            bootstrap(self.target,self.source,self.mirror)
+        with Store(self.target) as store:self.assertEqual(snapshot(store),before)

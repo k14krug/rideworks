@@ -21,7 +21,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
 
 
 def duration(seconds):
@@ -581,7 +581,7 @@ def performance_page(store, nonce='', query=''):
     if view['unknown_timezones']:
         notices.append(f"{view['unknown_timezones']:,} results have source dates with unknown timezones: available in period views, unavailable for exact timed-window summaries.")
     return shell('Performance', f'''<header><h1>Performance</h1><p class="performance-count">20-minute power · {len(points):,} eligible ride results · Virtual Ride power evidence</p></header>
-<div class="performance-modes" role="group" aria-label="Performance mode"><button type="button" data-curve-mode="history" aria-pressed="true">20-Minute History</button><button type="button" data-curve-mode="curve" aria-pressed="false">Power Curve</button></div><div id="performance-history-mode">{chart}
+<p><a href="/performance/ftp">FTP History &amp; comparison</a></p><div class="performance-modes" role="group" aria-label="Performance mode"><button type="button" data-curve-mode="history" aria-pressed="true">20-Minute History</button><button type="button" data-curve-mode="curve" aria-pressed="false">Power Curve</button></div><div id="performance-history-mode">{chart}
 <p class="performance-notice">{escape(' '.join(notices))}</p>
 <details class="panel performance-policy"><summary>Eligibility &amp; method</summary>
 <p>Virtual Ride file-backed power has precedence. When no file-backed power evidence exists, current Strava API time/watts streams may qualify if device watts are confirmed, both streams are high resolution and full length, and valid timing/power supports a complete window. Power presence alone does not establish measured origin. Outdoor Ride power remains excluded.</p>
@@ -631,6 +631,9 @@ class Application:
             if path == '/training-state':
                 from .training_state_page import training_page
                 return 200, 'text/html', self.page(store, training_page(store,url.query), display_zone=zone.key)
+            if path == '/performance/ftp':
+                from .ftp_page import page
+                return 200, 'text/html', self.page(store, page(store,self.settings.nonce), display_zone=DEFAULT_TIMEZONE)
             if path == '/performance':
                 return 200, 'text/html', self.page(store, performance_page(store,self.settings.nonce,url.query), display_zone=zone.key)
             if path.startswith('/activities/'):
@@ -674,6 +677,8 @@ class Application:
         return self.page(store,html,display_zone=query_zone(query,'plan_tz').key)
 
     def post(self,path,body,origin):
+        if path == '/performance/ftp/add':
+            return self.ftp_post(body,origin)
         if not path.startswith('/plan/'):
             return self.settings.post(path,body,origin)
         try:
@@ -703,6 +708,29 @@ class Application:
             return 303,{'Location':'/plan?'+urlencode({'plan_tz':zone})},b''
         except (ValueError,UnicodeError):
             return 400,{},b'Plan inputs changed or are invalid. Reload Plan and try again.'
+
+    def ftp_post(self, body, origin):
+        from .ftp_history import add_entry
+        from .ftp_page import page
+        values = {}
+        try:
+            parsed = parse_qs(body.decode('ascii'), max_num_fields=4, strict_parsing=True)
+            if any(len(v) != 1 for v in parsed.values()):
+                raise ValueError('Invalid FTP form. Reload and preview again.')
+            values = {k:v[0] for k,v in parsed.items()}
+            if not self.settings.access.allows_origin(origin,self.settings.port) or not secrets.compare_digest(values.get('nonce','').encode(),self.settings.nonce.encode()):
+                return 403,{},b'Invalid FTP action. Reload and try again.'
+            if set(values) != {'nonce','revision','date','watts'}:
+                raise ValueError('Invalid FTP form. Reload and preview again.')
+            if not values['watts'].isascii() or not values['watts'].isdecimal() or not values['revision'].isascii() or not values['revision'].isdecimal():
+                raise ValueError('FTP watts and revision must be whole numbers.')
+            with Store(self.data_dir) as store:
+                add_entry(store,values['date'],int(values['watts']),expected_revision=int(values['revision']))
+            return 303,{'Location':'/performance/ftp'},b''
+        except (ValueError,UnicodeError) as exc:
+            with Store(self.data_dir) as store:
+                html = page(store,self.settings.nonce,message=str(exc),draft=values)
+                return 400,{'Content-Type':'text/html; charset=utf-8'},self.page(store,html)
 
     def page(self, store, html, *, display_zone=DEFAULT_TIMEZONE):
         html = html.replace('<html lang="en">', f'<html lang="en" data-display-timezone="{escape(display_zone, quote=True)}">', 1)
@@ -760,7 +788,7 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
                         origins = self.headers.get_all('Origin', [])
                         origin = origins[0] if len(origins) == 1 else None
                         status, headers, body = app.post(urlsplit(self.path).path, self.rfile.read(int(size)), origin)
-                        content_type = 'text/plain'
+                        content_type = headers.pop('Content-Type', 'text/plain')
                 elif urlsplit(self.path).path == '/strava/callback':
                     status, headers, body = app.settings.callback(urlsplit(self.path).query)
                     content_type = 'text/plain'

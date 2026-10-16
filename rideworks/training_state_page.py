@@ -16,7 +16,7 @@ HELP = '''<details class="training-help"><summary>How these numbers work</summar
 
 def training_page(store, query=''):
     zone=query_zone(query)
-    header='<header><h1>Training State</h1><p>Your training trend and the rides behind it.</p></header>'
+    header='<header><h1>Training State</h1><p>Your training trend and the rides behind it.</p><p><a href="/performance/ftp">FTP History &amp; comparison</a></p></header>'
     if zone is None:
         return shell('Training State',header+'<p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p>'+HELP,active='training',page_class='training-redesign')
     data=training_state(store,zone.key)

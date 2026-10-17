@@ -59,23 +59,36 @@ async page => {
     }
     const header=await page.locator('.home-heading').boundingBox();
     geometry.push({width,headerHeight:header.height,factsTop:quick.y,factsWidth:quick.width,recommendationTop:rec.y,recommendationWidth:rec.width,priorRecommendationTop:prior.y,recentTop:recent.y});
+    check(data.recent.length===Math.min(7,data.diagnostics.cycling_activities),'seven most recent rides selected');
     check(await page.locator('.home-recent-row').count()===data.recent.length,'all recent rows retained');
+    check(await page.locator('.home-recent-row td[data-label="Ride"] span').count()===0,'ride type subline removed');
     for(const row of data.recent) {
       const el=page.locator('.home-recent-row[data-activity-id="'+row.activity_id+'"]');
       check(await el.locator('a').getAttribute('href')==='/activities/'+row.activity_id,'recent source link');
       check(await el.locator('[data-label="Distance"]').textContent()===money(row.distance===null?null:row.distance/1609.344),'recent exact distance');
       check(await el.locator('.home-avg-power').textContent()===(row.average_power===null?'Unavailable':row.average_power.toLocaleString('en-US',{maximumSignificantDigits:6})+' W'),'source-supplied average power');
     }
-    const before=await old.locator('.next-recommended').textContent(),after=await page.locator('.next-recommended').textContent();
-    check(before===after,'next ride all content unchanged');
+    const rideFacts=async source=>source.locator('.next-recommended').evaluate(el=>({
+      day:el.dataset.nextDay,type:el.querySelector('.recommended-type')?.textContent,
+      target:el.querySelector('.recommended-target')?.textContent
+    }));
+    check(JSON.stringify(await rideFacts(old))===JSON.stringify(await rideFacts(page)),'next ride date, type, and target unchanged');
+    check(!(await page.locator('.next-recommended').textContent()).includes('Provisional'),'Home hides provisional commentary');
     const plan=await page.context().newPage();await plan.goto(config.base+'/plan?plan_tz=America%2FLos_Angeles');await plan.waitForLoadState('networkidle');
     const expected=JSON.parse(await plan.locator('#plan-data').textContent());
     check(await page.locator('.next-recommended').getAttribute('data-next-day')===expected.next_ride.day,'same-clock Plan next date');
-    for(const [selector,key] of [['.recommended-type','category'],['.recommended-reason','reason']])check(await page.locator('.next-recommended '+selector).textContent()===expected.next_ride[key],'same Plan advice');
+    check(await page.locator('.next-recommended .recommended-type').textContent()===expected.next_ride.category,'same Plan type');
+    const reason=page.locator('.next-recommended .recommended-reason');
+    if(expected.next_ride.reason.startsWith('Provisional:'))check(await reason.count()===0,'provisional Plan reason omitted on Home');
+    else check(await reason.textContent()===expected.next_ride.reason,'non-provisional Plan reason retained on Home');
     check((await page.locator('.next-recommended .recommended-target').textContent())===expected.next_ride.duration+' · '+expected.next_ride.power,'same Plan duration/power');
     if(expected.today_actual.length)check(expected.next_ride.day>expected.today,'next future ride after completed today');
     await plan.close();
-    check(await page.locator('.home-training').textContent()===await old.locator('.home-training').textContent(),'Training State values/meaning retained');
+    check(await page.locator('.home-training > p').first().textContent()===await old.locator('.home-training > p').first().textContent(),'Training State values retained');
+    check(await page.locator('.home-training > p').count()===1,'Training State explanatory line removed');
+    check(!(await page.locator('.home-performance').textContent()).includes('Gaps mean no eligible result.'),'Performance note removed');
+    check(!(await page.locator('.home-goal-progress').textContent()).includes('Arithmetic goal progress'),'Goal note removed');
+    check(!(await page.locator('.home-mileage').textContent()).includes('Outlined current week is partial'),'Mileage note removed');
     check(await page.locator('.home-goal-progress').textContent().then(t=>t.includes(data.target_miles===null?'Set annual goal':'Annual target:')),'goal or honest no-goal state');
     const bars=page.locator('#home-mileage-chart [data-week]');check(await bars.count()===12,'twelve accepted mileage weeks');
     check(await page.locator('#home-mileage-chart .home-mileage-current').count()===1,'current partial-week outline');

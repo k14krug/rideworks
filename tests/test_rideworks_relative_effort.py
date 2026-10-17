@@ -63,7 +63,8 @@ class RelativeEffortTests(TestCase):
         self.assertEqual(classified['same']['comparisons'],6)
         self.assertEqual(classified['current']['load_category'],'Very High')
         self.assertEqual(classified['uncertain']['reason'],'date_unknown')
-        self.assertEqual(classified['tomorrow']['comparisons'],8)
+        # On Oct 18, the Sep 5 boundary ride is now outside the 42-day window.
+        self.assertEqual(classified['tomorrow']['comparisons'],7)
 
     def test_estimates_are_labeled_and_partial_is_excluded(self):
         sample=comparison_rides()

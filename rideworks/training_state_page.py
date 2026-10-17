@@ -49,4 +49,4 @@ def training_home(store, zone_name):
     data=training_state(store,zone_name)
     day=data['days'][-1] if data['days'] else None
     values=(f'Fitness {day["fitness"]:.1f} · Fatigue {day["fatigue"]:.1f} · Form {day["form"]:.1f}' if day else 'No usable training stress yet')
-    return f'''<section class="panel home-training"><div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div><p>{escape(values)}</p><p>42-/7-day modeled trend · Form at start of day · selected cycling stress</p></section>'''
+    return f'''<section class="panel home-training"><div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div><p>{escape(values)}</p></section>'''

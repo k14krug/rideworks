@@ -258,7 +258,7 @@ class PersistenceTests(unittest.TestCase):
             html=app.get('/activities/'+self.only)[2].decode()
         self.assertIn('data-best20-status="available"',html);self.assertIn('>121 W</strong>',html)
         self.assertIn('RideWorks-calculated from Strava API stream evidence',html)
-        self.assertIn('>123 W</strong>',html);self.assertIn('>111 bpm</strong>',html);self.assertIn('>1.00 mi</strong>',html)
+        self.assertIn('>123 W</strong>',html);self.assertIn('<dt>Average heart rate</dt><dd>111 bpm</dd>',html);self.assertIn('>1.00 mi</strong>',html)
         self.assertIn('>40:00</strong>',html);self.assertIn('Moving duration',html);self.assertIn('>35:00</dd>',html)
         self.assertIn('>100 ft</dd>',html);self.assertIn('>555 kJ</dd>',html);self.assertIn('>400 W</dd>',html)
         self.assertLess(html.index('class="metrics"'),html.index('id="chart-title"'))

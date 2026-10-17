@@ -379,20 +379,20 @@ def api_review_page(row, observation, observations, source_details, recent=None)
         ('Distance', distance(summary.get('distance')), 'distance'),
         ('Average power', sensor(summary.get('average_watts'), 'W'), 'power'),
     ])
+    best = review_best20(observation)
     summary_rows = []
     # Compare displayed precision: omit a duplicate, not a distinct moving duration.
     if (summary.get('moving_time') is not None and
             duration(summary.get('moving_time')) != duration(summary.get('elapsed_time'))):
         summary_rows.append(('Moving duration', duration(summary['moving_time'])))
     summary_rows += [
+        ('Best 20-minute power', sensor(best['rounded_watts'], 'W') if best['status'] == 'available' else 'Unavailable'),
         ('Maximum power', sensor(summary.get('max_watts'), 'W')),
         ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heartrate'), 'bpm')),
         ('Average cadence', sensor(summary.get('average_cadence'), 'rpm')),
         ('Energy', sensor(summary.get('kilojoules'), 'kJ')),
     ]
-    best = review_best20(observation)
-    summary_rows.insert(0, ('Best 20-minute power', sensor(best['rounded_watts'], 'W') if best['status'] == 'available' else 'Unavailable'))
     reasons = {
         'watts_stream_missing': 'No Strava watts stream is available.',
         'time_missing': 'No Strava time stream is available.',

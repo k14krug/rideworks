@@ -262,7 +262,7 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
     ])
     summary_rows = [
         ('Timer duration', duration(summary.get('total_timer_time'))),
-        ('Ascent', ascent(summary.get('total_ascent'))),
+        ('Best 20-minute power', sensor(best['rounded_watts'], 'W') if best['eligible'] else 'Unavailable'),
         ('Maximum power', sensor(summary.get('max_power'), 'W')),
         ('Average heart rate', sensor(summary.get('avg_heart_rate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heart_rate'), 'bpm')),
@@ -329,10 +329,8 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
                               type_text, subtype, 'FIT source')
     chart = f'''<section class="panel chart-panel" aria-labelledby="chart-title">
 <div class="panel-heading"><h2 id="chart-title">Ride power &amp; heart rate</h2>{chart_legend()}</div>
-<div id="ride-chart" data-record-count="{len(records)}" data-start-time="{escape(summary.get('start_time') or '', quote=True)}"><svg id="chart-svg" role="img" aria-label="Native power and heart rate over elapsed ride time" aria-describedby="chart-help"></svg></div>
-<div id="sample-readout" role="status" aria-live="polite">Move over the chart to inspect power and heart rate.</div>
-<div class="chart-footer"><span>{len(records):,} recorded samples · elapsed time</span><span id="chart-help">Focus chart + arrow keys to inspect</span></div>
-<noscript>Enable JavaScript to review the native chart and display dates in your local timezone.</noscript></section>'''
+<div id="sample-readout" role="status" aria-live="polite">Select a point on the chart to inspect power and heart rate.</div>
+<div id="ride-chart" data-record-count="{len(records)}" data-start-time="{escape(summary.get('start_time') or '', quote=True)}"><svg id="chart-svg" tabindex="0" role="img" aria-label="Native power and heart rate over elapsed ride time. Click the chart to focus, then use left and right arrow keys to inspect samples." aria-describedby="sample-readout"></svg></div></section>'''
     best_panel = f'''<section class="panel best-panel"><div><h2>{icon('power')}Best 20-minute power</h2><p>RideWorks-calculated</p></div><strong class="best-value">{sensor(best['rounded_watts'], 'W')}</strong><p class="window-context">{escape(window_text)}</p>
 {recent_context_panel(recent)}</section>'''
     evidence = f'''<details><summary>Calculation details</summary>{detail_rows(best_rows)}<p>Complete 1,200-sample windows with one-second timestamps and no missing power. Earliest window wins a tie; whole watts round half up. No repaired or estimated samples.</p></details><details class="panel provenance"><summary>Source &amp; provenance</summary><p>Ride summary values are FIT session source evidence. Sensor origins remain unknown; presence does not establish measurement origin.</p>{detail_rows(source_rows)}</details>{stream_details(streams or [])}'''
@@ -367,12 +365,8 @@ def stream_chart(observation):
     return f'''<section class="panel chart-panel" aria-labelledby="chart-title">
 <h2 id="chart-title">Ride power &amp; heart rate</h2><p class="source-caption">Strava API stream evidence</p>
 {chart_legend()}
-<div id="ride-chart" data-api-sample-count="{len(samples)}" data-start-time="{escape(observation['start_date'],quote=True)}"><svg id="chart-svg" role="img" aria-label="Strava API power and heart rate at returned elapsed time offsets" aria-describedby="chart-help"></svg></div>
-<div id="sample-readout" role="status" aria-live="polite">Move over the chart to inspect returned Strava samples.</div>
-<div class="chart-footer"><span>{len(samples):,} returned samples · elapsed time</span><span id="chart-help">Focus chart + arrow keys to inspect</span></div>
-<p class="source-caption">Returned time offsets are used directly. Missing values and gaps longer than one second break the lines; no intermediate samples are invented. Performance eligibility follows the versioned evidence policy.</p>
-<details><summary>Time mapping</summary><p>For local date/time inspection, the related Strava summary start_date plus the returned time offset supplies a presentation timestamp. Original offsets and source metadata are retained separately.</p></details>
-<noscript>Enable JavaScript to review the Strava stream chart.</noscript></section>
+<div id="sample-readout" role="status" aria-live="polite">Select a point on the chart to inspect power and heart rate.</div>
+<div id="ride-chart" data-api-sample-count="{len(samples)}" data-start-time="{escape(observation['start_date'],quote=True)}"><svg id="chart-svg" tabindex="0" role="img" aria-label="Strava API power and heart rate at returned elapsed time offsets. Click the chart to focus, then use left and right arrow keys to inspect samples." aria-describedby="sample-readout"></svg></div></section>
 <script id="api-stream-samples" type="application/json">{payload}</script>'''
 
 
@@ -391,7 +385,6 @@ def api_review_page(row, observation, observations, source_details, recent=None)
             duration(summary.get('moving_time')) != duration(summary.get('elapsed_time'))):
         summary_rows.append(('Moving duration', duration(summary['moving_time'])))
     summary_rows += [
-        ('Ascent', ascent(summary.get('total_elevation_gain'))),
         ('Maximum power', sensor(summary.get('max_watts'), 'W')),
         ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heartrate'), 'bpm')),
@@ -399,6 +392,7 @@ def api_review_page(row, observation, observations, source_details, recent=None)
         ('Energy', sensor(summary.get('kilojoules'), 'kJ')),
     ]
     best = review_best20(observation)
+    summary_rows.insert(0, ('Best 20-minute power', sensor(best['rounded_watts'], 'W') if best['status'] == 'available' else 'Unavailable'))
     reasons = {
         'watts_stream_missing': 'No Strava watts stream is available.',
         'time_missing': 'No Strava time stream is available.',
@@ -442,7 +436,7 @@ def api_review_page(row, observation, observations, source_details, recent=None)
 <p class="source-caption">{escape(eligibility_note)}</p>
 {recent_context_panel(recent) if eligible else ''}</section>'''
     summary_panel = f'''<aside class="panel ride-summary"><h2>{icon('summary')}Ride summary</h2><p class="source-caption">Strava API summary evidence</p>{detail_rows(summary_rows)}<details><summary>Summary source</summary>{detail_rows([('Source ID',summary_source['source']['source_id']),('Retrieved at (UTC)',summary_source['source']['imported_at']),('Mapping',summary_source['extraction']['mapping_version'])])}<p>Values are supplied by Strava; averages are not calculated from the retained API stream. Stream observations retain their own related summary Source.</p></details></aside>'''
-    evidence = f'''<details><summary>Calculation details</summary>{detail_rows(best_rows)}<p>Exactly 1,200 complete power samples at consecutive one-second returned offsets. Zero watts count. Highest raw average wins; exact ties choose the earliest window; displayed watts round half up. No interpolation or repaired samples.</p></details>{stream_details(observations)}<section class="thin-sources" aria-label="Associated source evidence">{source_details}</section>'''
+    evidence = f'''<details><summary>Calculation details</summary>{detail_rows(best_rows)}<p>Exactly 1,200 complete power samples at consecutive one-second returned offsets. Zero watts count. Highest raw average wins; exact ties choose the earliest window; displayed watts round half up. No interpolation or repaired samples.</p></details><details><summary>Stream display and time mapping</summary><p>Returned time offsets are used directly. Missing values and gaps longer than one second break the lines; no intermediate samples are invented. Performance eligibility follows the versioned evidence policy.</p><p>For local date/time inspection, the related Strava summary start_date plus the returned time offset supplies a presentation timestamp. Original offsets and source metadata are retained separately.</p></details>{stream_details(observations)}<section class="thin-sources" aria-label="Associated source evidence">{source_details}</section>'''
     return activity_review_layout(row['title'], identity=identity, metrics=metrics,
         chart=stream_chart(observation), summary=summary_panel, best=best_panel, evidence=evidence)
 

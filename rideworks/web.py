@@ -259,14 +259,10 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
         ('Duration', duration(summary.get('total_elapsed_time')), 'duration'),
         ('Distance', distance(summary.get('total_distance')), 'distance'),
         ('Average power', sensor(summary.get('avg_power'), 'W'), 'power'),
-        ('Average heart rate', sensor(summary.get('avg_heart_rate'), 'bpm'), 'heart'),
     ])
     summary_rows = [
-        ('Elapsed duration', duration(summary.get('total_elapsed_time'))),
         ('Timer duration', duration(summary.get('total_timer_time'))),
-        ('Distance', distance(summary.get('total_distance'))),
         ('Ascent', ascent(summary.get('total_ascent'))),
-        ('Average power', sensor(summary.get('avg_power'), 'W')),
         ('Maximum power', sensor(summary.get('max_power'), 'W')),
         ('Average heart rate', sensor(summary.get('avg_heart_rate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heart_rate'), 'bpm')),
@@ -388,14 +384,14 @@ def api_review_page(row, observation, observations, source_details, recent=None)
         ('Duration', duration(summary.get('elapsed_time')), 'duration'),
         ('Distance', distance(summary.get('distance')), 'distance'),
         ('Average power', sensor(summary.get('average_watts'), 'W'), 'power'),
-        ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm'), 'heart'),
     ])
-    summary_rows = [
-        ('Elapsed duration', duration(summary.get('elapsed_time'))),
-        ('Moving duration', duration(summary.get('moving_time'))),
-        ('Distance', distance(summary.get('distance'))),
+    summary_rows = []
+    # Compare displayed precision: omit a duplicate, not a distinct moving duration.
+    if (summary.get('moving_time') is not None and
+            duration(summary.get('moving_time')) != duration(summary.get('elapsed_time'))):
+        summary_rows.append(('Moving duration', duration(summary['moving_time'])))
+    summary_rows += [
         ('Ascent', ascent(summary.get('total_elevation_gain'))),
-        ('Average power', sensor(summary.get('average_watts'), 'W')),
         ('Maximum power', sensor(summary.get('max_watts'), 'W')),
         ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heartrate'), 'bpm')),
@@ -519,7 +515,6 @@ def thin_review_page(row, streams=None, stream_reason=None, recent=None):
         ('Duration', duration(values.get('elapsed_time')), 'duration'),
         ('Distance', distance(values.get('distance')), 'distance'),
         ('Average power', sensor(values.get('average_watts'), 'W'), 'power'),
-        ('Average heart rate', sensor(values.get('average_heartrate'), 'bpm'), 'heart'),
     ])
     caption = 'Strava API summary evidence · supplied averages' if api_only else 'No single supported summary selected; inspect associated source evidence.'
     metrics = f'<section class="metrics" aria-label="Available source summary">{cards}</section>'

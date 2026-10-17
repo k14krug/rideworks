@@ -548,3 +548,14 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Recovery:** Private verified pre-cutover schema-10 data backup at `/home/kkrug/rideworks-backups/ftp01/20261017T015331Z/data/`, paired with old code `92667ad`. Retain the backup and FTP-01 worktree pending deliberate later housekeeping.
 
 **Separate environment:** The Owner also operates a distinct production server. Updating that server and transferring a consistent copy of the accepted development database and necessary original artifacts, while preserving server-specific configuration, is **not part of this completed Gate 4 deployment** and requires a separate Owner-directed rollout. Do not treat this completion as evidence that the other server was updated. Do not automatically start another task.
+
+
+### OPS-03 — Initial accepted-data rollout to separate home-LAN production server
+
+**Status:** pending — Owner requested the separate production-server update on 2026-10-17. [JIT](docs/tasks/OPS-03.md); [issue #44](https://github.com/k14krug/rideworks/issues/44).
+
+**Purpose:** Transfer the accepted RideWorks development release and a consistent snapshot of its cycling history, FTP timeline and original activity files to the existing private home-LAN production server, without treating dev and prod as the same machine.
+
+**Execution:** **`/TASK only`**. Gate 1 discovers the actual production host/service/data path and compares production-only state **read-only**, prepares a source snapshot and exact verified runbook, then stops for **HARD Owner** approval of the destination/replacement. Gate 2 performs only the separately authorized controlled copy, backup, restart and smoke verification; stops again for Owner final acceptance. Preserve production-specific nginx/systemd/`.env`/OAuth settings and do not assume example paths, perform a second FTP bootstrap, or invent a bidirectional sync.
+
+**Acceptance:** Production runs the accepted release tree with source-matched SQLite schema 11, current development FTP/history and all referenced original artifacts, verified private recovery backups and unchanged server-specific setup, and explicit Owner acceptance. Existing development app and backups remain intact.

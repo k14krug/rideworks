@@ -110,6 +110,21 @@ class RotationTests(TestCase):
         data=project([actual(-1,'Uncertain')],TODAY)
         self.assertTrue(data['provisional']);self.assertIn('uncertain',data['days'][0]['reason'])
 
+    def test_home_only_hides_provisional_recommendation_commentary(self):
+        from rideworks.planning_page import today_card
+        data=dict(today='2026-10-17',timezone='America/Los_Angeles',today_actual=[],provisional=True,
+                  next_ride=dict(day='2026-10-17',category='Easy',duration='45–60 min',
+                                 power='~100–110 W',reason='Provisional: check recent classifications.',hard_number=None))
+        full=today_card(data,compact=True)
+        self.assertIn('Provisional: check recent classifications.',full)
+        self.assertIn('Provisional; check sync and actual classifications in Plan.',full)
+        home=today_card(data,compact=True,show_status=False,hide_provisional_reason=True)
+        self.assertNotIn('Provisional',home)
+        self.assertIn('View Plan',home)
+        data['next_ride']['reason']='Easy riding supports recovery.'
+        home=today_card(data,compact=True,show_status=False,hide_provisional_reason=True)
+        self.assertIn('Easy riding supports recovery.',home)
+
     def test_defensive_failure_and_determinism(self):
         with self.assertRaises(ValueError):project([],TODAY,limit=3)
         self.assertEqual(project([actual(-2,'Race')],TODAY),project([actual(-2,'Race')],TODAY))

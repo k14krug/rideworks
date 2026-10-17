@@ -107,6 +107,11 @@ class WebTests(unittest.TestCase):
         self.assertIn('<strong>1:00:00</strong>', html)
         self.assertNotIn('<dt>Elapsed duration</dt>', html)
         self.assertIn('<dt>Timer duration</dt><dd>59:59</dd>', html)
+        summary = html.split('<aside class="panel ride-summary">', 1)[1].split('</aside>', 1)[0]
+        for duplicate in ('Elapsed duration', 'Distance', 'Average power'):
+            self.assertNotIn('<dt>' + duplicate + '</dt>', summary)
+        self.assertIn('<dt>Average heart rate</dt>', summary)
+        self.assertEqual(html.count('class="metric"'), 3)
         self.assertNotIn(str(self.data_dir), html)
         self.assertNotIn(str(self.input_path), html)
         self.assertNotIn('stored_path', html)

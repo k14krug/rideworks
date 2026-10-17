@@ -126,6 +126,8 @@ class SessionPowerTests(TestCase):
 
     def test_session_policy_parameters_and_version_invalidate_cache_then_reuse(self):
         with tempfile.TemporaryDirectory() as directory,Store(directory) as store:
+            from ftp_fixture import seed_ftp
+            seed_ftp(store)
             item=dict(id=123,name='Synthetic virtual workout',type='VirtualRide',sport_type='VirtualRide',
                 start_date='2026-10-01T12:00:00Z',elapsed_time=1800,moving_time=1800,
                 device_watts=True,has_heartrate=True,average_heartrate=120)

@@ -1,0 +1,12 @@
+{
+  "existing_entries_preserved": 66,
+  "new_entries": 67,
+  "inverse_square_checks": 1,
+  "independent_daily_convolution": true,
+  "unchanged_hr_work_power": true,
+  "cache_restart_parity": true,
+  "bootstrap_replay_preserves_insert": true,
+  "noncache_tables_and_artifacts_preserved": true,
+  "cold_seconds": 21.318544084999303,
+  "warm_seconds": 0.4875317440018989
+}

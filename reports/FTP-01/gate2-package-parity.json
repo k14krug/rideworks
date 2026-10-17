@@ -1,0 +1,14 @@
+{
+  "model_scenarios": 2,
+  "page_render_checks": 6,
+  "tables_preserved": 24,
+  "artifacts_preserved": 1422,
+  "numerical_parity": true,
+  "warm_cache_parity": true,
+  "integrity": "ok",
+  "seconds": {
+    "America/Los_Angeles 2026-10-15T12:00:00-07:00": 21.25009855999815,
+    "Asia/Tokyo 2026-01-01T00:30:00+00:00": 0.4643856639995647,
+    "warm": 0.5560665390003123
+  }
+}

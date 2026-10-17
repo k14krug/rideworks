@@ -273,7 +273,7 @@ class PerformanceTests(unittest.TestCase):
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],3)
             self.assertEqual(db.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='performance_history'").fetchone()[0],0)
         with Store(root) as updated:
-            self.assertEqual(updated.connection.execute('PRAGMA user_version').fetchone()[0],10)
+            self.assertEqual(updated.connection.execute('PRAGMA user_version').fetchone()[0],11)
 
 
 if __name__=='__main__': unittest.main()

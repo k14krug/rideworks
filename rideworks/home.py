@@ -89,6 +89,11 @@ def power_chart(performance, zone):
 
 
 def home_page(store, query=''):
+    with store._transaction(write=True):
+        return _home_page(store, query)
+
+
+def _home_page(store, query=''):
     zone = query_zone(query,'home_tz')
     if zone is None:
         return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel"><h2>Cycling mileage and Performance</h2><p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')
@@ -156,11 +161,14 @@ def home_page(store, query=''):
                     ('Needed average miles per week',goal['needed_miles_per_week'])]
     sync_status = 'Last sync: '+local_time(data['successful_sync'],compact=True) if data['successful_sync'] else 'No successful sync recorded'
     sync = f'<p class="home-sync">{sync_status} · <a href="/settings">Settings</a></p>'
-    from .training_state_page import training_home
-    training = training_home(store, zone.key)
+    # Planning computes classifications after its stress calculations and
+    # flushes both cache batches at the end. Run it before the Home-only
+    # Training State summary so no expensive calculation follows that write.
     from .planning import plan
     from .planning_page import today_card
     advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of'])),compact=True)
+    from .training_state_page import training_home
+    training = training_home(store, zone.key)
     compact = {k:v for k,v in data.items() if k!='recent'}
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
     return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>

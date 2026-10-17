@@ -70,7 +70,8 @@ def stimulus(times, powers, ftp):
     return info | dict(category='Uncertain',hard=False,reason='Observed evidence does not clearly distinguish the training stimulus. Correct the category if known.')
 
 
-def classify_activity(store, snapshot, row, result, *, cache_result=True):
+def classify_activity(store, snapshot, row, result, *, cache_result=True,
+                      cache_writes=None):
     correction = store.connection.execute('SELECT * FROM planning_classifications WHERE activity_id=?',(row['activity_id'],)).fetchone()
     if correction:
         return dict(category=correction['category'],hard=correction['category'] in HARD,
@@ -109,14 +110,24 @@ def classify_activity(store, snapshot, row, result, *, cache_result=True):
                           title_hint=hint,source=source,version=CLASSIFIER,
                           race_metadata_source=api[0]['source']['source_id'] if reported_race else None)
     if cache_result:
-        store.connection.execute('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
-            DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
-            (row['activity_id'],signature,json.dumps(outcome,sort_keys=True)))
+        entry=(row['activity_id'],signature,json.dumps(outcome,sort_keys=True))
+        if cache_writes is None:
+            store.connection.execute('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+                DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',entry)
+        else:
+            cache_writes.append(entry)
     return outcome
 
 
 def completed_history(store, zone_name, *, as_of):
-    results, _ = ride_results(store,zone_name,as_of=as_of)
+    with store._transaction():
+        return _completed_history(store, zone_name, as_of=as_of)
+
+
+def _completed_history(store, zone_name, *, as_of):
+    stress_cache_writes=[];classification_cache_writes=[]
+    results, _ = ride_results(store,zone_name,as_of=as_of,
+                              cache_writes=stress_cache_writes)
     by_id = {r['activity_id']:r for r in results}
     history = []; undated = dict(total=0,recent=0)
     today=as_of.astimezone(browser_zone(zone_name)).date()
@@ -137,9 +148,20 @@ def completed_history(store, zone_name, *, as_of):
         if not row['absolute_time']:
             uncertain_date(row); continue  # No assumed rider-local conversion of unknown source zones.
         history.append(dict(activity_id=row['activity_id'],day=result['day'],start_time=row['start_time'],
-            title=row['title'],classification=classify_activity(store,snapshot,row,result),
+            title=row['title'],classification=classify_activity(store,snapshot,row,result,
+                cache_writes=classification_cache_writes),
             duration=row['duration'],average_power=average_power(row)[0],
             stress=result['selected'],ftp=result['ftp']))
+    # Training stress and classification misses are committed together only
+    # after every ride has been calculated on this same read snapshot.
+    if stress_cache_writes:
+        store.connection.executemany('''INSERT INTO training_stress_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+            DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
+            stress_cache_writes)
+    if classification_cache_writes:
+        store.connection.executemany('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
+            DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
+            classification_cache_writes)
     return sorted(history,key=lambda r:(r['start_time'],r['activity_id'])), undated
 
 
@@ -243,7 +265,7 @@ def plan(store, zone_name, *, as_of=None):
             known_absence = bool(synced and synced<=as_of and day<synced.astimezone(zone).date())
             state = 'recorded activity' if day.isoformat() in recorded else 'assumed rest for planning (no recorded ride)' if known_absence else 'no recorded ride; sync does not establish rest'
             recent_days.append(dict(day=day.isoformat(),state=state))
-        ftp, digest = ftp_history()
+        ftp, digest = ftp_history(store)
         current_ftp = ftp_on(ftp,as_of.astimezone(ZoneInfo(FTP_CALENDAR)).date().isoformat())
         intent = store.connection.execute('SELECT * FROM planning_intents WHERE day=? AND timezone=? ORDER BY confirmed_at DESC,intent_id DESC LIMIT 1',(today.isoformat(),zone_name)).fetchone()
     return result | dict(today=today.isoformat(),timezone=zone_name,as_of=as_of.isoformat(),sync_at=synced.isoformat() if synced else None,
@@ -293,6 +315,11 @@ def confirm_intent(store,zone_name,*,as_of=None,expected_day=None,expected_categ
 
 
 def activity_context(store, activity_id, *, as_of=None):
+    with store._transaction():
+        return _activity_context(store, activity_id, as_of=as_of)
+
+
+def _activity_context(store, activity_id, *, as_of=None):
     """Only a real pre-ride confirmation can establish intended-versus-actual."""
     as_of=as_of or datetime.now(timezone.utc)
     snapshot=store.activity_history(activity_id)[0];row=presentation(snapshot)
@@ -304,7 +331,7 @@ def activity_context(store, activity_id, *, as_of=None):
     # Shared source calculation; no retrospective suggestions are persisted.
     if start>as_of: return result
     athlete_day=start.astimezone(ZoneInfo(FTP_CALENDAR)).date().isoformat()
-    history,_=ftp_history()
+    history,_=ftp_history(store)
     ride=calculate_ride(store,snapshot,row,ftp_on(history,athlete_day),hr_context(athlete_day))
     result['classification']=classify_activity(store,snapshot,row,ride,cache_result=False)
     intents=store.connection.execute('SELECT * FROM planning_intents WHERE confirmed_at<? ORDER BY confirmed_at DESC,intent_id DESC',(start.isoformat(),)).fetchall()

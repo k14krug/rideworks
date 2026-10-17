@@ -58,42 +58,18 @@ class MathTests(TestCase):
         for change in [dict(max_hr=58),dict(resting_hr=None),dict(threshold_hr=58),dict(coefficient=float('inf'))]:
             self.assertIsNone(hrss(140,3600,DEFAULT_HR|change))
 
-    def test_packaged_ftp_identical_and_all_inclusive_exclusive_boundaries(self):
-        history,digest=ftp_history(); self.assertEqual(len(history),66)
-        self.assertEqual(Path('data/athlete/strava_ftp_history.csv').read_bytes(),Path('rideworks/data/strava_ftp_history.csv').read_bytes())
-        self.assertEqual(len(digest),64)
-        self.assertIsNone(ftp_on(history,'2019-07-17')['value'])
-        for i,row in enumerate(history):
-            self.assertEqual(ftp_on(history,row['effective_from_date'])['value'],row['ftp_watts'])
-            if i:
-                before=(date.fromisoformat(row['effective_from_date'])-timedelta(days=1)).isoformat()
-                self.assertEqual(ftp_on(history,before)['value'],history[i-1]['ftp_watts'])
-        self.assertEqual(ftp_on(history,'2099-01-01')['value'],history[-1]['ftp_watts'])
-        self.assertEqual(ftp_on(history,history[0]['effective_from_date'],False)['status'],'date_uncertain')
-
-    def test_updated_ftp_record_length_and_strict_intervals(self):
-        header=['effective_from_date','effective_until_date_exclusive','ftp_watts']
-        with tempfile.TemporaryDirectory() as directory:
-            path=Path(directory)/'approved.csv'
-            with Path('data/athlete/strava_ftp_history.csv').open() as handle:
-                rows=list(csv.DictReader(handle))
-            rows[-1]['effective_until_date_exclusive']='2026-10-10'
-            rows.append(dict(zip(header,['2026-10-10','',190])))
-            def write(values):
-                with path.open('w',newline='') as handle:
-                    writer=csv.DictWriter(handle,fieldnames=header);writer.writeheader();writer.writerows(values)
-            write(rows)
-            history,digest=ftp_history(path)
-            self.assertEqual(len(history),67)
-            self.assertNotEqual(digest,ftp_history()[1])
-            self.assertEqual(ftp_on(history,'2026-10-10')['value'],190)
-            for update in [dict(effective_from_date='2026-09-01'),dict(ftp_watts='0'),
-                           dict(ftp_watts='190.5'),dict(effective_until_date_exclusive='2027-01-01'),
-                           dict(effective_from_date='not-a-date')]:
-                write(rows[:-1]+[rows[-1]|update])
-                with self.assertRaises(IntegrityError):ftp_history(path)
-            write([])
-            with self.assertRaises(IntegrityError):ftp_history(path)
+    def test_sqlite_ftp_inclusive_exclusive_boundaries(self):
+        from ftp_fixture import seed_ftp
+        with tempfile.TemporaryDirectory() as directory, Store(directory) as store:
+            seed_ftp(store,[('2020-01-01',200),('2021-01-01',250)])
+            history,digest=ftp_history(store)
+            self.assertEqual(len(digest),64)
+            self.assertIsNone(ftp_on(history,'2019-12-31')['value'])
+            self.assertEqual(ftp_on(history,'2020-01-01')['value'],200)
+            self.assertEqual(ftp_on(history,'2020-12-31')['value'],200)
+            self.assertEqual(ftp_on(history,'2021-01-01')['value'],250)
+            self.assertEqual(ftp_on(history,'2099-01-01')['value'],250)
+            self.assertEqual(ftp_on(history,'2020-01-01',False)['status'],'date_uncertain')
 
     def test_exact_exponential_decay_prior_form_and_zero_seed(self):
         rows=daily_series([ride('2026-01-01',100),ride('2026-01-02',None,'2','unavailable')],'2026-02-12')
@@ -211,27 +187,26 @@ class StoreTests(TestCase):
         with patch('rideworks.training_state.calculate_ride',wraps=__import__('rideworks.training_state',fromlist=['calculate_ride']).calculate_ride) as calc:
             training_state(self.store,'America/Los_Angeles',as_of=when);self.assertEqual(calc.call_count,1)
         with Store(self.root/'store') as reopened:
-            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],10)
+            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],11)
             self.assertEqual(reopened.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
             training_state(reopened,'America/Los_Angeles',as_of=when)
 
-    def test_explicit_updated_ftp_source_invalidates_cached_scores(self):
+    def test_sqlite_insertion_invalidates_cached_scores(self):
+        from ftp_fixture import seed_ftp
+        from rideworks.ftp_history import add_entry,snapshot
+        seed_ftp(self.store,[('2000-01-01',200),('2030-01-01',200)])
         when=datetime(2026,10,9,tzinfo=timezone.utc)
         first=training_state(self.store,'America/Los_Angeles',as_of=when)
-        path=self.root/'approved-ftp.csv'
-        # Synthetic dated setting covers the synthetic activity, deliberately supplied.
-        path.write_text('effective_from_date,effective_until_date_exclusive,ftp_watts\n2000-01-01,,250\n')
+        add_entry(self.store,'2010-01-01',250,expected_revision=snapshot(self.store)['revision'])
         with patch('rideworks.training_state.calculate_ride',wraps=__import__('rideworks.training_state',fromlist=['calculate_ride']).calculate_ride) as calc:
-            updated=training_state(self.store,'America/Los_Angeles',as_of=when,ftp_source=path)
+            updated=training_state(self.store,'America/Los_Angeles',as_of=when)
             self.assertEqual(calc.call_count,1)
         self.assertNotEqual(first['ftp_source_sha256'],updated['ftp_source_sha256'])
         self.assertEqual(updated['days'][0]['rides'][0]['ftp']['value'],250)
         self.assertAlmostEqual(updated['days'][0]['stress'],1200/36*(200/250)**2)
-        with patch('rideworks.training_state.calculate_ride',side_effect=AssertionError('updated source cache should match')):
-            self.assertEqual(updated,training_state(self.store,'America/Los_Angeles',as_of=when,ftp_source=path))
-        with patch('rideworks.training_state.calculate_ride',wraps=__import__('rideworks.training_state',fromlist=['calculate_ride']).calculate_ride) as calc:
-            self.assertEqual(first,training_state(self.store,'America/Los_Angeles',as_of=when))
-            self.assertEqual(calc.call_count,1)
+        self.assertEqual(first['days'][0]['rides'][0]['hr'],updated['days'][0]['rides'][0]['hr'])
+        with patch('rideworks.training_state.calculate_ride',side_effect=AssertionError('cache should match')):
+            self.assertEqual(updated,training_state(self.store,'America/Los_Angeles',as_of=when))
 
     def test_page_routes_safe_help_navigation_and_home(self):
         app=Application(self.root/'store')
@@ -300,6 +275,8 @@ class ApiAndRecalculationTests(TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.store=Store(Path(self.temp.name)/'store');self.addCleanup(self.store.close)
+        from ftp_fixture import seed_ftp
+        seed_ftp(self.store)
         self.now=datetime(2026,10,9,23,tzinfo=timezone.utc)
         self.item=dict(id=123,name='Synthetic outdoor ride',type='Ride',sport_type='Ride',start_date='2026-10-01T12:00:00Z',
                        moving_time=3600,elapsed_time=3600,has_heartrate=True,average_heartrate=143,device_watts=False)

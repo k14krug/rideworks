@@ -316,7 +316,7 @@ class CurveSourceTests(unittest.TestCase):
         with patch.object(module,'MIGRATION_10',module.MIGRATION_10.replace('PRAGMA user_version = 10;','INSERT INTO nonexistent VALUES(1);')):
             with self.assertRaises(sqlite3.Error):Store(self.store.data_dir)
         self.assertEqual(self.store.connection.execute('PRAGMA user_version').fetchone()[0],9)
-        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],10)
+        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],11)
 
     def test_curve_migration_waits_for_completed_planning_migration(self):
         import rideworks.store as module
@@ -325,7 +325,7 @@ class CurveSourceTests(unittest.TestCase):
                 self.assertEqual(paused.connection.execute('PRAGMA user_version').fetchone()[0],8)
                 self.assertIsNone(paused.connection.execute("SELECT name FROM sqlite_master WHERE name='power_curve_profiles'").fetchone())
         with Store(self.root/'paused') as recovered:
-            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],10)
+            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],11)
 
     def test_changed_input_during_build_is_not_published(self):
         identity=self.api(1,[100]*20)

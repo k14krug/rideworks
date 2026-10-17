@@ -68,8 +68,7 @@ def preserve(current, baseline):
         assert db.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
         assert not db.execute('PRAGMA foreign_key_check').fetchall()
     hashes={path:sha256(Path(path).read_bytes()).hexdigest() for path in (
-        'data/athlete/strava_ftp_history.csv','rideworks/data/strava_ftp_history.csv',
-        'data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv')}
+        'data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv',)}
     return dict(source_tables_preserved=len(tables),originals_preserved=originals,
                 integrity='ok',foreign_key_violations=0,approved_reference_hashes=hashes)
 

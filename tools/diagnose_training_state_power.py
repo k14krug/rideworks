@@ -182,14 +182,16 @@ def main():
         parser.add_argument('--'+flag, type=Path, required=True)
     parser.add_argument('--as-of', required=True)
     args = parser.parse_args(); as_of = datetime.fromisoformat(args.as_of)
-    cases = json.loads(args.cases.read_text()); history, ftp_digest = ftp_history()
+    cases = json.loads(args.cases.read_text())
     completed, projected = read_reference(args.reference); reference = {r['date']:r for r in completed}
     before = preservation(args.data_dir, args.baseline_dir)
     with readonly(args.data_dir) as database:
-        assert database.execute('PRAGMA user_version').fetchone()[0]==8, 'Supply the existing schema-8 private review copy'
+        assert database.execute('PRAGMA user_version').fetchone()[0]==11, 'Supply an initialized schema-11 private review copy'
         initial_digest = table_digest(database)
     with Store(args.data_dir) as store:
         store.connection.execute('PRAGMA query_only=ON')
+        store.connection.execute('BEGIN')
+        history, ftp_digest = ftp_history(store)
         snapshots = store.activity_history(); rides = []; matches = []; census = Counter(); blocked = []; formula_checks = 0
         for snapshot in snapshots:
             row = presentation(snapshot)

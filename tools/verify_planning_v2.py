@@ -94,8 +94,7 @@ def main():
         assert all('data-next-day="2026-10-11"' in page for page in html.values())
         preservation=preserve(a.data_dir,a.baseline_dir)
         sha={name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in (
-            'data/athlete/strava_ftp_history.csv','rideworks/data/strava_ftp_history.csv',
-            'data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv')}
+            'data/reference/elevate/fitness_trend_export.2026.10.9-15.58.52.csv',)}
         safe=dict(planner=data['version'],classifier=data['classifier'],as_of=a.as_of,
             actual_owner_case_verified=True,assumed_recovery_dates_verified=2,
             before_primary=dict(offset=0,category=old['days'][0]['category']),

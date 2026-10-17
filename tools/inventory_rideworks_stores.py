@@ -2,11 +2,14 @@
 """Non-migrating SQLite inventory. Output contains private paths/identities; keep local."""
 import argparse
 from contextlib import closing
+from contextlib import contextmanager
 import hashlib
 import json
 import os
 from pathlib import Path
 import sqlite3
+import shutil
+import tempfile
 
 
 def digest(value):
@@ -21,6 +24,53 @@ def file_hash(path):
     return h.hexdigest()
 
 
+def source_manifest(db):
+    """Fingerprint the database and any SQLite sidecars without opening it."""
+    paths = [db, Path(str(db)+'-wal'), Path(str(db)+'-shm'), Path(str(db)+'-journal')]
+    result = {}
+    for path in paths:
+        if path.exists():
+            stat = path.stat()
+            result[path.name] = (stat.st_size, stat.st_mtime_ns, file_hash(path))
+    return result
+
+
+@contextmanager
+def read_snapshot(db, *, wal):
+    """Inspect a private copy; never open source WAL/SHM files through SQLite."""
+    sidecars = [Path(str(db)+suffix) for suffix in ('-wal', '-shm', '-journal')]
+    present = [path.exists() for path in sidecars]
+    if present[2] or present[0] != present[1]:
+        raise ValueError('SQLite sidecar state is unsupported or incomplete')
+    before = source_manifest(db)
+    if wal and not present[0]:
+        # With no WAL/SHM files, immutable mode can safely read the checkpointed
+        # main file and cannot create shared-memory sidecars.
+        uri = db.as_uri() + '?mode=ro&immutable=1'
+    elif wal and present[0]:
+        uri = None  # Open only the private main/WAL copy below.
+    elif not wal and not present[0]:
+        uri = db.as_uri() + '?mode=ro'
+    else:
+        raise ValueError('SQLite journal mode and sidecars disagree')
+    with tempfile.TemporaryDirectory(prefix='rideworks-inventory-') as temporary:
+        snapshot_path = Path(temporary) / 'rideworks.sqlite3'
+        if wal and present[0]:
+            # Copy the exact main/WAL pair to private temporary storage and let
+            # SQLite build temporary SHM there. Opening source WAL directly can
+            # mutate its transient SHM lock bytes even in query-only mode.
+            shutil.copyfile(db, snapshot_path)
+            shutil.copyfile(sidecars[0], Path(str(snapshot_path)+'-wal'))
+            uri = snapshot_path.as_uri()
+        if source_manifest(db) != before:
+            raise ValueError('Database or SQLite sidecars changed during read-only snapshot')
+        with closing(sqlite3.connect(uri, uri=True, isolation_level=None)) as connection:
+            connection.row_factory = sqlite3.Row
+            connection.execute('PRAGMA query_only=ON')
+            connection.execute('PRAGMA temp_store=MEMORY')
+            yield connection
+
+
 def cache_metadata(connection, tables):
     """Fingerprint replaceable cached contents without publishing underlying evidence."""
     result = {}
@@ -33,23 +83,20 @@ def cache_metadata(connection, tables):
 
 
 def inspect(root):
-    """Keep normal SQLite locking; refuse WAL rather than mutate shared-memory files."""
+    """Inspect one immutable rollback/WAL snapshot without changing its source."""
     root = Path(root).resolve()
     db = root / 'rideworks.sqlite3'
     # Header bytes 18/19 indicate WAL even when sidecars are currently absent.
     with db.open('rb') as stream:
         header = stream.read(100)
-    if header[:16] != b'SQLite format 3\0' or header[18:20] != b'\x01\x01':
-        raise ValueError('Unsupported/WAL journal mode; safe read-only route needs review')
-    if any(Path(str(db)+suffix).exists() for suffix in ('-wal', '-shm', '-journal')):
-        raise ValueError('Journal sidecar present; safe read-only route needs review')
-    before = (db.stat().st_size, db.stat().st_mtime_ns)
+    mode = header[18:20]
+    if header[:16] != b'SQLite format 3\0' or mode not in (b'\x01\x01', b'\x02\x02'):
+        raise ValueError('Unsupported SQLite format or journal mode')
+    wal = mode == b'\x02\x02'
+    before = source_manifest(db)
     result = dict(path=str(root), sidecars={name:(root/name).is_file() for name in
                   ('.strava-tokens.json', '.strava-settings.json')})
-    with closing(sqlite3.connect(db.as_uri()+'?mode=ro', uri=True, isolation_level=None)) as conn:
-        conn.row_factory = sqlite3.Row
-        conn.execute('PRAGMA query_only=ON')
-        conn.execute('PRAGMA temp_store=MEMORY')
+    with read_snapshot(db, wal=wal) as conn:
         conn.execute('BEGIN')
         result['schema'] = conn.execute('PRAGMA user_version').fetchone()[0]
         result['integrity'] = [r[0] for r in conn.execute('PRAGMA integrity_check')]
@@ -92,9 +139,11 @@ def inspect(root):
         result['identity_digests'] = {t:digest(v) for t,v in result['identities'].items()}
         result['state_digests'] = {t:digest(v) for t,v in result['state'].items()}
         conn.execute('ROLLBACK')
-    result['database_metadata_unchanged'] = before == (db.stat().st_size, db.stat().st_mtime_ns)
+    after = source_manifest(db)
+    result['database_metadata_unchanged'] = before == after
     result['journal_sidecars_after'] = [s for s in ('-wal','-shm','-journal') if Path(str(db)+s).exists()]
-    if not result['database_metadata_unchanged'] or result['journal_sidecars_after']:
+    result['journal_mode'] = 'wal' if wal else 'delete-or-rollback'
+    if not result['database_metadata_unchanged']:
         raise ValueError('Store changed during inventory; report concurrent writer and retry safely')
     return result
 

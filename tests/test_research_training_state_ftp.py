@@ -10,10 +10,14 @@ from tools.research_training_state_ftp import (
 
 
 class DatedFTPResearchTests(unittest.TestCase):
-    def test_committed_source_intervals_and_no_backfill(self):
-        history=read_ftp(Path('data/athlete/strava_ftp_history.csv'))
-        self.assertEqual(len(history),66)
-        self.assertIsNone(lookup(history,date(2019,7,17)))
+    def test_synthetic_source_intervals_and_no_backfill(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'synthetic.csv'
+            source.write_text('effective_from_date,effective_until_date_exclusive,ftp_watts\n'
+                              '2020-01-01,2020-02-01,200\n2020-02-01,2020-03-01,210\n2020-03-01,,210\n')
+            history=read_ftp(source,expected_count=3)
+        self.assertEqual(len(history),3)
+        self.assertIsNone(lookup(history,date(2019,12,31)))
         for i,row in enumerate(history):
             self.assertIs(lookup(history,row['start']),row)
             if i:

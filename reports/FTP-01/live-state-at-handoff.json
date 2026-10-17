@@ -1,0 +1,53 @@
+{
+  "live_schema": 10,
+  "baseline_schema": 10,
+  "ftp_tables_present": false,
+  "changed_tables": [
+    {
+      "table": "activities",
+      "baseline_rows": 1443,
+      "current_rows": 1444
+    },
+    {
+      "table": "performance_history",
+      "baseline_rows": 2884,
+      "current_rows": 2885
+    },
+    {
+      "table": "power_curve_profiles",
+      "baseline_rows": 1443,
+      "current_rows": 1444
+    },
+    {
+      "table": "strava_api_activities",
+      "baseline_rows": 21,
+      "current_rows": 22
+    },
+    {
+      "table": "strava_api_sources",
+      "baseline_rows": 21,
+      "current_rows": 22
+    },
+    {
+      "table": "strava_stream_attempts",
+      "baseline_rows": 13,
+      "current_rows": 14
+    },
+    {
+      "table": "strava_stream_current",
+      "baseline_rows": 13,
+      "current_rows": 14
+    },
+    {
+      "table": "strava_stream_sources",
+      "baseline_rows": 13,
+      "current_rows": 14
+    },
+    {
+      "table": "strava_sync_state",
+      "baseline_rows": 1,
+      "current_rows": 1
+    }
+  ],
+  "interpretation": "One additional synced Activity and associated API/performance records appeared after the test snapshot. Live remains schema10 with no FTP tables. No production writes were performed by this task; live cutover must use a new backup, never the rehearsal copy."
+}

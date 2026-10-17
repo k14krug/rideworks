@@ -40,6 +40,13 @@ async page => {
         check(await link.evaluate(n=>parseFloat(getComputedStyle(n).outlineWidth)>=2),'visible link focus');
       }
       if(name==='activities') {
+        const activityRows=page.locator('.activity-row');
+        if(await activityRows.count()) {
+          check(await activityRows.count()===await page.locator('.activity-row .row-effort .effort-pill').count(),'Each activity has a Relative Effort label or honest unrated state');
+        }
+        if(width<=620&&await activityRows.count()) {
+          check(await page.locator('.row-effort').first().evaluate(n=>getComputedStyle(n,'::before').content.includes('Relative effort')),'mobile Relative Effort label');
+        }
         if(width<=620&&await page.locator('.activity-row').count()) {
           check(await page.locator('.activity-row').first().evaluate(n=>getComputedStyle(n).gridTemplateColumns.split(' ').length===1),'stacked mobile activity rows');
           check(await page.locator('.row-date').first().evaluate(n=>getComputedStyle(n,'::before').content.includes('Date')),'mobile date label');

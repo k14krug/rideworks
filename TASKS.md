@@ -15,6 +15,21 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### HOME-DEV-REVIEW — Verify committed Home dashboard cleanup
+
+**Status:** in_progress — ready for Owner review after development verification on 2026-10-17.
+
+**Scope:** Review existing `dev` commits, correct verification failures, preserve
+FTP/Training State/Plan/Performance/mileage behavior, verify desktop/mobile Home,
+and make the development application available for Owner review. Work directly
+on `dev`; no production deployment or merge to `main`.
+
+**Acceptance:** Automated regression and calculation/source preservation checks
+pass; running development dashboard is presented for Owner review. Final review
+is pending. [Verification report](reports/HOME-UI-01/dev-dashboard-cleanup-review.md).
+
+---
+
 ### STRAVA-001 — Inventory latest Strava bulk export
 
 **Status:** done

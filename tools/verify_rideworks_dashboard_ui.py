@@ -136,8 +136,10 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
             data=run("""const context=await page.context().browser().newContext({timezoneId:ZONE,locale:'en-US'});
               const local=await context.newPage();try{
                 await local.goto(base+'/');await local.waitForSelector('#dashboard-data',{state:'attached'});
+                check(JSON.parse(await local.locator('#dashboard-data').textContent()).timezone==='America/Los_Angeles','Default athlete calendar');
+                await local.goto(base+'/?home_tz='+encodeURIComponent(ZONE));await local.waitForSelector('#dashboard-data',{state:'attached'});
                 const data=JSON.parse(await local.locator('#dashboard-data').textContent());
-                check(data.timezone===ZONE,'Browser-local aggregation');
+                check(data.timezone===ZONE,'Explicit timezone aggregation');
                 const originals=GOALS;check(data.target_miles===(originals[data.year]??null),'Hidden default or replaced goal');
                 check(await local.locator('.home-recent-row').count()===Math.min(7,data.diagnostics.cycling_activities),'Recent seven cycling Activities');
                 check(await local.locator('.home-recent-row td[data-label="Ride"] span').count()===0,'Recent rides show title only');

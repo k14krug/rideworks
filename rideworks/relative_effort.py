@@ -157,17 +157,19 @@ def chip(rating):
 
 
 def card(rating):
-    """Compact right-column activity panel; same category as Activities."""
+    """Short, quiet desktop sidebar card; details expand on demand."""
     if rating and rating.get('status') == 'available':
-        headline = chip(rating)
-        sub = f'Compared with {rating["comparisons"]} qualifying rides in the preceding 42 days.'
+        label, slug = rating['category'], rating['slug']
+        sub = f'Compared with {rating["comparisons"]} rides'
         parts = (
             ('Training load', rating['load_category'], rating['load_slug']),
             ('Intensity', rating['intensity_category'], rating['intensity_slug']))
         rows = ''.join(
-            f'<div class="effort-component"><span>{label}</span>'
-            f'<span class="effort-pill effort-{slug}">{escape(value)}</span></div>'
-            for label, value, slug in parts)
+            f'<div class="effort-component"><div class="effort-component-label">'
+            f'<span>{name}</span><span class="effort-pill effort-{part_slug}">{escape(value)}</span></div>'
+            f'<div class="effort-meter" aria-hidden="true">'
+            f'<span class="effort-meter-fill effort-{part_slug}"></span></div></div>'
+            for name, value, part_slug in parts)
         note = ('Training load is selected modeled stress; intensity is stress '
                 'per supported active hour. Estimates depend on source quality.')
         evidence = (f'<p>Current ride: {rating["stress"]:.1f} modeled stress points '
@@ -176,25 +178,28 @@ def card(rating):
                     f'Selected method: {escape(rating["method"])} '
                     f'({escape(rating["evidence_status"])}).</p>')
     else:
-        headline = chip(rating)
+        label, slug = 'Not rated', 'unavailable'
         reason = (rating or {}).get('reason', 'noncycling')
         sub = REASONS.get(reason, REASONS['noncycling'])
         if reason == 'insufficient_history':
-            sub = (f'Only {rating["comparisons"]} qualifying comparison rides; '
+            sub = (f'Only {rating["comparisons"]} comparison rides; '
                    f'at least {MIN_COMPARISONS} are needed.')
         rows = ''
         note = 'A rating is shown only when comparable historical evidence is available.'
         evidence = ''
+    explanation = (
+        f'<p>{escape(note)}</p>{evidence}'
+        f'<p>Categories use empirical percentile bands (20% each) from the '
+        f'preceding 42 calendar days. Load sets the baseline rating; when '
+        f'intensity is at least two bands higher, overall effort rises one '
+        f'band. Ties use their midpoint. Same-day rides are excluded. '
+        f'Incomplete or partial-only load is not treated as zero.</p>')
     return (f'<section class="panel relative-effort-card" aria-labelledby="relative-effort-title">'
             f'<div class="relative-effort-heading"><h2 id="relative-effort-title">Relative Effort</h2>'
             f'<span>Previous 42 days</span></div>'
-            f'<div class="relative-effort-overall">{headline}</div>{rows}'
-            f'<p class="relative-effort-context">{escape(sub)}</p>'
-            f'<details><summary>How this is rated</summary>'
-            f'<p>{escape(note)}</p>{evidence}'
-            f'<p>Categories use empirical percentile bands (20% each) from the '
-            f'preceding 42 calendar days. Load sets the baseline rating; when '
-            f'intensity is at least two bands higher, overall effort rises one '
-            f'band. Ties use their midpoint. Same-day rides are excluded. '
-            f'Incomplete or partial-only load is not treated as zero.</p>'
-            f'</details></section>')
+            f'<div class="relative-effort-overall effort-{slug}">'
+            f'<span class="relative-effort-accent" aria-hidden="true"></span>'
+            f'<div><strong>{escape(label)}</strong><small>Overall effort</small></div></div>'
+            f'<div class="relative-effort-components">{rows}</div>'
+            f'<div class="relative-effort-footer"><span class="relative-effort-context">{escape(sub)}</span>'
+            f'<details><summary>How this is rated</summary>{explanation}</details></div></section>')

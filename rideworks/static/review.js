@@ -160,7 +160,11 @@
     if (index !== null) inspect(index);
   }
   svg.addEventListener('pointermove', inspectPointer);
-  svg.addEventListener('pointerdown', inspectPointer);
+  svg.addEventListener('pointerdown', event => {
+    // Click or tap to focus the graph before keyboard inspection.
+    svg.focus({preventScroll: true});
+    inspectPointer(event);
+  });
   svg.addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();

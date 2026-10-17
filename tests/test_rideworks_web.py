@@ -73,6 +73,9 @@ class WebTests(unittest.TestCase):
         analyze.assert_called_once()
         self.assertEqual(analyze.call_args.args[1], activity_id)
         self.assertIn('321 W', html)
+        summary = html.split('<aside class="panel ride-summary">', 1)[1].split('</aside>', 1)[0]
+        self.assertIn('<dt>Best 20-minute power</dt><dd>321 W</dd>', summary)
+        self.assertNotIn('<dt>Ascent</dt>', summary)
         self.assertIn('RideWorks-calculated', html)
         self.assertIn('FIT session source evidence', html)
 
@@ -111,6 +114,12 @@ class WebTests(unittest.TestCase):
         for duplicate in ('Elapsed duration', 'Distance', 'Average power'):
             self.assertNotIn('<dt>' + duplicate + '</dt>', summary)
         self.assertIn('<dt>Average heart rate</dt>', summary)
+        self.assertIn('<dt>Best 20-minute power</dt><dd>Unavailable</dd>', summary)
+        self.assertNotIn('<dt>Ascent</dt>', summary)
+        chart = html.split('<section class="panel chart-panel"', 1)[1].split('</section>', 1)[0]
+        self.assertLess(chart.index('id="sample-readout"'), chart.index('id="ride-chart"'))
+        self.assertNotIn('class="chart-footer"', chart)
+        self.assertNotIn('Focus chart + arrow keys', chart)
         self.assertEqual(html.count('class="metric"'), 3)
         self.assertNotIn(str(self.data_dir), html)
         self.assertNotIn(str(self.input_path), html)

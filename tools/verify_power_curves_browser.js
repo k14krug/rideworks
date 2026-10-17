@@ -29,6 +29,28 @@ async (page) => {
     }
     return d;
   }
+  async function axisMatches() {
+    const p=await data();
+    const keys=[p.mode==='activity'?'ride':await page.locator('#curve-a').inputValue(),await page.locator('#curve-b').inputValue()];
+    const watts=keys.flatMap(key=>p.series[key].points.map(point=>point.average_watts));
+    const chart=page.locator('#power-curve-chart');
+    const actual=await chart.getAttribute('data-watts-min');
+    if (!watts.length) {
+      check(actual===null,'empty comparisons have no invented watt scale');
+      return;
+    }
+    const expected=Math.max(0,Math.floor(Math.min(...watts)/50)*50);
+    check(actual===String(expected),'lowest visible wattage rounds down to 50 W');
+    check(Number(await chart.getAttribute('data-watts-max'))>=Math.max(...watts),'top wattage includes all visible curves');
+    const labels=await chart.locator('text').allTextContents();
+    check(labels.includes(String(expected)),'bottom gridline shows the actual nonzero baseline');
+    const clipped=await chart.locator('.curve-anchor').evaluateAll(nodes=>nodes.some(n=>{
+      const svg=n.ownerSVGElement;
+      const limit=svg.viewBox.baseVal.height-46;
+      return Number(n.getAttribute('cy'))<21.9 || Number(n.getAttribute('cy'))>limit+.1;
+    }));
+    check(!clipped,'both plotted curves remain inside the wattage scale');
+  }
   await page.setViewportSize({width:1440,height:1080});
   await open('/performance');
   check(await page.locator('#performance-history-mode').isVisible(),'unchanged default history');
@@ -49,6 +71,7 @@ async (page) => {
       const p=await data();
       if(p.series[a].points.length||p.series[b].points.length) await effort();
       else check((await page.locator('#curve-empty').textContent()).includes('No qualifying'),'empty-period explanation');
+      await axisMatches();
     }
   }
   await page.locator('#curve-a').selectOption('six');await page.locator('#curve-b').selectOption('all');
@@ -83,6 +106,7 @@ async (page) => {
       if(series.start)check(new Date(point.activity.start_time).getTime()>=new Date(series.start).getTime(),'inclusive lower historical boundary');
     }
     if(ride.series.ride.points.length||series.points.length)await effort();
+    await axisMatches();
   }
   await page.locator('#curve-b').selectOption('six');
   check(await page.locator('#chart-svg').count()===1,'existing ride power/HR chart retained');
@@ -95,7 +119,7 @@ async (page) => {
       await open(route);
       check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no mobile horizontal overflow');
       const box=await page.locator('#power-curve-chart').boundingBox();
-      check(box.width>=200,'usable mobile plot width');await focus();await page.keyboard.press('Home');await effort();
+      check(box.width>=200,'usable mobile plot width');await focus();await page.keyboard.press('Home');await effort();await axisMatches();
       await page.keyboard.press('Tab');
       check(await page.evaluate(()=>document.activeElement.tagName==='A'),'keyboard reaches source link');
       await page.locator('#power-curve-chart').dispatchEvent('pointerdown',{pointerType:'touch',clientX:box.x+box.width*.6,clientY:box.y+100});await effort();

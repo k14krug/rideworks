@@ -18,10 +18,11 @@ def miles(value):
     return 'Unavailable' if value is None else f'{value:,.1f} mi'
 
 
-def pace(value):
+def pace(value, target_miles, days_in_year):
+    weekly_target = target_miles * 7 / days_in_year
     if round(value,1) == 0:
-        return 'On calendar pace'
-    return f'{abs(value):,.1f} mi {"ahead of" if value > 0 else "behind"} calendar pace'
+        return f'On target pace ({weekly_target:,.1f} mi/week)'
+    return f'{abs(value):,.1f} mi {"ahead of" if value > 0 else "behind"} target pace ({weekly_target:,.1f} mi/week)'
 
 
 def weekly_chart(weeks):
@@ -109,7 +110,7 @@ def _home_page(store, query=''):
         progress = f'<p>Annual target: {escape(display_target)} mi · <a href="{settings}">Edit goal</a></p>'
         if goal:
             goal_summary = f'<p>{goal["percent"]:.1f}% complete · {miles(goal["remaining_miles"])} remaining</p>'
-            goal_note = f'<p>{pace(goal["pace_difference"])}</p>'
+            goal_note = f'<p>{pace(goal["pace_difference"], goal["target_miles"], goal["calendar_days_in_year"])}</p>'
             needed = goal['needed_miles_per_week']
             needed_text = 'Unavailable' if needed is None else f'{needed:,.1f} mi/week'
             progress += f'<progress id="annual-mileage-progress" value="{min(goal["actual_miles"],goal["target_miles"])}" max="{goal["target_miles"]}" aria-label="Annual mileage progress"></progress>{goal_summary}<p id="needed-weekly">Needed average: {needed_text}</p>{goal_note}'

@@ -83,6 +83,11 @@ async (page) => {
       check(curve.y+curve.height<=context.y,'Power Curve before Workout Context and Current next ride');
       check(context.y+context.height<=bests.y,'context cards before best efforts');
       check(await page.locator('.ride-summary dl').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).display==='block')),'summary rows retain readable spacing at tablet widths');
+      const sidebar=page.locator('.review-sidebar');
+      check(await sidebar.locator('.ride-summary').count()===1,'Ride Summary in sidebar');
+      check(await sidebar.locator('.relative-effort-card').count()===1,'Relative Effort immediately below Ride Summary');
+      check(await sidebar.evaluate(n=>Boolean(n.querySelector('.ride-summary').compareDocumentPosition(n.querySelector('.relative-effort-card')) & Node.DOCUMENT_POSITION_FOLLOWING)),'Effort follows summary');
+      check(await sidebar.locator('.relative-effort-card .effort-pill').count()>=1,'Color-coded or clearly unrated effort label');
       const source = await signals();
       if(source) {
         const chart = page.locator('#chart-svg');

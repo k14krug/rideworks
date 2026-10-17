@@ -87,8 +87,22 @@ async (page) => {
       check(await sidebar.locator('.ride-summary').count()===1,'Ride Summary in sidebar');
       check(await sidebar.locator('.relative-effort-card').count()===1,'Relative Effort immediately below Ride Summary');
       check(await sidebar.evaluate(n=>Boolean(n.querySelector('.ride-summary').compareDocumentPosition(n.querySelector('.relative-effort-card')) & Node.DOCUMENT_POSITION_FOLLOWING)),'Effort follows summary');
-      check(await sidebar.locator('.relative-effort-card .effort-pill').count()>=1,'Color-coded or clearly unrated effort label');
+      const effort=sidebar.locator('.relative-effort-card');
+      check(await effort.locator('.relative-effort-overall strong').count()===1,'prominent plain overall effort');
+      check(await effort.locator('.relative-effort-accent').count()===1,'category-colored accent');
+      check(await effort.locator('details:not([open])').count()===1,'explanation collapsed by default');
+      const unrated=(await effort.locator('.relative-effort-overall strong').textContent()).trim()==='Not rated';
+      check(await effort.locator('.effort-meter').count()===(unrated?0:2),'compact load and intensity level bars or explicit unavailable');
       const source = await signals();
+      if(source && width>=1200 && !unrated) {
+        const size=await effort.boundingBox();
+        check(size.height<=195,'Relative Effort card is substantially smaller');
+        const graph=await page.locator('.review-main .chart-panel').boundingBox();
+        const summary=await sidebar.boundingBox();
+        // The Ride Summary and condensed Relative Effort cards should not be
+        // taller than the power/heart-rate panel at a spacious desktop width.
+        check(summary.y+summary.height<=graph.y+graph.height+4,'desktop sidebar fits alongside power and heart rate');
+      }
       if(source) {
         const chart = page.locator('#chart-svg');
         const panel = page.locator('.review-layout .chart-panel');

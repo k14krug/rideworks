@@ -36,7 +36,7 @@ async (page) => {
       await page.setViewportSize({width,height:1080});
       await open(item.path);
       check(await page.locator('h1').count()===1,'single activity title');
-      check(await page.locator('.review-hero .metric').count()===4,'four real summary metrics');
+      check(await page.locator('.review-hero .metric').count()===3,'three real summary metrics');
       check(await page.locator('.review-hero a[href^="#"]').count()===0,'section navigation is the only header jump control');
       const header = await page.locator('.review-hero').evaluate(hero => {
         const rect = node => { const r=node.getBoundingClientRect(); return {x:r.x,y:r.y,bottom:r.bottom,height:r.height}; };
@@ -50,9 +50,9 @@ async (page) => {
       check(header.divider==='0px','natural spacing between identity and metrics');
       if(width>=1024 && header.fits) check(header.height<=220,'compact desktop header and navigation');
       if(width<=620) {
-        check(Math.abs(header.cards[0].y-header.cards[1].y)<1 && Math.abs(header.cards[2].y-header.cards[3].y)<1 && header.cards[2].y>header.cards[0].y,'compact mobile 2 by 2 metrics');
-      } else check(header.cards.every(c=>Math.abs(c.y-header.cards[0].y)<1),'four aligned desktop metrics');
-      for(let i=0;i<4;i++) {
+        check(Math.abs(header.cards[0].y-header.cards[1].y)<1 && header.cards[2].y>header.cards[0].y,'compact mobile two-column then one metric');
+      } else check(header.cards.every(c=>Math.abs(c.y-header.cards[0].y)<1),'three aligned desktop metrics');
+      for(let i=0;i<3;i++) {
         const first=width<=620 ? Math.floor(i/2)*2 : 0;
         check(Math.abs(header.values[i].bottom-header.values[first].bottom)<1,'summary values aligned within each row');
       }

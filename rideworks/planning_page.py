@@ -49,7 +49,7 @@ def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',ide
     actual=completed_card(data,compact=True) if compact and label=='Next Recommended Ride' and include_completed else ''
     # calendar-day, rather than recommendation-day, drives midnight reload.
     number=f'<span class="plan-number">Hard day #{rec["hard_number"]}</span>' if rec['hard_number'] else ''
-    return f'<section class="panel next-recommended" data-recommended-day="{data["today"]}" data-next-day="{rec["day"]}" aria-labelledby="{identifier}-heading"><h2 id="{identifier}-heading">{escape(label)}</h2><p class="next-ride-date"><time datetime="{rec["day"]}">{day_label(rec["day"],data["today"])}</time>{number}</p>{ride_content(rec,reason=not (hide_provisional_reason and rec['reason'].startswith('Provisional:')))}{status}{controls}{actual}</section>'
+    return f'<section class="panel next-recommended" data-recommended-day="{data["today"]}" data-next-day="{rec["day"]}" aria-labelledby="{identifier}-heading"><h2 id="{identifier}-heading">{escape(label)}</h2><p class="next-ride-date"><time datetime="{rec["day"]}">{day_label(rec["day"],data["today"])}</time>{number}</p>{ride_content(rec,reason=not (hide_provisional_reason and rec["reason"].startswith("Provisional:")))}{status}{controls}{actual}</section>'
 
 
 def correction_form(ride,nonce,zone,*,back='plan'):

@@ -83,6 +83,8 @@
     if (data.mode==='performance') messages.push('Periods may overlap; a period best can come from a different ride at each duration. Calendar bounds: '+data.calendar_timezone+'.');
     $('empty').textContent=messages.join(' ');
     svg.replaceChildren();
+    delete svg.dataset.wattsMin;
+    delete svg.dataset.wattsMax;
     if (data.mode === 'activity') {
       panel.dataset.curveEmpty=String(!durations.length);
       svg.setAttribute('tabindex',durations.length ? '0' : '-1');
@@ -96,11 +98,19 @@
     svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
     const left=48,right=width-16,top=22,bottom=height-46;
     const maxD=durations.at(-1), domain=Math.max(2,maxD);
-    const maximum=Math.max(1,...maps.flatMap(map=>[...map.values()].map(p=>p.average_watts)));
-    const step=Math.max(1,Math.ceil(maximum/5/25)*25), maxY=Math.ceil(maximum/step)*step;
-    const x=d=>left+Math.log(d)/Math.log(domain)*(right-left), y=w=>bottom-w/maxY*(bottom-top);
+    // Zoom the vertical axis to the lowest real wattage in either visible
+    // series. Never round upwards and hide a point below the plot.
+    const watts=maps.flatMap(map=>[...map.values()].map(p=>p.average_watts));
+    const minY=Math.max(0,Math.floor(Math.min(...watts)/50)*50);
+    const maximum=Math.max(...watts);
+    const step=Math.max(50,Math.ceil(Math.max(1,maximum-minY)/5/50)*50);
+    const maxY=minY+Math.ceil(Math.max(1,maximum-minY)/step)*step;
+    const x=d=>left+Math.log(d)/Math.log(domain)*(right-left),
+      y=w=>bottom-(w-minY)/(maxY-minY)*(bottom-top);
+    svg.dataset.wattsMin=String(minY);
+    svg.dataset.wattsMax=String(maxY);
     scale={x,y,top,bottom};
-    for (let w=0;w<=maxY;w+=step) {
+    for (let w=minY;w<=maxY;w+=step) {
       node('path',{d:`M${left} ${y(w)}H${right}`,class:'curve-grid'});
       node('text',{x:left-7,y:y(w)+4,'text-anchor':'end'},w);
     }

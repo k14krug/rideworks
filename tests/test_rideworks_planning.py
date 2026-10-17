@@ -314,9 +314,18 @@ class StorePlanningTests(TestCase):
             planner_clock.fromtimestamp.side_effect=datetime.fromtimestamp
             home=app.get('/?home_tz=UTC')[2].decode();page=app.get('/plan?plan_tz=UTC')[2].decode()
         import re
-        for cls in ('recommended-type','recommended-target','recommended-reason'):
+        for cls in ('recommended-type','recommended-target'):
             pattern=r'class="'+cls+r'">(.*?)</'
             self.assertEqual(re.search(pattern,home).group(1),re.search(pattern,page).group(1))
+        pattern=r'class="recommended-reason">(.*?)</'
+        plan_reason=re.search(pattern,page).group(1)
+        home_reason=re.search(pattern,home)
+        if plan_reason.startswith('Provisional:'):
+            self.assertIsNone(home_reason)
+            self.assertNotIn('Provisional; check sync',home)
+        else:
+            self.assertIsNotNone(home_reason)
+            self.assertEqual(home_reason.group(1),plan_reason)
         self.assertIn('href="/plan"',home);self.assertIn('Hard day #3',page)
         self.assertIn('No recorded intent',app.get('/activities/'+self.identity)[2].decode())
         body=urlencode(dict(nonce=app.settings.nonce,tz='UTC',day=datetime.now(timezone.utc).date().isoformat(),legs='heavy')).encode()

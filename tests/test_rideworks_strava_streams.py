@@ -271,6 +271,29 @@ class PersistenceTests(unittest.TestCase):
         self.assertEqual(performance_history(self.store),history)
         self.assertEqual(app.get('/activities/'+self.only)[2].decode(),html)
 
+    def test_api_ride_summary_only_shows_distinct_moving_duration(self):
+        from rideworks.strava_streams import persist
+        from rideworks.strava_api import apply_observations, normalize
+        from rideworks.web import Application
+        persist(self.store, 2, dict(time=stream(list(range(1300))),
+                                     watts=stream([123] * 1300)))
+        app = Application(self.store.data_dir)
+        base = self.observation(identity=2, seconds=60) | dict(
+            elapsed_time=2400, moving_time=2400, average_heartrate=111)
+        for moving, should_show in ((2400, False), (2390, True), (None, False)):
+            summary = base | dict(moving_time=moving)
+            apply_observations(self.store, [normalize(summary)], 321,
+                               self.now + 1 + (0 if moving == 2400 else 1 if moving == 2390 else 2))
+            html = app.get('/activities/' + self.only)[2].decode()
+            ride_summary = html.split('<aside class="panel ride-summary">', 1)[1].split('</aside>', 1)[0]
+            self.assertEqual('<dt>Moving duration</dt>' in ride_summary, should_show)
+            if should_show:
+                self.assertIn('<dt>Moving duration</dt><dd>39:50</dd>', ride_summary)
+            for label in ('Elapsed duration', 'Distance', 'Average power'):
+                self.assertNotIn('<dt>' + label + '</dt>', ride_summary)
+            self.assertEqual(html.count('class="metric"'), 3)
+            self.assertIn('<dt>Average heart rate</dt>', ride_summary)
+
     def test_hr_only_summary_watts_never_substitute_for_missing_best20_and_metrics_stay_missing(self):
         from rideworks.strava_streams import persist
         from rideworks.strava_api import apply_observations,normalize

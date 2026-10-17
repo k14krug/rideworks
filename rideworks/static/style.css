@@ -556,6 +556,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .hr-swatch { background: transparent; height: 0; border-top: 2px dashed var(--rw-teal); }
 .activity-review-redesign #ride-chart, .activity-review-redesign #chart-svg { height: 380px; }
 .activity-review-redesign #chart-svg text { font-size: 11px; }
+.activity-review-redesign #chart-svg:focus { outline: 2px solid var(--rw-blue); outline-offset: 2px; }
+.activity-review-redesign #sample-readout { min-height: 24px; margin: 2px 0 10px; border: 0; padding: 0; font-size: 12px; font-weight: 600; line-height: 1.5; }
 .activity-review-redesign .chart-hr { stroke-dasharray: 5 2; stroke-width: 1.8; }
 .activity-review-redesign .chart-power { stroke-width: 1.6; }
 .activity-review-redesign #sample-readout { font-weight: 600; line-height: 1.7; padding-top: 12px; min-height: 42px; }

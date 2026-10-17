@@ -34,7 +34,7 @@ def completed_card(data,*,compact=False):
     return f'<section class="panel plan-completed"><h2>{heading} · <time datetime="{data["today"]}">{date.fromisoformat(data["today"]).strftime("%a, %b %d")}</time></h2>{"".join(rows)}</section>'
 
 
-def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',identifier='next-recommended',show_status=True,include_completed=True):
+def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',identifier='next-recommended',show_status=True,include_completed=True,hide_provisional_reason=False):
     """The shared primary recommendation is future-dated once today is ridden."""
     rec=data['next_ride'];zone=data['timezone']
     controls=f'<a class="plan-open" href="/plan?{urlencode({"plan_tz":zone})}#rotation-heading">View Plan</a>'
@@ -49,7 +49,7 @@ def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',ide
     actual=completed_card(data,compact=True) if compact and label=='Next Recommended Ride' and include_completed else ''
     # calendar-day, rather than recommendation-day, drives midnight reload.
     number=f'<span class="plan-number">Hard day #{rec["hard_number"]}</span>' if rec['hard_number'] else ''
-    return f'<section class="panel next-recommended" data-recommended-day="{data["today"]}" data-next-day="{rec["day"]}" aria-labelledby="{identifier}-heading"><h2 id="{identifier}-heading">{escape(label)}</h2><p class="next-ride-date"><time datetime="{rec["day"]}">{day_label(rec["day"],data["today"])}</time>{number}</p>{ride_content(rec)}{status}{controls}{actual}</section>'
+    return f'<section class="panel next-recommended" data-recommended-day="{data["today"]}" data-next-day="{rec["day"]}" aria-labelledby="{identifier}-heading"><h2 id="{identifier}-heading">{escape(label)}</h2><p class="next-ride-date"><time datetime="{rec["day"]}">{day_label(rec["day"],data["today"])}</time>{number}</p>{ride_content(rec,reason=not (hide_provisional_reason and rec['reason'].startswith('Provisional:')))}{status}{controls}{actual}</section>'
 
 
 def correction_form(ride,nonce,zone,*,back='plan'):

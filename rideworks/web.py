@@ -110,9 +110,22 @@ def browser_time(row, *, compact=False):
     return escape(row['date_text']) + ' · source date text · timezone unknown' if row['date_text'] else 'Date unavailable'
 
 
+def relative_effort_ratings(store):
+    """Read historical ratings without making Activity views mutate the caches."""
+    from .relative_effort import for_store
+    store.connection.execute('SAVEPOINT review_effort')
+    try:
+        return for_store(store)
+    finally:
+        store.connection.execute('ROLLBACK TO review_effort')
+        store.connection.execute('RELEASE review_effort')
+
+
 def activities_page(store, query_string=''):
     result = browse(store, query_string)
     rows, query = result['rows'], result['query']
+    from .relative_effort import chip as effort_chip
+    ratings = relative_effort_ratings(store) if rows else {}
     def options(choices, current):
         return ''.join(f'<option value="{escape(value, quote=True)}"{" selected" if value == current else ""}>{escape(text)}</option>'
                        for value, text in choices)
@@ -139,8 +152,8 @@ def activities_page(store, query_string=''):
             types = row['activity_type'] + (f" · {row['subtype']}" if row['subtype'] and row['subtype'] != row['activity_type'] else '')
             duration_context = row['duration_source']['context'] if row['duration_source'] else 'Duration unavailable'
             distance_context = row['distance_source']['context'] if row['distance_source'] else 'Distance unavailable'
-            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'])}"><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}</div><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-type">{escape(types)}</span><div class="list-metrics"><span title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="open-ride" aria-hidden="true">→</span></div></a></li>''')
-        columns = '<div class="activity-columns" aria-hidden="true"><span>Title</span><span>Date</span><span>Type</span><div class="list-metrics"><span>Distance</span><span>Duration</span><span></span></div></div>'
+            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'])}"><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}</div><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-type">{escape(types)}</span><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="list-metrics"><span title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="open-ride" aria-hidden="true">→</span></div></a></li>''')
+        columns = '<div class="activity-columns" aria-hidden="true"><span>Title</span><span>Date</span><span>Type</span><span>Relative Effort</span><div class="list-metrics"><span>Distance</span><span>Duration</span><span></span></div></div>'
         body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0
@@ -239,7 +252,7 @@ def activity_review_layout(title, *, identity, metrics, chart, summary, best, ev
 {identity}{metrics}</section>
 <nav class="review-section-nav" aria-label="Ride detail sections"><a href="#overview">Overview</a><a href="#ride-chart-section">Power &amp; HR</a><a href="#power-curve-panel">Power Curve</a><a href="#bests">Best Efforts</a><a href="#sources">Source Evidence</a></nav>
 <div class="review-layout"><div class="review-main" id="ride-chart-section">{chart}</div>
-{summary}</div>
+<div class="review-sidebar">{summary}<!-- review-relative-effort --></div></div>
 <!-- review-power-curve -->
 <div class="review-context-layout"><!-- review-workout-context --><!-- review-current-next --></div>
 <section class="review-best-efforts" id="bests" aria-labelledby="bests-title"><h2 id="bests-title">Best efforts</h2>{best}</section>
@@ -672,7 +685,10 @@ class Application:
         from .power_curve_page import panel as curve_panel
         context, next_ride = activity_panels(store,activity_id,self.settings.nonce,query)
         curve = curve_panel(store,self.settings.nonce,activity_id=activity_id,query=query)
-        slots = {'<!-- review-workout-context -->': context,
+        from .relative_effort import card as effort_card
+        rating = relative_effort_ratings(store).get(activity_id)
+        slots = {'<!-- review-relative-effort -->': effort_card(rating),
+                 '<!-- review-workout-context -->': context,
                  '<!-- review-current-next -->': next_ride,
                  '<!-- review-power-curve -->': curve}
         for slot, content in slots.items():

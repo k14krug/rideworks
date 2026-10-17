@@ -157,7 +157,9 @@ def verify(data_dir,links,session,port=8774,*,live=False):
             check(summaryRows['Best 20-minute power']===(graph.best20?graph.best20.rounded_watts+' W':'Unavailable'),'Ride Summary uses same calculated ride-local best20');
             check(await page.locator('.review-sidebar > .relative-effort-card').count()===1,'Relative Effort directly below Ride Summary');
             check((await page.locator('.relative-effort-heading').textContent()).includes('Previous 42 days'),'History-relative window visible');
-            check(await page.locator('.relative-effort-card .effort-pill').count()>=1,'Relative Effort category or explicit unrated state');
+            check(await page.locator('.relative-effort-card .relative-effort-overall strong').count()===1,'Relative Effort category or explicit unrated state');
+            const unrated=(await page.locator('.relative-effort-overall strong').textContent()).trim()==='Not rated';
+            check(await page.locator('.relative-effort-card .effort-meter').count()===(unrated?0:2),'Two slim indicator bars for rated effort');
             check(await page.locator('.provenance[open]').count()===0,'Provenance must be secondary');
             const panel=page.locator('.api-best20');
             check((await panel.textContent()).includes('RideWorks-calculated from Strava API stream evidence'),'Local best20 provenance');

@@ -529,7 +529,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .title-origin { font-size: 12px; }
 .activity-review-redesign .ride-meta { font-size: 12px; margin-top: 4px; }
 .activity-review-redesign .meta-separator { margin: 0 6px; }
-.activity-review-redesign .metrics { gap: 0; margin: 10px 0 0; border-top: 0; padding-top: 0; }
+.activity-review-redesign .metrics { grid-template-columns: repeat(3, minmax(0, 200px)); justify-content: start; gap: 0; margin: 10px 0 0; border-top: 0; padding-top: 0; }
 .activity-review-redesign .metric { display: flex; flex-direction: column; border: 0; border-right: 1px solid var(--rw-stroke); border-radius: 0; background: transparent; padding: 0 16px; min-width: 0; }
 .activity-review-redesign .metric > div { flex: 1; align-items: flex-start; }
 .activity-review-redesign .metric:first-child { padding-left: 0; }
@@ -616,7 +616,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .activity-review-redesign .review-hero { padding: 14px 16px; }
   .activity-review-redesign .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 0; }
   .activity-review-redesign .metric { padding: 0 12px; }
-  .activity-review-redesign .metric:nth-child(2) { border: 0; }
+  .activity-review-redesign .metric:nth-child(2) { border-right: 0; }
   .activity-review-redesign .metric:nth-child(3) { padding-left: 0; }
   .activity-review-redesign .metric > div { gap: 6px; font-size: 11px; }
   .activity-review-redesign .metric strong { font-size: 22px; }

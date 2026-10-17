@@ -858,7 +858,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 @media (max-width: 1100px) {
   .rw-page :is(.panel, .training-help) { padding: 20px; }
   .activities-redesign .activity-list { padding: 0; }
-  .activities-redesign .activity-row, .activities-redesign .activity-columns { grid-template-columns: minmax(0,1fr) 150px 90px 115px 165px; gap: 10px; }
+  .activities-redesign .activity-row, .activities-redesign .activity-columns { grid-template-columns: minmax(0,1fr) 170px 90px 115px 165px; gap: 8px; }
   .performance-redesign .performance-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .performance-redesign .performance-card:nth-child(2) { border-right: 0; }
   .performance-redesign .performance-card:nth-child(-n+2) { border-bottom: 1px solid var(--border); }

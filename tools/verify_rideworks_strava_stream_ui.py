@@ -153,7 +153,8 @@ def verify(data_dir,links,session,port=8774,*,live=False):
             check((await page.locator('.ride-summary .source-caption').textContent()).includes('Strava API summary evidence'),'Ride summary source label');
             check(!(await page.locator('.ride-summary').textContent()).includes('Timer duration'),'Invented FIT timer duration');
             const summaryRows=await page.locator('.ride-summary > dl > div').evaluateAll(rows=>Object.fromEntries(rows.map(r=>[r.querySelector('dt').textContent,r.querySelector('dd').textContent])));
-            check(!('Elapsed duration' in summaryRows) && !('Distance' in summaryRows) && !('Average power' in summaryRows),'No duplicated Ride Summary values');
+            check(!('Elapsed duration' in summaryRows) && !('Distance' in summaryRows) && !('Average power' in summaryRows) && !('Ascent' in summaryRows),'No duplicated or Ascent Ride Summary values');
+            check(summaryRows['Best 20-minute power']===(graph.best20?graph.best20.rounded_watts+' W':'Unavailable'),'Ride Summary uses same calculated ride-local best20');
             check(await page.locator('.provenance[open]').count()===0,'Provenance must be secondary');
             const panel=page.locator('.api-best20');
             check((await panel.textContent()).includes('RideWorks-calculated from Strava API stream evidence'),'Local best20 provenance');

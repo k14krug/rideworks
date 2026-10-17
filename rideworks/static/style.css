@@ -795,7 +795,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .effort-unavailable { --effort-color: #96a1b0; }
 .effort-pill { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; white-space: nowrap; padding: 0; background: none; color: var(--navy); font-size: 12px; font-weight: 650; }
 .effort-pill::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; background: var(--effort-color, #96a1b0); }
-.rw-page .activity-review-redesign .relative-effort-card { min-width: 0; padding: 14px 18px; }
+.activity-review-redesign .panel.relative-effort-card { min-width: 0; padding: 14px 18px; }
 .activity-review-redesign .relative-effort-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
 .activity-review-redesign .relative-effort-heading h2 { font-size: 16px; }
 .activity-review-redesign .relative-effort-heading > span { color: var(--rw-muted); font-size: 11px; }

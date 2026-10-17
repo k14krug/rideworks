@@ -143,6 +143,12 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
                 check(await local.locator('.home-recent-row td[data-label="Ride"] span').count()===0,'Recent rides show title only');
                 check(!(await local.locator('.next-recommended').textContent()).includes('Provisional'),'No provisional Home recommendation commentary');
                 if(data.target_miles===null)check((await local.locator('.home-goal-progress').textContent()).includes('Set annual goal'),'No-goal path');
+                if(data.goal){
+                  const weekly=(data.goal.target_miles*7/data.goal.calendar_days_in_year).toFixed(1);
+                  const goalText=await local.locator('.home-goal-progress').textContent();
+                  check(goalText.includes('target pace ('+weekly+' mi/week)'),'Annual target pace uses actual goal and year length');
+                  check(!goalText.includes('calendar pace'),'Old annual pace wording removed');
+                }
                 check(await local.locator('#home-ytd').count()===0,'Duplicate annual card');
                 check((await local.locator('#home-this-week strong').textContent())===(data.this_week.miles===null?'Unavailable':data.this_week.miles.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi'),'Actual This Week Miles');
                 check(await local.locator('.home-summary .home-quick-fact').count()===4,'Four compact quick facts');

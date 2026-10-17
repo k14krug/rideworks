@@ -69,6 +69,31 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.html('/activities/not-an-id')[0], 404)
         self.assertEqual(self.html('/unknown')[0], 404)
 
+    def test_relative_effort_is_identical_in_list_and_review(self):
+        activity_id, _ = self.import_activity()
+        from rideworks.relative_effort import classify
+        from datetime import date, timedelta
+        start = date(2026, 10, 10)
+        rides = [dict(activity_id=str(i),day=(start+timedelta(days=i)).isoformat(),
+                      timezone_unknown=False,
+                      selected=dict(method='power',status='calculated',stress=(i+1)*10),
+                      power=dict(intervals=[dict(seconds=3600)]))
+                 for i in range(6)]
+        rides.append(dict(activity_id=activity_id,day='2026-10-17',timezone_unknown=False,
+                          selected=dict(method='power',status='calculated',stress=30),
+                          power=dict(intervals=[dict(seconds=900)])))
+        rating = classify(rides)[activity_id]
+        self.assertEqual(rating['category'], 'High')
+        with patch('rideworks.web.relative_effort_ratings', return_value={activity_id:rating}):
+            _, listing = self.html('/activities')
+            _, details = self.html(f'/activities/{activity_id}')
+        self.assertIn('class="row-effort"', listing)
+        self.assertIn('effort-pill effort-high', listing)
+        self.assertIn('class="panel relative-effort-card"', details)
+        self.assertIn('effort-pill effort-high', details)
+        self.assertIn('Training load', details)
+        self.assertIn('Intensity', details)
+
     def test_accepted_analysis_boundary_is_used(self):
         activity_id, analysis = self.import_activity()
         analysis['best_20_minute_power'].update(rounded_watts=321, eligible=True,

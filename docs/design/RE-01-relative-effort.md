@@ -43,8 +43,19 @@ model, changing Fitness/Fatigue, or claiming a medical or readiness assessment.
 ## Color and accessibility
 
 Very Light: teal green; Light: green; Moderate: blue; High: amber; Very High:
-muted red. Text is always displayed with a colored dot, never color alone.
-Unrated is neutral gray.
+muted red. The Activities list uses a small colored dot and navy label **without
+pill backgrounds**. On Ride Details the overall category is navy with a narrow
+color accent; two short, unobtrusive horizontal bars indicate the five category
+levels for Load and Intensity. These bars communicate **categories, not precise
+percentile values**. All labels remain visible, not color-only; unrated is gray.
+
+**Visual follow-up, 2026-10-17:** The initial large badge-filled card was not
+accepted. Owner preferred the understated accented design and asked to make it
+substantially shorter, ideally keeping Ride Summary plus Relative Effort within
+the height of the adjacent Ride Power & Heart Rate card. The default collapsed
+panel is intentionally compact; the detailed methodology can expand below
+that boundary on request. Desktop layout/height and narrow-screen rendering
+still require verification in the running dev app.
 
 ## Provenance and limitations
 

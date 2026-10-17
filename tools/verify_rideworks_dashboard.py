@@ -146,6 +146,7 @@ def verify(store,data):
         assert point['bar_kind']=='actual'
         same(point['actual_miles'],Decimal(str(week['miles'])) if week['miles'] is not None else None)
         same(point['bar_miles'],Decimal(str(week['miles'])) if week['miles'] is not None else None)
+    assert len(data['recent'])==min(7,len(cycling))
     for recent in data['recent']:
         row=next(r for r in rows if r['activity_id']==recent['activity_id'])
         assert recent['average_power']==row['average_power']

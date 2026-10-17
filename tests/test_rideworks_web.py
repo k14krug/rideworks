@@ -90,7 +90,9 @@ class WebTests(unittest.TestCase):
         self.assertIn('class="row-effort"', listing)
         self.assertIn('effort-pill effort-high', listing)
         self.assertIn('class="panel relative-effort-card"', details)
-        self.assertIn('effort-pill effort-high', details)
+        self.assertIn('class="relative-effort-overall effort-high"', details)
+        self.assertIn('class="relative-effort-accent"', details)
+        self.assertEqual(details.count('class="effort-meter"'), 2)
         self.assertIn('Training load', details)
         self.assertIn('Intensity', details)
 

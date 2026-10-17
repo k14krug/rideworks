@@ -799,11 +799,11 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .relative-effort-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
 .activity-review-redesign .relative-effort-heading h2 { font-size: 16px; }
 .activity-review-redesign .relative-effort-heading > span { color: var(--rw-muted); font-size: 11px; }
-.activity-review-redesign .relative-effort-overall { display: flex; align-items: center; gap: 10px; margin: 8px 0 10px; }
+.activity-review-redesign .relative-effort-overall { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
 .activity-review-redesign .relative-effort-accent { flex: 0 0 4px; width: 4px; height: 34px; border-radius: 4px; background: var(--effort-color, #96a1b0); }
-.activity-review-redesign .relative-effort-overall strong { display: block; font-size: 22px; line-height: 1.1; color: var(--rw-ink); }
-.activity-review-redesign .relative-effort-overall small { display: block; color: var(--rw-muted); font-size: 11px; line-height: 1.3; margin-top: 2px; }
-.activity-review-redesign .relative-effort-components { display: grid; gap: 8px; }
+.activity-review-redesign .relative-effort-overall strong { display: block; font-size: 21px; line-height: 1.05; color: var(--rw-ink); }
+.activity-review-redesign .relative-effort-overall small { display: block; color: var(--rw-muted); font-size: 11px; line-height: 1.2; margin-top: 1px; }
+.activity-review-redesign .relative-effort-components { display: grid; gap: 6px; }
 .activity-review-redesign .effort-component-label { display: flex; align-items: center; justify-content: space-between; gap: 6px 12px; font-size: 12px; font-weight: 550; line-height: 16px; }
 .activity-review-redesign .effort-component-label .effort-pill { font-size: 12px; }
 .activity-review-redesign .effort-meter { height: 4px; background: #e8eef4; border-radius: 4px; margin-top: 4px; overflow: hidden; }
@@ -813,7 +813,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .effort-meter-fill.effort-moderate { width: 60%; }
 .activity-review-redesign .effort-meter-fill.effort-high { width: 80%; }
 .activity-review-redesign .effort-meter-fill.effort-very-high { width: 100%; }
-.activity-review-redesign .relative-effort-footer { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: start; gap: 4px 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--rw-stroke); font-size: 11px; }
+.activity-review-redesign .relative-effort-footer { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: start; gap: 4px 8px; margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--rw-stroke); font-size: 11px; }
 .activity-review-redesign .relative-effort-context { margin: 0; color: var(--rw-muted); font-size: 11px; line-height: 16px; }
 .activity-review-redesign .relative-effort-footer details { margin: 0; font-size: 11px; }
 .activity-review-redesign .relative-effort-footer summary { color: var(--rw-muted); font-size: 11px; }

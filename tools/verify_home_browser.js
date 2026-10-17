@@ -84,8 +84,16 @@ async page => {
     check((await page.locator('.next-recommended .recommended-target').textContent())===expected.next_ride.duration+' · '+expected.next_ride.power,'same Plan duration/power');
     if(expected.today_actual.length)check(expected.next_ride.day>expected.today,'next future ride after completed today');
     await plan.close();
-    check(await page.locator('.home-training > p').first().textContent()===await old.locator('.home-training > p').first().textContent(),'Training State values retained');
-    check(await page.locator('.home-training > p').count()===1,'Training State explanatory line removed');
+    const training=page.locator('.home-training');
+    const homeFitness=training.locator('#home-fitness-chart');
+    if(await homeFitness.count()){
+      check(await training.locator('.home-fitness-summary > strong').count()===1,'Home current Fitness shown');
+      check(await training.locator('.home-fitness-change').count()===1,'Home 7-day Fitness comparison shown');
+      check(await homeFitness.locator('[data-series="fitness"]').count()===1 || await homeFitness.getAttribute('data-point-count')==='1','Fitness-only trend or single-day point');
+      check(!(await training.textContent()).includes('Fatigue'),'No Home Fatigue summary');
+      check(!(await training.textContent()).includes('Last 3 months'),'No Home range or legend row');
+      check(await homeFitness.getAttribute('data-range-end')!==null,'Dated model source');
+    }else check((await training.textContent()).includes('No usable training stress yet'),'Honest missing Fitness state');
     check(!(await page.locator('.home-performance').textContent()).includes('Gaps mean no eligible result.'),'Performance note removed');
     check(!(await page.locator('.home-goal-progress').textContent()).includes('Arithmetic goal progress'),'Goal note removed');
     check(!(await page.locator('.home-mileage').textContent()).includes('Outlined current week is partial'),'Mileage note removed');

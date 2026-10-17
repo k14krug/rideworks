@@ -1,4 +1,6 @@
 """Training State in the established local shell."""
+from calendar import monthrange
+from datetime import date
 from html import escape
 from .goals import query_zone
 from .training_state import training_state
@@ -45,8 +47,55 @@ def training_page(store, query=''):
     return shell('Training State',content,active='training',page_class='training-redesign')
 
 
+def home_fitness_chart(days):
+    """Compact Fitness-only view of the full Training State page's 3-month range."""
+    end = date.fromisoformat(days[-1]['day'])
+    month_index = end.year * 12 + end.month - 1 - 3
+    year, month_zero = divmod(month_index, 12)
+    month = month_zero + 1
+    cutoff = date(year, month, min(end.day, monthrange(year, month)[1])).isoformat()
+    # Match training_state.js: three calendar months back, excluding cutoff.
+    visible = [row for row in days if row['day'] > cutoff]
+    values = [row['fitness'] for row in visible]
+    minimum, maximum = min(values), max(values)
+    padding = max(1.0, (maximum - minimum) * .1)
+    low, high = max(0.0, minimum - padding), maximum + padding
+    if high == low:
+        high = low + 1.0
+    x = lambda i: 48 + 528 * (i / (len(visible) - 1)) if len(visible) > 1 else 312
+    y = lambda v: 142 - 118 * (v - low) / (high - low)
+    grid = ''.join(
+        f'<line x1="48" x2="576" y1="{y(low + (high-low)*i/2):.2f}" y2="{y(low + (high-low)*i/2):.2f}" class="home-fitness-grid"/>'
+        f'<text x="40" y="{y(low + (high-low)*i/2)+4:.2f}" text-anchor="end">{low + (high-low)*i/2:.1f}</text>'
+        for i in range(3))
+    points = ' '.join(f'{x(i):.2f},{y(row["fitness"]):.2f}' for i, row in enumerate(visible))
+    line = f'<polyline class="home-fitness-line" data-series="fitness" points="{points}"/>' if len(visible) > 1 else ''
+    end_x, end_y = x(len(visible) - 1), y(visible[-1]['fitness'])
+    start_label = date.fromisoformat(visible[0]['day']).strftime('%b %d')
+    end_label = end.strftime('%b %d')
+    labels = (f'<text x="48" y="173">{start_label}</text>'
+              f'<text x="576" y="173" text-anchor="end">{end_label}</text>') if len(visible) > 1 else f'<text x="312" y="173" text-anchor="middle">{end_label}</text>'
+    return f'''<svg id="home-fitness-chart" class="home-fitness-chart" viewBox="0 0 600 185" role="img" aria-labelledby="home-fitness-chart-title home-fitness-chart-desc" data-range-start="{visible[0]["day"]}" data-range-end="{visible[-1]["day"]}" data-point-count="{len(visible)}">
+<title id="home-fitness-chart-title">Fitness over the past three months</title>
+<desc id="home-fitness-chart-desc">RideWorks modeled Fitness from {visible[0]["day"]} through {end.isoformat()}. Current Fitness {visible[-1]["fitness"]:.1f}.</desc>
+{grid}{line}<circle class="home-fitness-endpoint" cx="{end_x:.2f}" cy="{end_y:.2f}" r="4"/>{labels}</svg>'''
+
+
 def training_home(store, zone_name):
-    data=training_state(store,zone_name)
-    day=data['days'][-1] if data['days'] else None
-    values=(f'Fitness {day["fitness"]:.1f} · Fatigue {day["fatigue"]:.1f} · Form {day["form"]:.1f}' if day else 'No usable training stress yet')
-    return f'''<section class="panel home-training"><div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div><p>{escape(values)}</p></section>'''
+    data = training_state(store, zone_name)
+    days = data['days']
+    heading = '<div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div>'
+    if not days:
+        return f'<section class="panel home-training">{heading}<p class="empty">No usable training stress yet.</p></section>'
+    current = days[-1]
+    change = current['changes7']['fitness']
+    if change is None:
+        delta = '7-day change unavailable'
+    elif round(change, 1) == 0:
+        delta = 'No change from 7 days ago'
+    else:
+        direction = '↑' if change > 0 else '↓'
+        delta = f'{direction} {abs(change):.1f} from 7 days ago'
+    summary = (f'<div class="home-fitness-summary"><strong>{current["fitness"]:.1f}</strong>'
+               f'<div><span>Current fitness</span><p class="home-fitness-change">{delta}</p></div></div>')
+    return f'<section class="panel home-training">{heading}{summary}{home_fitness_chart(days)}</section>'

@@ -86,6 +86,14 @@ async (page) => {
       const source = await signals();
       if(source) {
         const chart = page.locator('#chart-svg');
+        const panel = page.locator('.review-layout .chart-panel');
+        check(await panel.locator('.chart-footer, #chart-help').count()===0,'chart footer instructions removed');
+        check(await panel.locator('#sample-readout').evaluate(n=>Boolean(n.compareDocumentPosition(document.querySelector('#ride-chart')) & Node.DOCUMENT_POSITION_FOLLOWING)),'live inspection readout sits above chart');
+        check(!((await panel.textContent()).includes('Focus chart + arrow keys to inspect')),'no unexplained keyboard footer');
+        if(!source.native) {
+          check(await panel.locator('details, .chart-footer').count()===0,'API stream technical notes removed from chart footer');
+          check((await page.locator('#sources').textContent()).includes('Stream display and time mapping'),'stream presentation explanation remains inspectable in source evidence');
+        }
         const box = await chart.boundingBox();
         check(box.height>=(width<=620 ? 300 : 350),'large legible ride chart');
         check(await page.locator('#toggle-power').isChecked() && await page.locator('#toggle-hr').isChecked(),'signals checked initially');
@@ -121,7 +129,13 @@ async (page) => {
           await chart.scrollIntoViewIfNeeded();
           const hover=await chart.boundingBox();
           await page.mouse.move(hover.x+hover.width*.5,hover.y+100); await verifyReadout(source);
-          await chart.dispatchEvent('pointerdown',{pointerType:'touch',clientX:hover.x+hover.width*.3,clientY:hover.y+100});
+          await chart.dispatchEvent('pointerdown',{pointerType:'mouse',clientX:hover.x+hover.width*.3,clientY:hover.y+100});
+          check(await chart.evaluate(n=>n===document.activeElement),'clicking chart focuses keyboard inspection');
+          await verifyReadout(source);
+          const attr = source.native ? 'data-record-index' : 'data-sample-index';
+          const before = await page.locator('#sample-readout').getAttribute(attr);
+          await page.keyboard.press('ArrowRight');
+          check(await page.locator('#sample-readout').getAttribute(attr)!==before,'arrow right moves selected sample after chart click');
           await verifyReadout(source);
           const raw = await page.locator(source.selector).textContent();
           await page.setViewportSize({width:width+1,height:1080}); await page.waitForTimeout(50);

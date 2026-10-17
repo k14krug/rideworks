@@ -48,7 +48,7 @@ def verify(data_dir,links,session,port=8774,*,live=False):
                 best20=independent_best(times,watts),
                 performance_eligible=any(p['activity_id']==route.split('/')[-1] for p in baseline['points']),
                 cards=[duration(summary.get('elapsed_time')),distance(summary.get('distance')),
-                       sensor(summary.get('average_watts'),'W'),sensor(summary.get('average_heartrate'),'bpm')],
+                       sensor(summary.get('average_watts'),'W')],
                 payload_hash=sha256(json.dumps(samples,separators=(',',':')).encode()).hexdigest()))
             if graph_checks[-1]['performance_eligible']:
                 current_point=next(p for p in baseline['points'] if p['activity_id']==route.split('/')[-1])
@@ -152,6 +152,8 @@ def verify(data_dir,links,session,port=8774,*,live=False):
             check(await page.locator('.review-layout > .ride-summary').count()===1,'Ride summary side panel');
             check((await page.locator('.ride-summary .source-caption').textContent()).includes('Strava API summary evidence'),'Ride summary source label');
             check(!(await page.locator('.ride-summary').textContent()).includes('Timer duration'),'Invented FIT timer duration');
+            const summaryRows=await page.locator('.ride-summary > dl > div').evaluateAll(rows=>Object.fromEntries(rows.map(r=>[r.querySelector('dt').textContent,r.querySelector('dd').textContent])));
+            check(!('Elapsed duration' in summaryRows) && !('Distance' in summaryRows) && !('Average power' in summaryRows),'No duplicated Ride Summary values');
             check(await page.locator('.provenance[open]').count()===0,'Provenance must be secondary');
             const panel=page.locator('.api-best20');
             check((await panel.textContent()).includes('RideWorks-calculated from Strava API stream evidence'),'Local best20 provenance');

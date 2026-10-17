@@ -260,7 +260,15 @@ class PersistenceTests(unittest.TestCase):
         self.assertIn('RideWorks-calculated from Strava API stream evidence',html)
         self.assertIn('>123 W</strong>',html);self.assertIn('<dt>Average heart rate</dt><dd>111 bpm</dd>',html);self.assertIn('>1.00 mi</strong>',html)
         self.assertIn('>40:00</strong>',html);self.assertIn('Moving duration',html);self.assertIn('>35:00</dd>',html)
-        self.assertIn('>100 ft</dd>',html);self.assertIn('>555 kJ</dd>',html);self.assertIn('>400 W</dd>',html)
+        ride_summary=html.split('<aside class="panel ride-summary">',1)[1].split('</aside>',1)[0]
+        self.assertIn('<dt>Best 20-minute power</dt><dd>121 W</dd>',ride_summary)
+        self.assertNotIn('<dt>Ascent</dt>',ride_summary)
+        self.assertIn('>555 kJ</dd>',ride_summary);self.assertIn('>400 W</dd>',ride_summary)
+        chart=html.split('<section class="panel chart-panel"',1)[1].split('</section>',1)[0]
+        self.assertLess(chart.index('id="sample-readout"'),chart.index('id="ride-chart"'))
+        self.assertNotIn('class="chart-footer"',chart)
+        self.assertNotIn('Time mapping',chart)
+        self.assertIn('Stream display and time mapping',html)
         self.assertLess(html.index('class="metrics"'),html.index('id="chart-title"'))
         self.assertLess(html.index('id="chart-title"'),html.index('class="panel best-panel api-best20"'))
         self.assertIn('class="panel ride-summary"',html);self.assertIn('Returned-offset start',html)
@@ -289,7 +297,7 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual('<dt>Moving duration</dt>' in ride_summary, should_show)
             if should_show:
                 self.assertIn('<dt>Moving duration</dt><dd>39:50</dd>', ride_summary)
-            for label in ('Elapsed duration', 'Distance', 'Average power'):
+            for label in ('Elapsed duration', 'Distance', 'Average power', 'Ascent'):
                 self.assertNotIn('<dt>' + label + '</dt>', ride_summary)
             self.assertEqual(html.count('class="metric"'), 3)
             self.assertIn('<dt>Average heart rate</dt>', ride_summary)
@@ -304,6 +312,8 @@ class PersistenceTests(unittest.TestCase):
         html=Application(self.store.data_dir).get('/activities/'+self.only)[2].decode()
         self.assertIn('data-best20-status="unavailable"',html)
         self.assertIn('class="best-value">Unavailable',html);self.assertIn('No Strava watts stream',html)
+        summary=html.split('<aside class="panel ride-summary">',1)[1].split('</aside>',1)[0]
+        self.assertIn('<dt>Best 20-minute power</dt><dd>Unavailable</dd>',summary)
         self.assertIn('>333 W</strong>',html);self.assertIn('>Unavailable</strong>',html)
         self.assertNotIn('<section class="recent-context"',html);self.assertEqual(comparison.fingerprint(self.store.connection),before)
 

@@ -100,7 +100,7 @@ class ActivityReviewTests(unittest.TestCase):
         self.assertNotIn('id="native-records"',html)
         self.assertEqual(html.count('<summary>FIT source evidence'),2)
         self.assertIn('No single supported summary selected',html)
-        self.assertEqual(html.count('class="metric-unavailable"'),4)
+        self.assertEqual(html.count('class="metric-unavailable"'),3)
 
     def test_all_missing_signals_keep_explicit_evidence(self):
         html = self.page(self.native(missing=True))

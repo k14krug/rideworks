@@ -104,7 +104,8 @@ class WebTests(unittest.TestCase):
                       'unknown', '2 present / 1 missing / 3 total', 'synthetic.fit']:
             self.assertIn(value, html)
         self.assertIn('<dt>Maximum heart rate</dt><dd>Unavailable</dd>', html)
-        self.assertIn('<dt>Elapsed duration</dt><dd>1:00:00</dd>', html)
+        self.assertIn('<strong>1:00:00</strong>', html)
+        self.assertNotIn('<dt>Elapsed duration</dt>', html)
         self.assertIn('<dt>Timer duration</dt><dd>59:59</dd>', html)
         self.assertNotIn(str(self.data_dir), html)
         self.assertNotIn(str(self.input_path), html)
@@ -119,7 +120,8 @@ class WebTests(unittest.TestCase):
             timestamps=tuple(1100000000 + i for i in range(1200)), elapsed=1200, timer=1199)
         html = review_page(analysis)
         self.assertIn('120 W', html)
-        self.assertIn('<dt>Average power</dt><dd>Unavailable</dd>', html)
+        self.assertIn('<strong class="metric-unavailable">Unavailable</strong>', html)
+        self.assertNotIn('<dt>Average power</dt>', html)
         self.assertIn('1,200 native samples', html)
         self.assertIn('Window end, exclusive (UTC)', html)
 

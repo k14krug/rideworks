@@ -25,6 +25,20 @@ def pace(value, target_miles, days_in_year):
     return f'{abs(value):,.1f} mi {"ahead of" if value > 0 else "behind"} target pace ({weekly_target:,.1f} mi/week)'
 
 
+def recent_ride_link(row, rating):
+    """Ride title with the same Relative Effort category used on Activities."""
+    label = rating['category'] if rating and rating.get('status') == 'available' else 'Not rated'
+    slug = rating['slug'] if rating and rating.get('status') == 'available' else 'unavailable'
+    title = escape(row['title'])
+    identity = escape(row['activity_id'], quote=True)
+    description = escape(f'Relative effort: {label}', quote=True)
+    accessible = escape(f'{row["title"]} · Relative effort: {label}', quote=True)
+    return (f'<a class="home-recent-ride" href="/activities/{identity}" '
+            f'title="{description}" aria-label="{accessible}">'
+            f'<span class="home-effort-dot effort-{slug}" aria-hidden="true"></span>'
+            f'{title}</a>')
+
+
 def weekly_chart(weeks):
     values = [value for w in weeks for value in (w['bar_miles'],w['needed_miles_per_week']) if value is not None]
     maximum = max(values,default=0) or 1
@@ -139,9 +153,12 @@ def _home_page(store, query=''):
         text = f'Latest eligible best-20: {abs(diff)} W {"above" if diff>0 else "below"} the previous six-week best.' if diff else 'Latest eligible best-20 matches the previous six-week best.'
         insights.append(text)
     insight_panel = '<details class="home-insights"><summary>Recent performance context</summary>'+''.join(f'<p>{escape(text)}</p>' for text in insights)+'<p>The best-20 comparison uses the accepted (Activity start − 42 days, Activity start) window, excluding both endpoints and the current ride. Details are available in Activity Review.</p></details>' if insights else ''
+    from .relative_effort import for_store as relative_effort_ratings
+    # Use the same historical classifications as Activities and Ride Details.
+    ratings = relative_effort_ratings(store) if data['recent'] else {}
     rows = []
     for row in data['recent']:
-        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride"><a href="/activities/{row['activity_id']}">{escape(row['title'])}</a></td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
+        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride">{recent_ride_link(row, ratings.get(row['activity_id']))}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
     recent = f'<table class="home-recent-table"><thead><tr><th>Date</th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table>' if rows else '<p class="empty">No cycling Activities yet.</p>'
     week_rows = ''.join(f'<tr><td>{w["start"]}</td><td>{miles(w["miles"])}</td><td>{miles(g["needed_miles_per_week"])}</td><td>{w["file_count"]}</td><td>{w["api_count"]}</td><td>{w["distance_unavailable"]}</td></tr>' for w,g in zip(data['weeks'],data['weekly_goal']))
     details = [('Browser timezone',zone.key),('YTD start',ytd['start']),('As of',data['as_of']),

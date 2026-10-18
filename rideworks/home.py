@@ -36,19 +36,28 @@ def annual_goal_meter(goal):
     expected = goal['target_to_date']
     actual_pct = min(100.0, max(0.0, 100.0 * actual / target))
     expected_pct = min(100.0, max(0.0, 100.0 * expected / target))
-    start_pct = min(actual_pct, expected_pct)
-    gap_pct = abs(actual_pct - expected_pct)
+    start_x = 10 * min(actual_pct, expected_pct)
+    gap_width = 10 * abs(actual_pct - expected_pct)
+    marker_x = 10 * expected_pct
     direction = 'behind' if goal['pace_difference'] < 0 else 'ahead'
-    gap = (f'<span class="home-goal-pace-gap home-goal-pace-gap-{direction}" '
-           f'style="left:{start_pct:.4f}%;width:{gap_pct:.4f}%" '
-           f'aria-hidden="true"></span>') if round(goal['pace_difference'], 1) != 0 and gap_pct > 0 else ''
-    tooltip = escape(f'Target pace today: {expected:,.1f} mi ({expected_pct:.1f}% of annual goal)', quote=True)
+    # Use SVG coordinates rather than inline CSS: the site's Content Security
+    # Policy disallows style attributes, which would put the marker at x=0.
+    gap = (f'<rect class="home-goal-pace-gap home-goal-pace-gap-{direction}" '
+           f'x="{start_x:.4f}" y="5" width="{gap_width:.4f}" height="10"/>'
+           if round(goal['pace_difference'], 1) != 0 and gap_width > 0 else '')
+    label = f'Target pace today: {expected:,.1f} mi ({expected_pct:.1f}% of annual goal)'
+    tooltip = escape(label, quote=True)
     return (f'<div class="home-goal-meter" data-actual-percent="{actual_pct:.4f}" '
             f'data-target-pace-percent="{expected_pct:.4f}">'
             f'<progress id="annual-mileage-progress" value="{min(actual, target)}" '
             f'max="{target}" aria-label="Annual mileage progress"></progress>'
-            f'{gap}<span class="home-goal-pace-marker" style="left:{expected_pct:.4f}%" '
-            f'role="img" aria-label="{tooltip}" title="{tooltip}"></span></div>')
+            f'<svg class="home-goal-pace-overlay" viewBox="0 0 1000 20" '
+            f'preserveAspectRatio="none" role="img" tabindex="0" aria-label="{tooltip}">'
+            f'<title>{escape(label)}</title>{gap}'
+            f'<line class="home-goal-pace-marker" x1="{marker_x:.4f}" y1="0" '
+            f'x2="{marker_x:.4f}" y2="20"/>'
+            f'<path class="home-goal-pace-tip" d="M{marker_x-9:.4f} 0 '
+            f'L{marker_x+9:.4f} 0 L{marker_x:.4f} 7 Z"/></svg></div>')
 
 
 def recent_ride_link(row, rating):

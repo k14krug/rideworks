@@ -138,6 +138,10 @@ async (page) => {
         check(summary.y+summary.height<=graph.y+graph.height+4,'desktop sidebar fits alongside power and heart rate');
       }
       if(source) {
+        const readoutStyle=await page.locator('#sample-readout').evaluate(n=>{
+          const s=getComputedStyle(n);return {padding:s.paddingTop,minHeight:s.minHeight};
+        });
+        check(readoutStyle.padding==='0px' && readoutStyle.minHeight==='24px','compact chart readout styles are not overridden');
         const chart = page.locator('#chart-svg');
         const panel = page.locator('.review-layout .chart-panel');
         check(await panel.locator('.chart-footer, #chart-help').count()===0,'chart footer instructions removed');

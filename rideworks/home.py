@@ -188,6 +188,11 @@ def _home_page(store, query=''):
         text = f'Latest eligible best-20: {abs(diff)} W {"above" if diff>0 else "below"} the previous six-week best.' if diff else 'Latest eligible best-20 matches the previous six-week best.'
         insights.append(text)
     insight_panel = '<details class="home-insights"><summary>Recent performance context</summary>'+''.join(f'<p>{escape(text)}</p>' for text in insights)+'<p>The best-20 comparison uses the accepted (Activity start − 42 days, Activity start) window, excluding both endpoints and the current ride. Details are available in Activity Review.</p></details>' if insights else ''
+    # Planning defers stress and classification cache writes until all expensive
+    # calculations finish. Run it before any other stress consumer can write.
+    from .planning import plan
+    from .planning_page import today_card
+    advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of'])),compact=True,show_status=False,hide_provisional_reason=True)
     from .relative_effort import for_store as relative_effort_ratings
     # Use the same historical classifications as Activities and Ride Details.
     ratings = relative_effort_ratings(store) if data['recent'] else {}
@@ -214,12 +219,6 @@ def _home_page(store, query=''):
                     ('Needed average miles per week',goal['needed_miles_per_week'])]
     sync_status = 'Last sync: '+local_time(data['successful_sync'],compact=True) if data['successful_sync'] else 'No successful sync recorded'
     sync = f'<p class="home-sync">{sync_status} · <a href="/settings">Settings</a></p>'
-    # Planning computes classifications after its stress calculations and
-    # flushes both cache batches at the end. Run it before the Home-only
-    # Training State summary so no expensive calculation follows that write.
-    from .planning import plan
-    from .planning_page import today_card
-    advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of'])),compact=True,show_status=False,hide_provisional_reason=True)
     from .training_state_page import training_home
     training = training_home(store, zone.key)
     compact = {k:v for k,v in data.items() if k!='recent'}

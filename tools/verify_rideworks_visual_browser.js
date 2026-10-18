@@ -10,7 +10,7 @@ async page => {
     ['training','/training-state?tz=America%2FLos_Angeles','training-redesign'],
     ['plan','/plan?plan_tz=America%2FLos_Angeles','plan-redesign'],
     ['settings','/settings?tz=America%2FLos_Angeles','settings-redesign']];
-  for(const width of [1440,1024,768,390,320]) {
+  for(const width of [1440,1024,850,768,650,620,390,320]) {
     await page.setViewportSize({width,height:1080});
     for(const [name,path,scope] of routes) {
       const response=await page.goto(config.base+path);await page.waitForLoadState('networkidle');
@@ -43,6 +43,16 @@ async page => {
         const activityRows=page.locator('.activity-row');
         if(await activityRows.count()) {
           check(await activityRows.count()===await page.locator('.activity-row .row-effort .effort-pill').count(),'Each activity has a Relative Effort label or honest unrated state');
+          const rows=await activityRows.evaluateAll(nodes=>nodes.map(n=>({
+            titleWidth:n.querySelector('h2').getBoundingClientRect().width,
+            titleHeight:n.querySelector('h2').getBoundingClientRect().height,
+            rowHeight:n.getBoundingClientRect().height
+          })));
+          check(rows.every(r=>r.titleWidth>=200),'Activity titles retain a usable width, including tablets');
+          // Allow genuine multi-line names while detecting column collapse or
+          // excessive space around an otherwise short title.
+          check(rows.every(r=>r.rowHeight-r.titleHeight<=180),'Activity rows have bounded non-title height');
+          check(rows.filter(r=>r.titleHeight<=42).every(r=>r.rowHeight<=230),'Short activity titles never create towering rows');
         }
         if(width<=620&&await activityRows.count()) {
           check(await page.locator('.row-effort').first().evaluate(n=>getComputedStyle(n,'::before').content.includes('Relative effort')),'mobile Relative Effort label');
@@ -145,5 +155,5 @@ async page => {
   check(missing.status()===404,'normal missing-activity route');
   check(await page.getByRole('link',{name:'Activities',exact:true}).count()>=1,'missing-activity recovery link');
   check(errors.length===0,'no page JavaScript errors');
-  return {checks,source:config.source,routes:routes.length,widths:[1440,1024,768,390,320],geometry,errors};
+  return {checks,source:config.source,routes:routes.length,widths:[1440,1024,850,768,650,620,390,320],geometry,errors};
 }

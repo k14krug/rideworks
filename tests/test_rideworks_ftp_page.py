@@ -210,6 +210,12 @@ class FTPPageTests(TestCase):
             'classification_attempts':len(calls)}
 
     def test_home_get_finishes_plan_batch_before_training_summary_and_allows_ftp_write(self):
+        self._home_get_allows_ftp_write(invalidated=False)
+
+    def test_home_get_allows_ftp_write_after_existing_stress_and_plan_caches_are_invalidated(self):
+        self._home_get_allows_ftp_write(invalidated=True)
+
+    def _home_get_allows_ftp_write(self, *, invalidated):
         with Store(self.target) as store:
             seed_ftp(store,[('2000-01-01',200),('2030-01-01',200)])
             for index,start in enumerate((1100000000,1100086400)):
@@ -219,7 +225,16 @@ class FTPPageTests(TestCase):
                     event_timestamps=(start,start+1200),session_timestamp=start+1200))
                 store.import_fit(seed_path)
             rebuild_performance(store)
+            if invalidated:
+                plan(store,'America/Los_Angeles')
+                self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],2)
+                self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM planning_classification_cache').fetchone()[0],2)
+                # A changed timeline signature invalidates both existing cache
+                # sets even when the extra historical setting has equal watts.
+                before=snapshot(store)
+                add_entry(store,'2001-01-01',200,expected_revision=before['revision'])
         app=Application(self.target);entered,release=Event(),Event();calls=[];result=[];failures=[]
+        self.addCleanup(release.set)
         from rideworks.planning import classify_activity as classify
         def pause_second_classification(*args,**kwargs):
             value=classify(*args,**kwargs);calls.append(1)
@@ -235,8 +250,8 @@ class FTPPageTests(TestCase):
             thread=Thread(target=load);thread.start()
             self.assertTrue(entered.wait(5),'Home did not reach its second classification calculation')
             with Store(self.target) as reader:
-                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],0)
-                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM planning_classification_cache').fetchone()[0],0)
+                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],2 if invalidated else 0)
+                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM planning_classification_cache').fetchone()[0],2 if invalidated else 0)
             with Store(self.target) as writer:
                 writer.connection.execute('PRAGMA busy_timeout=200')
                 before=snapshot(writer)

@@ -1,14 +1,16 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** HOME-DEV-REVIEW — engineering corrections after independent Astra review of the development UI and Relative Effort changes.
-**Branch:** `fix/home-dev-review-corrections`; draft PR targets `dev`, **not** `main`.
-**State:** `in_progress` — Analyst JIT committed; Dex implementation has not started. Existing development UI remains unmerged to production.
+**Current task:** HOME-DEV-REVIEW — engineering corrections after independent development review.
+**Branch / PR:** `fix/home-dev-review-corrections`; [draft PR #46](https://github.com/k14krug/rideworks/pull/46) targets `dev`.
+**State:** `ready_for_review` — both engineering merge blockers corrected; task remains `in_progress` pending Analyst acceptance.
 
-**Independent review of `dev` at `932f391`:** 523 Python tests: 522 passed, 1 `sqlite3.OperationalError: database is locked` in cold-cache Home vs FTP concurrency test (passes on `main`). Tablet Activities titles collapse at 650/768/850px. Other findings: redundant Relative Effort history DB work, slight desktop sidebar height overshoot, duplicate chart readout CSS. Browser/goal/Relative Effort correctness checks otherwise substantial.
+**Corrections:** Home runs Plan's deferred cache batch before Relative Effort; concurrent FTP edits pass with cold and invalidated caches. Activities uses readable tablet rows. Ride sidebar spacing fits the tested desktop charts, and the conflicting chart-readout rule is removed. No Relative Effort or other model calculation changes.
 
-**Controlling JIT:** [HOME-DEV-REVIEW](docs/tasks/HOME-DEV-REVIEW.md). Five engineering fixes are in scope. The separate 42-day mixed-source Relative Effort calibration decision is reserved for Owner review and **must not be implemented here**.
+**Verification:** 524 Python tests pass; both concurrency cases also pass five repetitions each. 28,043 Chromium assertions pass across Home, six Activity Details evidence cases and six related page routes, including tablet/phone, keyboard/touch, exact marker geometry, readout styles and unchanged sidebar-height limits. 27 source-mode reviews, all 28 table fingerprints, all 1,422 original artifacts/modification times, accepted model/evidence/provenance and approved reference match archived `dev`. Six further fixed-clock LA/Tokyo cases preserve ratings, models and dashboard; independent dashboard checks pass.
 
-**Required implementation:** Dex uses GPT-6.1 Sol, refreshes origin, works on this PR branch, reproduces confirmed defects, implements small corrections, runs full Python and browser verification, records evidence and updates this PR. Do not modify `main`, merge, deploy, touch production store, or publish private ride data.
+**Remaining:** Full-history Relative Effort scan optimization investigated and deferred (7,236 SQL statements, roughly 0.3–0.4s for 1,420 rides); no new cache/invalidation change. Mixed-source Relative Effort calibration and final visual acceptance remain Owner decisions. Firefox/WebKit, physical devices and screen readers were not tested.
 
-**Next action:** Dex invokes `/TASK HOME-DEV-REVIEW` on this PR branch and follows the JIT; stop with verified fixes for Analyst review and subsequent independent Astra check.
+**Evidence:** [Correction report](reports/HOME-DEV-REVIEW/corrections.md), [Analyst JIT](docs/tasks/HOME-DEV-REVIEW.md). Private captures/logs stay outside Git under `/tmp/rideworks-home-corrections/` and `/tmp/output/playwright/`. Verification used temporary snapshot servers; existing development processes were not restarted. No production changes or deployment.
+
+**Next action:** Analyst reviews PR #46 and requests the planned independent Astra re-review; Owner retains visual/calibration decisions. Leave PR draft. No merge, production deployment or next-task start authorized.

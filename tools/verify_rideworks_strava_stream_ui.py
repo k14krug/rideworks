@@ -149,6 +149,11 @@ def verify(data_dir,links,session,port=8774,*,live=False):
             check(JSON.stringify(await page.locator('.metrics .metric strong').allTextContents())===JSON.stringify(graph.cards),'Summary card evidence');
             check(await page.locator('.metrics').evaluate(el=>!!(el.compareDocumentPosition(document.querySelector('.chart-panel'))&Node.DOCUMENT_POSITION_FOLLOWING)),'Cards must precede chart');
             check(await page.locator('.review-layout > .review-main .chart-panel').count()===1,'Normal review hierarchy');
+            const accented = await page.locator('.review-hero, .review-main > .panel, .review-sidebar > .panel, .power-curve-panel, .review-context-layout > .panel, .review-best-efforts > .panel, .review-evidence').evaluateAll(cards => cards.map(card => {
+              const style = getComputedStyle(card);
+              return style.borderLeftWidth === '3px' && style.borderLeftColor === 'rgb(37, 99, 235)' && style.borderLeftStyle === 'solid';
+            }));
+            check(accented.length >= 5 && accented.every(Boolean),'Consistent blue left accents across Activity Details cards');
             check(await page.locator('.review-layout > .review-sidebar > .ride-summary').count()===1,'Ride summary side panel');
             check((await page.locator('.ride-summary .source-caption').textContent()).includes('Strava API summary evidence'),'Ride summary source label');
             check(!(await page.locator('.ride-summary').textContent()).includes('Timer duration'),'Invented FIT timer duration');

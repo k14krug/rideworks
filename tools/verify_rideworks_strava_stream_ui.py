@@ -149,11 +149,25 @@ def verify(data_dir,links,session,port=8774,*,live=False):
             check(JSON.stringify(await page.locator('.metrics .metric strong').allTextContents())===JSON.stringify(graph.cards),'Summary card evidence');
             check(await page.locator('.metrics').evaluate(el=>!!(el.compareDocumentPosition(document.querySelector('.chart-panel'))&Node.DOCUMENT_POSITION_FOLLOWING)),'Cards must precede chart');
             check(await page.locator('.review-layout > .review-main .chart-panel').count()===1,'Normal review hierarchy');
-            const accented = await page.locator('.review-hero, .review-main > .panel, .review-sidebar > .panel, .power-curve-panel, .review-context-layout > .panel, .review-best-efforts > .panel, .review-evidence').evaluateAll(cards => cards.map(card => {
+            const effortColors = {
+              'very-light':'rgb(119, 190, 167)', 'light':'rgb(79, 167, 122)',
+              'moderate':'rgb(103, 154, 230)', 'high':'rgb(219, 163, 74)',
+              'very-high':'rgb(213, 109, 100)', 'unavailable':'rgb(150, 161, 176)'
+            };
+            const overall=await page.locator('.relative-effort-overall').getAttribute('class');
+            const slug=Object.keys(effortColors).find(k=>overall.split(' ').includes('effort-'+k));
+            check(Boolean(slug),'Overall effort category is present');
+            const hero=await page.locator('.review-hero').evaluate(card=>{
+              const style=getComputedStyle(card);
+              return {width:style.borderLeftWidth,color:style.borderLeftColor,kind:style.borderLeftStyle};
+            });
+            check(hero.width==='3px' && hero.kind==='solid' && hero.color===effortColors[slug],
+                  'Top card border matches overall effort, including neutral unrated state');
+            const accented = await page.locator('.review-main > .panel, .review-sidebar > .panel, .power-curve-panel, .review-context-layout > .panel, .review-best-efforts > .panel, .review-evidence').evaluateAll(cards => cards.map(card => {
               const style = getComputedStyle(card);
               return style.borderLeftWidth === '3px' && style.borderLeftColor === 'rgb(37, 99, 235)' && style.borderLeftStyle === 'solid';
             }));
-            check(accented.length >= 5 && accented.every(Boolean),'Consistent blue left accents across Activity Details cards');
+            check(accented.length >= 4 && accented.every(Boolean),'All other Activity Details cards remain blue');
             check(await page.locator('.review-layout > .review-sidebar > .ride-summary').count()===1,'Ride summary side panel');
             check((await page.locator('.ride-summary .source-caption').textContent()).includes('Strava API summary evidence'),'Ride summary source label');
             check(!(await page.locator('.ride-summary').textContent()).includes('Timer duration'),'Invented FIT timer duration');

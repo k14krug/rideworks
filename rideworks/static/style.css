@@ -356,11 +356,12 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 /* Pace marker overlays the existing goal bar; the card needs no extra row. */
 .home-goal-progress .home-goal-meter { position:relative; height:10px; margin:12px 0; }
 .home-goal-progress .home-goal-meter progress { height:10px; width:100%; margin:0; }
-.home-goal-progress .home-goal-pace-gap { position:absolute; top:0; height:10px; pointer-events:none; }
-.home-goal-progress .home-goal-pace-gap-behind { background:rgb(219 163 74 / 34%); }
-.home-goal-progress .home-goal-pace-gap-ahead { background:rgb(12 156 146 / 25%); }
-.home-goal-progress .home-goal-pace-marker { position:absolute; z-index:1; top:-5px; height:20px; width:2px; border-radius:1px; background:#aa751b; transform:translateX(-1px); cursor:help; }
-.home-goal-progress .home-goal-pace-marker::before { content:''; position:absolute; top:0; left:-4px; width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid #aa751b; }
+.home-goal-progress .home-goal-pace-overlay { position:absolute; top:-5px; left:0; width:100%; height:20px; overflow:visible; cursor:help; }
+.home-goal-progress .home-goal-pace-overlay:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+.home-goal-progress .home-goal-pace-gap-behind { fill:rgb(219 163 74 / 34%); }
+.home-goal-progress .home-goal-pace-gap-ahead { fill:rgb(12 156 146 / 25%); }
+.home-goal-progress .home-goal-pace-marker { stroke:#aa751b; stroke-width:2px; vector-effect:non-scaling-stroke; }
+.home-goal-progress .home-goal-pace-tip { fill:#aa751b; }
 .home-mileage details, .home-insights details { margin-top:12px; }
 .home-insights p { margin-top:12px; font-size:12px; }
 .home-diagnostics { margin-top:14px; }

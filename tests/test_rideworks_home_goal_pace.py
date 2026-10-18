@@ -29,9 +29,9 @@ class HomeGoalPaceTests(TestCase):
         target = 100 * goal['target_to_date'] / goal['target_miles']
         self.assertIn(f'data-actual-percent="{actual:.4f}"', markup)
         self.assertIn(f'data-target-pace-percent="{target:.4f}"', markup)
-        self.assertIn(f'style="left:{actual:.4f}%;width:{target-actual:.4f}%"', markup)
+        self.assertIn(f'x="{10*actual:.4f}" y="5" width="{10*(target-actual):.4f}" height="10"', markup)
         self.assertIn('home-goal-pace-gap-behind', markup)
-        self.assertIn(f'style="left:{target:.4f}%"', markup)
+        self.assertIn(f'x1="{10*target:.4f}" y1="0" x2="{10*target:.4f}" y2="20"', markup)
         self.assertIn('Target pace today:', markup)
         self.assertIn('aria-label="Annual mileage progress"', markup)
 
@@ -41,8 +41,8 @@ class HomeGoalPaceTests(TestCase):
         pace_pct = 100 * goal['target_to_date'] / goal['target_miles']
         actual_pct = 100 * goal['actual_miles'] / goal['target_miles']
         self.assertIn('home-goal-pace-gap-ahead', markup)
-        self.assertIn(f'style="left:{pace_pct:.4f}%;width:{actual_pct-pace_pct:.4f}%"', markup)
-        self.assertIn(f'style="left:{pace_pct:.4f}%"', markup)
+        self.assertIn(f'x="{10*pace_pct:.4f}" y="5" width="{10*(actual_pct-pace_pct):.4f}" height="10"', markup)
+        self.assertIn(f'x1="{10*pace_pct:.4f}" y1="0" x2="{10*pace_pct:.4f}" y2="20"', markup)
 
     def test_exactly_on_pace_has_marker_without_false_gap(self):
         goal = goal_progress(2024, '2024-02-29', 60, '366')
@@ -50,6 +50,8 @@ class HomeGoalPaceTests(TestCase):
         self.assertIn('data-actual-percent="16.3934"', markup)
         self.assertIn('data-target-pace-percent="16.3934"', markup)
         self.assertIn('class="home-goal-pace-marker"', markup)
+        self.assertIn('viewBox="0 0 1000 20"', markup)
+        self.assertNotIn(' style=', markup)
         self.assertNotIn('home-goal-pace-gap-', markup)
 
     def test_completed_or_exceeded_goal_keeps_track_and_marker_bounded(self):
@@ -58,7 +60,8 @@ class HomeGoalPaceTests(TestCase):
         self.assertIn('data-actual-percent="100.0000"', markup)
         self.assertIn('value="2200.0" max="2200.0"', markup)
         self.assertIn('home-goal-pace-gap-ahead', markup)
-        self.assertNotIn('left:111.', markup)
+        self.assertNotIn(' style=', markup)
+        self.assertIn('x1="794.5205"', markup)
         year_end = goal_progress(2026, '2026-12-31', 2200, '2200')
         self.assertIn('data-target-pace-percent="100.0000"', annual_goal_meter(year_end))
 

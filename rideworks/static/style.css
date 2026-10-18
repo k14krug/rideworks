@@ -768,6 +768,17 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .rw-page :is(.training-lower, .plan-summary, .settings-panels) > .panel {
   border-left: 3px solid var(--blue);
 }
+/* Match the other primary pages: accent only standalone Ride Details cards.
+   Avoid nested source/provenance panels and inner performance components. */
+.rw-page .activity-review-redesign :is(
+  .review-hero,
+  .review-main > .panel,
+  .review-sidebar > .panel,
+  .power-curve-panel,
+  .review-context-layout > .panel,
+  .review-best-efforts > .panel,
+  .review-evidence
+) { border-left: 3px solid var(--rw-blue); }
 .rw-page :is(button, input, select) { font-family: inherit; font-size: 13px; }
 .rw-page :is(button, select, input:not([type="hidden"]):not([type="checkbox"])) {
   min-height: 38px; border-radius: 8px; max-width: 100%; min-width: 0;

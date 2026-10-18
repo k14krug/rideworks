@@ -681,6 +681,11 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-recent-table time { white-space: normal; }
 .home-redesign .home-recent-table :is(th, td) { padding: 12px 6px; }
 .home-redesign .home-recent-table td:nth-child(2) a { font-weight: 600; }
+.home-redesign .home-recent-ride .home-effort-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--effort-color, #96a1b0); margin-right: 7px;
+  vertical-align: 1px; flex: none;
+}
 .home-redesign .home-fitness-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin: 2px 0 12px; }
 .home-redesign .home-fitness-summary > strong { font-size: 32px; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
 .home-redesign .home-fitness-summary span { font-size: 12px; color: var(--muted); font-weight: 600; }

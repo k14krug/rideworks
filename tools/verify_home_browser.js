@@ -117,18 +117,32 @@ async page => {
       check(Math.abs(await read('data-actual-percent')-actual)<.0002,'actual completion uses goal mileage');
       check(Math.abs(await read('data-target-pace-percent')-target)<.0002,'pace position uses dated annual goal arithmetic');
       const marker=meter.locator('.home-goal-pace-marker');
+      const overlay=meter.locator('.home-goal-pace-overlay');
       check(await marker.count()===1,'single visible pace marker');
-      check(Math.abs(parseFloat(await marker.evaluate(n=>n.style.left))-target)<.0002,'pace marker is at the correct percent');
-      check((await marker.getAttribute('aria-label')).includes('Target pace today:'),'pace marker has accessible mileage meaning');
+      check(await overlay.count()===1,'CSP-compatible SVG pace overlay');
+      check(await meter.locator('[style]').count()===0,'no inline styles blocked by RideWorks CSP');
+      check((await overlay.getAttribute('aria-label')).includes('Target pace today:'),'pace marker has accessible mileage meaning');
+      const geometry=await meter.evaluate(n=>{
+        const progress=n.querySelector('progress').getBoundingClientRect();
+        const line=n.querySelector('.home-goal-pace-marker').getBoundingClientRect();
+        const gap=n.querySelector('.home-goal-pace-gap')?.getBoundingClientRect();
+        return {width:progress.width,
+          markerPct:100*((line.left+line.right)/2-progress.left)/progress.width,
+          gapStartPct:gap?100*(gap.left-progress.left)/progress.width:null,
+          gapWidthPct:gap?100*gap.width/progress.width:null};
+      });
+      check(geometry.width>100,'pace marker has a measurable chart');
+      // Check browser-computed pixels, not HTML attributes: the original bug
+      // had correct inline values but CSP prevented those styles rendering.
+      check(Math.abs(geometry.markerPct-target)<.3,'visible pace marker aligns with target at browser-computed coordinates');
       const gap=meter.locator('.home-goal-pace-gap');
       const showGap=Math.round(data.goal.pace_difference*10)!==0 && Math.abs(actual-target)>0.00005;
       check(await gap.count()===(showGap?1:0),'gap shown only for measurable ahead/behind difference');
       if(showGap){
         const direction=data.goal.pace_difference<0?'behind':'ahead';
         check(await gap.evaluate((n,d)=>n.classList.contains('home-goal-pace-gap-'+d),direction),'correct ahead/behind gap color');
-        const positions=await gap.evaluate(n=>({left:parseFloat(n.style.left),width:parseFloat(n.style.width)}));
-        check(Math.abs(positions.left-Math.min(actual,target))<.0002,'gap starts at lower mileage position');
-        check(Math.abs(positions.width-Math.abs(actual-target))<.0002,'gap width is exact pace difference');
+        check(Math.abs(geometry.gapStartPct-Math.min(actual,target))<.3,'visible gap starts at lower mileage position');
+        check(Math.abs(geometry.gapWidthPct-Math.abs(actual-target))<.3,'visible gap width is the pace difference');
       }
     } else check(await meter.count()===0,'no marker when goal or actual mileage unavailable');
     const bars=page.locator('#home-mileage-chart [data-week]');check(await bars.count()===12,'twelve accepted mileage weeks');

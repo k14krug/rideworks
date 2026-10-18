@@ -770,7 +770,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 }
 /* Match the other primary pages: accent only standalone Ride Details cards.
    Avoid nested source/provenance panels and inner performance components. */
-.rw-page .activity-review-redesign :is(
+.activity-review-redesign :is(
   .review-hero,
   .review-main > .panel,
   .review-sidebar > .panel,

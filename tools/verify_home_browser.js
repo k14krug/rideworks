@@ -107,6 +107,30 @@ async page => {
     check(!(await page.locator('.home-goal-progress').textContent()).includes('Arithmetic goal progress'),'Goal note removed');
     check(!(await page.locator('.home-mileage').textContent()).includes('Outlined current week is partial'),'Mileage note removed');
     check(await page.locator('.home-goal-progress').textContent().then(t=>t.includes(data.target_miles===null?'Set annual goal':'Annual target:')),'goal or honest no-goal state');
+    const meter=page.locator('.home-goal-meter');
+    if(data.goal) {
+      check(await meter.count()===1,'Annual goal has one combined progress and target pace bar');
+      check(await meter.locator('#annual-mileage-progress').count()===1,'Native progress semantics retained');
+      const actual=Math.min(100,Math.max(0,100*data.goal.actual_miles/data.goal.target_miles));
+      const target=Math.min(100,Math.max(0,100*data.goal.target_to_date/data.goal.target_miles));
+      const read=attr=>meter.getAttribute(attr).then(Number);
+      check(Math.abs(await read('data-actual-percent')-actual)<.0002,'actual completion uses goal mileage');
+      check(Math.abs(await read('data-target-pace-percent')-target)<.0002,'pace position uses dated annual goal arithmetic');
+      const marker=meter.locator('.home-goal-pace-marker');
+      check(await marker.count()===1,'single visible pace marker');
+      check(Math.abs(parseFloat(await marker.evaluate(n=>n.style.left))-target)<.0002,'pace marker is at the correct percent');
+      check((await marker.getAttribute('aria-label')).includes('Target pace today:'),'pace marker has accessible mileage meaning');
+      const gap=meter.locator('.home-goal-pace-gap');
+      const showGap=Math.round(data.goal.pace_difference*10)!==0 && Math.abs(actual-target)>0.00005;
+      check(await gap.count()===(showGap?1:0),'gap shown only for measurable ahead/behind difference');
+      if(showGap){
+        const direction=data.goal.pace_difference<0?'behind':'ahead';
+        check(await gap.evaluate((n,d)=>n.classList.contains('home-goal-pace-gap-'+d),direction),'correct ahead/behind gap color');
+        const positions=await gap.evaluate(n=>({left:parseFloat(n.style.left),width:parseFloat(n.style.width)}));
+        check(Math.abs(positions.left-Math.min(actual,target))<.0002,'gap starts at lower mileage position');
+        check(Math.abs(positions.width-Math.abs(actual-target))<.0002,'gap width is exact pace difference');
+      }
+    } else check(await meter.count()===0,'no marker when goal or actual mileage unavailable');
     const bars=page.locator('#home-mileage-chart [data-week]');check(await bars.count()===12,'twelve accepted mileage weeks');
     check(await page.locator('#home-mileage-chart .home-mileage-current').count()===1,'current partial-week outline');
     for(let i=0;i<12;i++) {

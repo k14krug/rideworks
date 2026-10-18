@@ -25,6 +25,32 @@ def pace(value, target_miles, days_in_year):
     return f'{abs(value):,.1f} mi {"ahead of" if value > 0 else "behind"} target pace ({weekly_target:,.1f} mi/week)'
 
 
+def annual_goal_meter(goal):
+    """Show actual completion against today's arithmetic annual target pace.
+
+    Reuse the dashboard's existing goal and target-to-date values. Both
+    positions are capped at the bar's 0–100% range; underlying miles are not.
+    """
+    target = goal['target_miles']
+    actual = goal['actual_miles']
+    expected = goal['target_to_date']
+    actual_pct = min(100.0, max(0.0, 100.0 * actual / target))
+    expected_pct = min(100.0, max(0.0, 100.0 * expected / target))
+    start_pct = min(actual_pct, expected_pct)
+    gap_pct = abs(actual_pct - expected_pct)
+    direction = 'behind' if goal['pace_difference'] < 0 else 'ahead'
+    gap = (f'<span class="home-goal-pace-gap home-goal-pace-gap-{direction}" '
+           f'style="left:{start_pct:.4f}%;width:{gap_pct:.4f}%" '
+           f'aria-hidden="true"></span>') if round(goal['pace_difference'], 1) != 0 and gap_pct > 0 else ''
+    tooltip = escape(f'Target pace today: {expected:,.1f} mi ({expected_pct:.1f}% of annual goal)', quote=True)
+    return (f'<div class="home-goal-meter" data-actual-percent="{actual_pct:.4f}" '
+            f'data-target-pace-percent="{expected_pct:.4f}">'
+            f'<progress id="annual-mileage-progress" value="{min(actual, target)}" '
+            f'max="{target}" aria-label="Annual mileage progress"></progress>'
+            f'{gap}<span class="home-goal-pace-marker" style="left:{expected_pct:.4f}%" '
+            f'role="img" aria-label="{tooltip}" title="{tooltip}"></span></div>')
+
+
 def recent_ride_link(row, rating):
     """Ride title with the same Relative Effort category used on Activities."""
     label = rating['category'] if rating and rating.get('status') == 'available' else 'Not rated'
@@ -127,7 +153,7 @@ def _home_page(store, query=''):
             goal_note = f'<p>{pace(goal["pace_difference"], goal["target_miles"], goal["calendar_days_in_year"])}</p>'
             needed = goal['needed_miles_per_week']
             needed_text = 'Unavailable' if needed is None else f'{needed:,.1f} mi/week'
-            progress += f'<progress id="annual-mileage-progress" value="{min(goal["actual_miles"],goal["target_miles"])}" max="{goal["target_miles"]}" aria-label="Annual mileage progress"></progress>{goal_summary}<p id="needed-weekly">Needed average: {needed_text}</p>{goal_note}'
+            progress += f'{annual_goal_meter(goal)}{goal_summary}<p id="needed-weekly">Needed average: {needed_text}</p>{goal_note}'
         else:
             progress += '<p>Remaining miles: Unavailable</p><p id="needed-weekly">Needed average: Unavailable</p><p>No supported YTD distance.</p>'
     def card(name,title,value,note,symbol):

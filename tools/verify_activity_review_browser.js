@@ -37,6 +37,25 @@ async (page) => {
       await open(item.path);
       check(await page.locator('h1').count()===1,'single activity title');
       check(await page.locator('.review-hero .metric').count()===3,'three real summary metrics');
+      // Same 3px RideWorks-blue accent used by top-level Home/Activities/Performance cards.
+      const cardsToAccent = [
+        '.review-hero', '.review-main > .panel', '.review-sidebar > .panel',
+        '.power-curve-panel', '.review-context-layout > .panel',
+        '.review-best-efforts > .panel', '.review-evidence'
+      ];
+      for(const selector of cardsToAccent) {
+        const cards = await page.locator('.activity-review-redesign '+selector).evaluateAll(nodes =>
+          nodes.map(node => {
+            const style=getComputedStyle(node);
+            return {width:style.borderLeftWidth,color:style.borderLeftColor,kind:style.borderLeftStyle};
+          }));
+        for(const accent of cards)
+          check(accent.width==='3px' && accent.kind==='solid' && accent.color==='rgb(37, 99, 235)',
+                'Ride Details card has matching blue left edge: '+selector);
+      }
+      const nestedEvidence = await page.locator('.review-evidence .provenance').evaluateAll(nodes =>
+        nodes.map(node => getComputedStyle(node).borderLeftColor));
+      check(nestedEvidence.every(color=>color!=='rgb(37, 99, 235)'),'Nested source details do not gain blue accents');
       check(await page.locator('.review-hero a[href^="#"]').count()===0,'section navigation is the only header jump control');
       const header = await page.locator('.review-hero').evaluate(hero => {
         const rect = node => { const r=node.getBoundingClientRect(); return {x:r.x,y:r.y,bottom:r.bottom,height:r.height}; };

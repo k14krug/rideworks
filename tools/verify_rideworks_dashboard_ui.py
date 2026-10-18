@@ -158,15 +158,27 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
                 const last7=data.last7.miles===null?'Unavailable':data.last7.miles.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi';
                 check(await local.locator('#home-last7 strong').textContent()===last7,'Last 7 Days value');
                 check(await local.locator('#home-mileage-chart [data-week]').count()===12,'Weekly buckets');
+                const homeEffort={};
                 for(const row of data.recent){
-                  check(await local.locator('.home-recent-row[data-activity-id="'+row.activity_id+'"] a').getAttribute('href')==='/activities/'+row.activity_id,'Recent review link');
+                  const recent=local.locator('.home-recent-row[data-activity-id="'+row.activity_id+'"]');
+                  const link=recent.locator('a.home-recent-ride');
+                  check(await link.getAttribute('href')==='/activities/'+row.activity_id,'Recent review link');
+                  check(await recent.locator('.home-effort-dot').count()===1,'Home Relative Effort dot');
+                  homeEffort[row.activity_id]={
+                    label:(await link.getAttribute('title')).replace('Relative effort: ',''),
+                    category:(await recent.locator('.home-effort-dot').getAttribute('class')).split(' ').find(x=>x.startsWith('effort-'))};
                   const expected=row.average_power===null?'Unavailable':row.average_power.toLocaleString('en-US',{maximumSignificantDigits:6})+' W';
-                  check(await local.locator('.home-recent-row[data-activity-id="'+row.activity_id+'"] .home-avg-power').textContent()===expected,'Avg Pwr table');
+                  check(await recent.locator('.home-avg-power').textContent()===expected,'Avg Pwr table');
                 }
                 await local.getByRole('link',{name:'View all Activities',exact:true}).click();await local.waitForSelector('.history-filters');
                 check(new URL(local.url()).pathname==='/activities','Activities route');
                 const links=await local.locator('.activity-row').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));
                 check(data.recent.every(r=>links.includes('/activities/'+r.activity_id)),'Recent Activities browser evidence');
+                for(const row of data.recent){
+                  const listing=local.locator('.activity-row[href="/activities/'+row.activity_id+'"] .row-effort .effort-pill');
+                  check(await listing.textContent()===homeEffort[row.activity_id].label,'Home/list Relative Effort label agrees');
+                  check((await listing.getAttribute('class')).split(' ').includes(homeEffort[row.activity_id].category),'Home/list Relative Effort color agrees');
+                }
                 if(data.recent.length){
                   await local.getByLabel('Title search',{exact:true}).fill(data.recent[0].title.toUpperCase());
                   await local.getByRole('button',{name:'Apply',exact:true}).click();

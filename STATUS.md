@@ -1,13 +1,14 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** HOME-DEV-REVIEW — Owner-directed verification of committed Home dashboard cleanup (2026-10-17).
-**Branch:** `dev`; no new branch or PR. No merge to `main` or production deployment authorized.
-**State:** ready_for_review — verification complete; awaiting Owner review of the running development app.
-**Verification:** 499 Python tests passed with command-scoped `DEBUG=0`; synthetic dashboard Chromium acceptance passed after correcting stale test expectations. Six fixed-clock cases preserve FTP, Training State, Plan, Performance and mileage/goal outputs, allowing the seventh recent ride; 27 table fingerprints equal `main`. All 1,422 referenced originals pass hash/size validation; schema 11, 66 FTP entries.
-**Browser:** 996 Chromium assertions passed at 1440/1024/768/390/320px, including keyboard/touch, actual values, Home/Plan agreement and disclosures; no overflow or JavaScript errors. Desktop/phone screenshots inspected privately.
-**Concurrent updates:** Preserved the three remote annual target-pace commits through `b57ea98`; restarted only development with its original environment. Final 499-test/synthetic/model checks passed again, plus 61 final browser checks across all five widths for the updated wording and retained cleanup.
-**Development application:** `http://127.0.0.1:8766/`, existing `.venv/bin/python -m rideworks serve` process from this checkout, default `data/` store. Already serves the committed cleanup.
-**Evidence:** [Development verification report](reports/HOME-UI-01/dev-dashboard-cleanup-review.md); private screenshots/snapshots under ignored `output/playwright/home-cleanup-review/` and `local_data/home-cleanup-review/`.
-**Context:** Owner reports FTP-01 deployed to the separate production server. This task does not inspect or change that server; prior OPS-03 handoff is superseded as the current action by this development-only request. Retain existing FTP-01 recovery backup/worktree.
-**Next action:** Owner reviews `http://127.0.0.1:8766/`. Stop here; no merge to `main` or production deployment until explicit approval. Phase 6 remains deferred.
+**Current task:** HOME-DEV-REVIEW — engineering corrections after independent Astra review of the development UI and Relative Effort changes.
+**Branch:** `fix/home-dev-review-corrections`; draft PR targets `dev`, **not** `main`.
+**State:** `in_progress` — Analyst JIT committed; Dex implementation has not started. Existing development UI remains unmerged to production.
+
+**Independent review of `dev` at `932f391`:** 523 Python tests: 522 passed, 1 `sqlite3.OperationalError: database is locked` in cold-cache Home vs FTP concurrency test (passes on `main`). Tablet Activities titles collapse at 650/768/850px. Other findings: redundant Relative Effort history DB work, slight desktop sidebar height overshoot, duplicate chart readout CSS. Browser/goal/Relative Effort correctness checks otherwise substantial.
+
+**Controlling JIT:** [HOME-DEV-REVIEW](docs/tasks/HOME-DEV-REVIEW.md). Five engineering fixes are in scope. The separate 42-day mixed-source Relative Effort calibration decision is reserved for Owner review and **must not be implemented here**.
+
+**Required implementation:** Dex uses GPT-6.1 Sol, refreshes origin, works on this PR branch, reproduces confirmed defects, implements small corrections, runs full Python and browser verification, records evidence and updates this PR. Do not modify `main`, merge, deploy, touch production store, or publish private ride data.
+
+**Next action:** Dex invokes `/TASK HOME-DEV-REVIEW` on this PR branch and follows the JIT; stop with verified fixes for Analyst review and subsequent independent Astra check.

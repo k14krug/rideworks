@@ -81,8 +81,8 @@ def home_fitness_chart(days):
 {grid}{line}<circle class="home-fitness-endpoint" cx="{end_x:.2f}" cy="{end_y:.2f}" r="4"/>{labels}</svg>'''
 
 
-def training_home(store, zone_name):
-    data = training_state(store, zone_name)
+def training_home(store, zone_name, *, cache_writes=None):
+    data = training_state(store, zone_name, cache_writes=cache_writes)
     days = data['days']
     heading = '<div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div>'
     if not days:

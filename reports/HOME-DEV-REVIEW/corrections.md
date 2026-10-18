@@ -1,5 +1,10 @@
 # HOME-DEV-REVIEW engineering corrections — 2026-10-18
 
+**Initial pass at `8f23620`.** Analyst review subsequently identified a remaining
+post-Plan writer-lock window. The original classification-pause test did not
+cover it; the follow-up reproduced it and extends deferral through response
+completion. See [current follow-up evidence](post-plan-concurrency.md).
+
 Draft PR [#46](https://github.com/k14krug/rideworks/pull/46), branch
 `fix/home-dev-review-corrections`, targets `dev`. Implementation started at
 `5ca9fb3`, whose application code matches reviewed `dev` at `932f391`.
@@ -8,7 +13,7 @@ operation, or restart of an existing development process was performed.
 
 ## Corrections
 
-- **Home FTP concurrency:** Run the existing Plan calculation before Relative
+- **Initial Home FTP correction:** Run the existing Plan calculation before Relative
   Effort can populate stress caches. This restores Plan's deferred stress and
   classification write batch and the existing stale-snapshot retry. No changes
   to timeouts, transactions, training models, or cache invalidation rules.
@@ -147,8 +152,10 @@ The baseline source was prepared with `git archive origin/dev` for `rideworks`,
 `pyproject.toml` and the approved Elevate reference file. No active branch or
 original source artifact was altered to construct it.
 
-Both engineering merge blockers are corrected. History-scan optimization is
-explicitly deferred. Mixed-source calibration, final visual acceptance and
-Analyst acceptance remain open. Chromium was exercised; Firefox/WebKit,
+This initial pass fixed the original classification-pause failure but did not
+close every Home writer-lock window; the linked follow-up supersedes that
+conclusion. History-scan optimization is explicitly deferred. Mixed-source
+calibration, final visual acceptance and Analyst acceptance remain open.
+Chromium was exercised; Firefox/WebKit,
 physical-device and screen-reader testing were not performed. Leave PR draft,
 task `in_progress`, handoff `ready_for_review`; no automatic merge or deployment.

@@ -638,7 +638,13 @@ class Application:
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':
                 from .home import home_page
-                return 200, 'text/html', self.page(store, home_page(store,url.query), display_zone=zone.key)
+                from .planning import write_history_caches
+                cache_writes=([],[])
+                html=home_page(store,url.query,cache_writes=cache_writes)
+                body=self.page(store,html,display_zone=zone.key)
+                # Reserve SQLite's writer slot only after all response work.
+                write_history_caches(store,cache_writes)
+                return 200, 'text/html', body
             if path == '/plan':
                 from .planning_page import plan_page
                 return 200, 'text/html', self.page(store, plan_page(store,url.query,self.settings.nonce), display_zone=zone.key)

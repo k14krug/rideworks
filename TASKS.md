@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-DEV-REVIEW — Verify dev UI and correct independent-review regressions
 
-**Status:** in_progress — engineering corrections verified and ready for Analyst review on draft PR #46 targeting `dev`; history-scan optimization deferred and Owner calibration remains separate.
+**Status:** in_progress — Analyst follow-up reproduced and corrected through final Home response generation; 529 Python tests and 27,990 browser assertions pass. Draft PR #46 targets `dev` and is ready for re-review; Owner calibration remains separate.
 
 **Scope:** Continue the existing development verification task. Correct the
 confirmed early SQLite writer-lock/FTP concurrency regression and unreadable
@@ -32,6 +32,7 @@ relevant browser verification pass; code receives Analyst/Owner review. Mixed
 HR/power Relative Effort classification remains an explicit **Owner calibration
 decision**, excluded from this engineering pass.
 [Current corrections JIT](docs/tasks/HOME-DEV-REVIEW.md) ·
+[Post-Plan follow-up verification](reports/HOME-DEV-REVIEW/post-plan-concurrency.md) ·
 [Correction verification](reports/HOME-DEV-REVIEW/corrections.md) ·
 [Prior dashboard verification report](reports/HOME-UI-01/dev-dashboard-cleanup-review.md).
 

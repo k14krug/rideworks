@@ -158,6 +158,9 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
                   check(Math.abs(Number(await bar.getAttribute('data-actual-percent'))-expectedActual)<.0002,'Goal actual portion');
                   check(Math.abs(Number(await bar.getAttribute('data-target-pace-percent'))-expectedPace)<.0002,'Goal target pace position');
                   check(await bar.locator('.home-goal-pace-marker').count()===1,'Target pace marker');
+                  check(await bar.locator('.home-goal-pace-overlay').count()===1,'SVG overlay works with strict CSP');
+                  check(await bar.locator('[style]').count()===0,'No blocked inline positioning styles');
+                  check(Math.abs(Number(await bar.locator('.home-goal-pace-marker').getAttribute('x1'))-expectedPace*10)<.002,'SVG marker position uses expected percent');
                   const gap=bar.locator('.home-goal-pace-gap');
                   const showGap=Math.round(data.goal.pace_difference*10)!==0 && Math.abs(expectedActual-expectedPace)>.00005;
                   check(await gap.count()===(showGap?1:0),'Pace difference shading');

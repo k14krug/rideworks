@@ -779,6 +779,15 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .review-best-efforts > .panel,
   .review-evidence
 ) { border-left: 3px solid var(--rw-blue); }
+/* Ride header alone reflects this ride's overall Relative Effort. Use the
+   category already rendered in the sidebar, never Load/Intensity subratings.
+   Unrated rides use neutral gray; all other content cards remain blue. */
+.activity-review-redesign:has(.relative-effort-overall.effort-very-light) > .review-hero { border-left-color: #77bea7; }
+.activity-review-redesign:has(.relative-effort-overall.effort-light) > .review-hero { border-left-color: #4fa77a; }
+.activity-review-redesign:has(.relative-effort-overall.effort-moderate) > .review-hero { border-left-color: #679ae6; }
+.activity-review-redesign:has(.relative-effort-overall.effort-high) > .review-hero { border-left-color: #dba34a; }
+.activity-review-redesign:has(.relative-effort-overall.effort-very-high) > .review-hero { border-left-color: #d56d64; }
+.activity-review-redesign:has(.relative-effort-overall.effort-unavailable) > .review-hero { border-left-color: #96a1b0; }
 .rw-page :is(button, input, select) { font-family: inherit; font-size: 13px; }
 .rw-page :is(button, select, input:not([type="hidden"]):not([type="checkbox"])) {
   min-height: 38px; border-radius: 8px; max-width: 100%; min-width: 0;

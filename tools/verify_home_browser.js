@@ -61,10 +61,19 @@ async page => {
     geometry.push({width,headerHeight:header.height,factsTop:quick.y,factsWidth:quick.width,recommendationTop:rec.y,recommendationWidth:rec.width,priorRecommendationTop:prior.y,recentTop:recent.y});
     check(data.recent.length===Math.min(7,data.diagnostics.cycling_activities),'seven most recent rides selected');
     check(await page.locator('.home-recent-row').count()===data.recent.length,'all recent rows retained');
-    check(await page.locator('.home-recent-row td[data-label="Ride"] span').count()===0,'ride type subline removed');
+    check(await page.locator('.home-recent-row td[data-label="Ride"] span:not(.home-effort-dot)').count()===0,'ride type subline remains removed');
+    check(await page.locator('.home-recent-row .home-effort-dot').count()===data.recent.length,'one Relative Effort dot per recent ride');
     for(const row of data.recent) {
       const el=page.locator('.home-recent-row[data-activity-id="'+row.activity_id+'"]');
-      check(await el.locator('a').getAttribute('href')==='/activities/'+row.activity_id,'recent source link');
+      const link=el.locator('a.home-recent-ride');
+      check(await link.getAttribute('href')==='/activities/'+row.activity_id,'recent source link');
+      const dot=link.locator('.home-effort-dot');
+      check(await dot.count()===1,'one inline Relative Effort indicator');
+      check(await dot.getAttribute('aria-hidden')==='true','dot decorative; link carries its text label');
+      const label=await link.getAttribute('title');
+      check(/^Relative effort: (Very Light|Light|Moderate|High|Very High|Not rated)$/.test(label),'honest named Relative Effort status');
+      check((await link.getAttribute('aria-label'))===row.title+' · '+label,'ride title and effort readable on link focus');
+      check((await dot.getAttribute('class')).includes('effort-'+(label.split(': ')[1].toLowerCase().replaceAll(' ','-')==='not-rated'?'unavailable':label.split(': ')[1].toLowerCase().replaceAll(' ','-'))),'shared category color');
       check(await el.locator('[data-label="Distance"]').textContent()===money(row.distance===null?null:row.distance/1609.344),'recent exact distance');
       check(await el.locator('.home-avg-power').textContent()===(row.average_power===null?'Unavailable':row.average_power.toLocaleString('en-US',{maximumSignificantDigits:6})+' W'),'source-supplied average power');
     }

@@ -37,9 +37,24 @@ async (page) => {
       await open(item.path);
       check(await page.locator('h1').count()===1,'single activity title');
       check(await page.locator('.review-hero .metric').count()===3,'three real summary metrics');
-      // Same 3px RideWorks-blue accent used by top-level Home/Activities/Performance cards.
+      // The top card alone reflects the already-displayed *overall* rating.
+      const effortColors = {
+        'very-light':'rgb(119, 190, 167)', 'light':'rgb(79, 167, 122)',
+        'moderate':'rgb(103, 154, 230)', 'high':'rgb(219, 163, 74)',
+        'very-high':'rgb(213, 109, 100)', 'unavailable':'rgb(150, 161, 176)'
+      };
+      const overall = await page.locator('.relative-effort-overall').getAttribute('class');
+      const slug=Object.keys(effortColors).find(k=>overall.split(' ').includes('effort-'+k));
+      check(Boolean(slug),'Overall Relative Effort has a valid category or unrated state');
+      const heroAccent=await page.locator('.review-hero').evaluate(node=>{
+        const style=getComputedStyle(node);
+        return {width:style.borderLeftWidth,color:style.borderLeftColor,kind:style.borderLeftStyle};
+      });
+      check(heroAccent.width==='3px' && heroAccent.kind==='solid' &&
+            heroAccent.color===effortColors[slug],'Header accent agrees with overall Relative Effort color');
+      // All other standalone cards keep the shared RideWorks blue accent.
       const cardsToAccent = [
-        '.review-hero', '.review-main > .panel', '.review-sidebar > .panel',
+        '.review-main > .panel', '.review-sidebar > .panel',
         '.power-curve-panel', '.review-context-layout > .panel',
         '.review-best-efforts > .panel', '.review-evidence'
       ];

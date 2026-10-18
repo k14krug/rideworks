@@ -142,7 +142,7 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
                 check(data.timezone===ZONE,'Explicit timezone aggregation');
                 const originals=GOALS;check(data.target_miles===(originals[data.year]??null),'Hidden default or replaced goal');
                 check(await local.locator('.home-recent-row').count()===Math.min(7,data.diagnostics.cycling_activities),'Recent seven cycling Activities');
-                check(await local.locator('.home-recent-row td[data-label="Ride"] span').count()===0,'Recent rides show title only');
+                check(await local.locator('.home-recent-row td[data-label="Ride"] span:not(.home-effort-dot)').count()===0,'Recent rides show title plus Relative Effort dot only');
                 check(!(await local.locator('.next-recommended').textContent()).includes('Provisional'),'No provisional Home recommendation commentary');
                 if(data.target_miles===null)check((await local.locator('.home-goal-progress').textContent()).includes('Set annual goal'),'No-goal path');
                 if(data.goal){
@@ -150,7 +150,21 @@ def verify(root,session,*,baseline=None,synthetic=False,skip_sync=False):
                   const goalText=await local.locator('.home-goal-progress').textContent();
                   check(goalText.includes('target pace ('+weekly+' mi/week)'),'Annual target pace uses actual goal and year length');
                   check(!goalText.includes('calendar pace'),'Old annual pace wording removed');
-                }
+                  const bar=local.locator('.home-goal-meter');
+                  check(await bar.count()===1,'Annual mileage combined progress and pace bar');
+                  check(await bar.locator('#annual-mileage-progress').count()===1,'Native goal progress preserved');
+                  const expectedActual=Math.min(100,Math.max(0,100*data.goal.actual_miles/data.goal.target_miles));
+                  const expectedPace=Math.min(100,Math.max(0,100*data.goal.target_to_date/data.goal.target_miles));
+                  check(Math.abs(Number(await bar.getAttribute('data-actual-percent'))-expectedActual)<.0002,'Goal actual portion');
+                  check(Math.abs(Number(await bar.getAttribute('data-target-pace-percent'))-expectedPace)<.0002,'Goal target pace position');
+                  check(await bar.locator('.home-goal-pace-marker').count()===1,'Target pace marker');
+                  const gap=bar.locator('.home-goal-pace-gap');
+                  const showGap=Math.round(data.goal.pace_difference*10)!==0 && Math.abs(expectedActual-expectedPace)>.00005;
+                  check(await gap.count()===(showGap?1:0),'Pace difference shading');
+                  if(showGap){
+                    check(await gap.evaluate((n,d)=>n.classList.contains('home-goal-pace-gap-'+d),data.goal.pace_difference<0?'behind':'ahead'),'Pace gap shade direction');
+                  }
+                } else check(await local.locator('.home-goal-meter').count()===0,'No invented pace target without mileage');
                 check(await local.locator('#home-ytd').count()===0,'Duplicate annual card');
                 check((await local.locator('#home-this-week strong').textContent())===(data.this_week.miles===null?'Unavailable':data.this_week.miles.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi'),'Actual This Week Miles');
                 check(await local.locator('.home-summary .home-quick-fact').count()===4,'Four compact quick facts');

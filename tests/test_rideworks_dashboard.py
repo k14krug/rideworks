@@ -241,8 +241,18 @@ class DashboardTests(TestCase):
         self.assertLess(html.index('id="home-recent-mileage"'),html.index('id="next-recommended-heading"'))
         self.assertLess(html.index('Recent Activities</h2>'),html.index('Training State</h2>'))
         self.assertIn('Synthetic &lt;ride&gt;',html)
+        self.assertIn('class="home-effort-dot effort-unavailable"',html)
+        self.assertIn('title="Relative effort: Not rated"',html)
         for label in ('Date','Ride','Distance','Duration','Avg Pwr'):
             self.assertIn('data-label="'+label+'"',html)
+        activity_id=self.store.activity_history()[0]['activity']['activity_id']
+        rating=dict(status='available',category='Very High',slug='very-high')
+        with patch('rideworks.relative_effort.for_store',return_value={activity_id:rating}):
+            rated=self.app.get('/?home_tz=UTC')[2].decode()
+        self.assertIn('class="home-effort-dot effort-very-high"',rated)
+        self.assertIn('title="Relative effort: Very High"',rated)
+        self.assertIn('Synthetic &lt;ride&gt; · Relative effort: Very High',rated)
+        self.assertNotIn('class="home-effort-dot effort-unavailable"',rated)
         self.assertIn('Last sync:',html)
         self.assertIn('No current eligible result.',html)
         self.assertNotIn('Form at start of day',html)

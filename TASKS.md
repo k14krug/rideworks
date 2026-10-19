@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-DEV-REVIEW — Verify dev UI and correct independent-review regressions
 
-**Status:** in_progress — Analyst follow-up reproduced and corrected through final Home response generation; 529 Python tests and 27,990 browser assertions pass. Draft PR #46 targets `dev` and is ready for re-review; Owner calibration remains separate.
+**Status:** done — Analyst engineering acceptance and Owner-authorized PR #46 merge to `dev` on 2026-10-19 (`564df03`). Final GPT-6.1 Sol review found no merge-blocking defects; 529 Python tests and 27,990 browser assertions passed. Relative Effort mixed-source calibration and production/visual acceptance remain separate Owner decisions.
 
 **Scope:** Continue the existing development verification task. Correct the
 confirmed early SQLite writer-lock/FTP concurrency regression and unreadable

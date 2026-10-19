@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import patch
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 from rideworks.store import Store
 from rideworks.web import Application
@@ -13,7 +14,7 @@ from rideworks.ftp_page import comparison
 from rideworks.ftp_history import snapshot
 from rideworks.ftp_history import add_entry
 from rideworks.performance import rebuild_performance
-from rideworks.training_state import ftp_on, training_state
+from rideworks.training_state import calculate_ride, ftp_on, ride_results, training_state
 from rideworks.planning import plan
 from rideworks.history import presentation
 from ftp_fixture import seed_ftp
@@ -210,6 +211,52 @@ class FTPPageTests(TestCase):
             'classification_attempts':len(calls)}
 
     def test_home_get_finishes_plan_batch_before_training_summary_and_allows_ftp_write(self):
+        self._home_get_allows_ftp_write(invalidated=False)
+
+    def test_home_get_allows_ftp_write_after_existing_stress_and_plan_caches_are_invalidated(self):
+        self._home_get_allows_ftp_write(invalidated=True)
+
+    def test_home_get_allows_ftp_write_during_post_plan_relative_effort_with_cold_caches(self):
+        self._home_get_allows_ftp_write(invalidated=False,pause_stage='relative_effort')
+
+    def test_home_get_allows_ftp_write_during_post_plan_relative_effort_with_invalidated_caches(self):
+        self._home_get_allows_ftp_write(invalidated=True,pause_stage='relative_effort')
+
+    def test_home_get_allows_ftp_write_after_response_render_with_cold_caches(self):
+        self._home_get_allows_ftp_write(invalidated=False,pause_stage='response')
+
+    def test_home_get_allows_ftp_write_after_response_render_with_invalidated_caches(self):
+        self._home_get_allows_ftp_write(invalidated=True,pause_stage='response')
+
+    def test_pending_stress_results_reuse_requires_current_ftp_signature(self):
+        with Store(self.target) as store:
+            seed_ftp(store,[('2000-01-01',200),('2030-01-01',200)])
+            start=1100000000
+            source=self.target.parent/'pending.fit'
+            source.write_bytes(make_fit(powers=[200]*1200,heart_rates=[143]*1200,
+                timestamps=range(start,start+1200),elapsed=1200,timer=1200,
+                event_timestamps=(start,start+1200),session_timestamp=start+1200))
+            store.import_fit(source)
+            pending=[]
+            with patch('rideworks.training_state.calculate_ride',wraps=calculate_ride) as score:
+                first,_=ride_results(store,'America/Los_Angeles',cache_writes=pending)
+                self.assertEqual(score.call_count,1)
+                reused,context=ride_results(store,'Asia/Tokyo',cache_writes=pending)
+                self.assertEqual(score.call_count,1,'same signature reuses pending stress without recalculation')
+                self.assertEqual(reused[0]['selected'],first[0]['selected'])
+                stamp=presentation(store.activity_history()[0])['start_time']
+                self.assertEqual(reused[0]['day'],datetime.fromisoformat(stamp).astimezone(ZoneInfo('Asia/Tokyo')).date().isoformat())
+                self.assertEqual(context['timezone'],'Asia/Tokyo')
+                before=snapshot(store)
+                add_entry(store,'2003-01-01',250,expected_revision=before['revision'])
+                updated,_=ride_results(store,'America/Los_Angeles',cache_writes=pending)
+                self.assertEqual(score.call_count,2,'changed FTP invalidates a pending result too')
+                self.assertEqual(first[0]['ftp']['value'],200)
+                self.assertEqual(updated[0]['ftp']['value'],250)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],0,
+                             'all three scans leave cache writes deferred')
+
+    def _home_get_allows_ftp_write(self, *, invalidated, pause_stage='classification'):
         with Store(self.target) as store:
             seed_ftp(store,[('2000-01-01',200),('2030-01-01',200)])
             for index,start in enumerate((1100000000,1100086400)):
@@ -219,24 +266,54 @@ class FTPPageTests(TestCase):
                     event_timestamps=(start,start+1200),session_timestamp=start+1200))
                 store.import_fit(seed_path)
             rebuild_performance(store)
+            if invalidated:
+                plan(store,'America/Los_Angeles')
+                self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],2)
+                self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM planning_classification_cache').fetchone()[0],2)
+                # A changed timeline signature invalidates both existing cache
+                # sets even when the extra historical setting has equal watts.
+                before=snapshot(store)
+                add_entry(store,'2001-01-01',200,expected_revision=before['revision'])
         app=Application(self.target);entered,release=Event(),Event();calls=[];result=[];failures=[]
         from rideworks.planning import classify_activity as classify
+        from rideworks.relative_effort import for_store as rate_effort
+        render_page=app.page
+        def pause():
+            entered.set()
+            if not release.wait(5):raise AssertionError('test release timed out')
         def pause_second_classification(*args,**kwargs):
             value=classify(*args,**kwargs);calls.append(1)
-            if len(calls)==2:
-                entered.set()
-                if not release.wait(5):raise AssertionError('test release timed out')
+            if pause_stage=='classification' and len(calls)==2:
+                pause()
+            return value
+        def pause_relative_effort(*args,**kwargs):
+            value=rate_effort(*args,**kwargs)
+            if pause_stage=='relative_effort' and not entered.is_set():
+                self.assertEqual(len(calls),2,'Relative Effort runs after Plan classifications')
+                pause()
+            return value
+        def pause_response(*args,**kwargs):
+            value=render_page(*args,**kwargs)
+            if pause_stage=='response' and not entered.is_set():
+                self.assertEqual(len(calls),2,'response is built after Plan classifications')
+                pause()
             return value
         def load():
             try:result.append(app.get('/'))
             except Exception as exc:failures.append(exc)
         started=__import__('time').perf_counter()
-        with patch('rideworks.planning.classify_activity',side_effect=pause_second_classification):
+        with patch('rideworks.planning.classify_activity',side_effect=pause_second_classification), \
+             patch('rideworks.relative_effort.for_store',side_effect=pause_relative_effort), \
+             patch.object(app,'page',side_effect=pause_response), \
+             patch('rideworks.training_state.calculate_ride',wraps=calculate_ride) as score:
             thread=Thread(target=load);thread.start()
-            self.assertTrue(entered.wait(5),'Home did not reach its second classification calculation')
+            def finish():
+                release.set();thread.join(10)
+            self.addCleanup(finish)
+            self.assertTrue(entered.wait(5),'Home did not reach the '+pause_stage+' calculation')
             with Store(self.target) as reader:
-                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],0)
-                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM planning_classification_cache').fetchone()[0],0)
+                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM training_stress_cache').fetchone()[0],2 if invalidated else 0)
+                self.assertEqual(reader.connection.execute('SELECT COUNT(*) FROM planning_classification_cache').fetchone()[0],2 if invalidated else 0)
             with Store(self.target) as writer:
                 writer.connection.execute('PRAGMA busy_timeout=200')
                 before=snapshot(writer)
@@ -244,10 +321,11 @@ class FTPPageTests(TestCase):
                 updated=add_entry(writer,'2003-01-01',250,expected_revision=before['revision'])
                 write_elapsed=__import__('time').perf_counter()-write_started
             release.set();thread.join(10)
+            self.assertEqual(score.call_count,4,'each ride is scored once per coherent attempt, including the retry')
         elapsed=__import__('time').perf_counter()-started
         self.assertFalse(thread.is_alive());self.assertEqual(failures,[])
         self.assertEqual(result[0][0],200)
-        self.assertLess(write_elapsed,1,'FTP write commits while Home classifications are calculated')
+        self.assertLess(write_elapsed,1,'FTP write commits during Home '+pause_stage)
         self.assertGreaterEqual(len(calls),4,'stale Home snapshot is retried after cache-batch upgrade')
         with Store(self.target) as store:
             stress=store.connection.execute('SELECT input_signature,result_json FROM training_stress_cache ORDER BY activity_id').fetchall()

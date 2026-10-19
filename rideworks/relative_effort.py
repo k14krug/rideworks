@@ -136,11 +136,11 @@ def classify(rides):
     return output
 
 
-def for_store(store):
+def for_store(store, *, cache_writes=None):
     """Build ratings once for the page, using existing versioned stress evidence."""
     # Use one fixed athlete-history calendar on both screens; browser timezone,
     # pagination and selected date filters must not change historical ratings.
-    rides, _ = ride_results(store, FTP_CALENDAR)
+    rides, _ = ride_results(store, FTP_CALENDAR, cache_writes=cache_writes)
     return classify(rides)
 
 

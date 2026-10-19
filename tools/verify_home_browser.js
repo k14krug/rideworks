@@ -45,7 +45,11 @@ async page => {
     check(await page.locator('.home-quick-fact, .home-supporting details, .next-recommended .plan-completed, .home-chart').evaluateAll(ns=>ns.every(n=>{
       const s=getComputedStyle(n);return parseFloat(s.borderLeftWidth)===0||s.borderLeftColor!=='rgb(37, 99, 235)';
     })),'no nested blue stripes');
-    check(rec.y<prior.y,'next ride closer to top');
+    // Engineering follow-ups compare against the already accepted layout;
+    // the original redesign still requires improvement over its older base.
+    if(config.preserveRecommendationPosition)
+      check(rec.y===prior.y,'accepted recommendation position unchanged');
+    else check(rec.y<prior.y,'next ride closer to top');
     check(rec.y+rec.height<=recent.y,'recommendation above recent rides');
     if(width===1440) {
       check(rec.y<220 && Math.abs(rec.y-quick.y)<1,'recommendation and quick facts above desktop fold');

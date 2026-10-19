@@ -15,18 +15,26 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
-### HOME-DEV-REVIEW — Verify committed Home dashboard cleanup
+### HOME-DEV-REVIEW — Verify dev UI and correct independent-review regressions
 
-**Status:** in_progress — ready for Owner review after development verification on 2026-10-17.
+**Status:** in_progress — Analyst follow-up reproduced and corrected through final Home response generation; 529 Python tests and 27,990 browser assertions pass. Draft PR #46 targets `dev` and is ready for re-review; Owner calibration remains separate.
 
-**Scope:** Review existing `dev` commits, correct verification failures, preserve
-FTP/Training State/Plan/Performance/mileage behavior, verify desktop/mobile Home,
-and make the development application available for Owner review. Work directly
-on `dev`; no production deployment or merge to `main`.
+**Scope:** Continue the existing development verification task. Correct the
+confirmed early SQLite writer-lock/FTP concurrency regression and unreadable
+tablet Activities layout; address small CSS/sidebar defects and safe redundant
+history-work reductions where practical. Preserve all approved Relative Effort,
+FTP/Training State/Plan/Performance/mileage calculations. Current corrections
+are developed on `fix/home-dev-review-corrections` and reviewed into `dev`;
+no production deployment or merge to `main`.
 
-**Acceptance:** Automated regression and calculation/source preservation checks
-pass; running development dashboard is presented for Owner review. Final review
-is pending. [Verification report](reports/HOME-UI-01/dev-dashboard-cleanup-review.md).
+**Acceptance:** Reproduce then fix confirmed regressions; full Python and
+relevant browser verification pass; code receives Analyst/Owner review. Mixed
+HR/power Relative Effort classification remains an explicit **Owner calibration
+decision**, excluded from this engineering pass.
+[Current corrections JIT](docs/tasks/HOME-DEV-REVIEW.md) ·
+[Post-Plan follow-up verification](reports/HOME-DEV-REVIEW/post-plan-concurrency.md) ·
+[Correction verification](reports/HOME-DEV-REVIEW/corrections.md) ·
+[Prior dashboard verification report](reports/HOME-UI-01/dev-dashboard-cleanup-review.md).
 
 ---
 

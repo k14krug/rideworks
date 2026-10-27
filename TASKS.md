@@ -559,3 +559,13 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Execution:** **`/TASK only`**. Gate 1 discovers the actual production host/service/data path and compares production-only state **read-only**, prepares a source snapshot and exact verified runbook, then stops for **HARD Owner** approval of the destination/replacement. Gate 2 performs only the separately authorized controlled copy, backup, restart and smoke verification; stops again for Owner final acceptance. Preserve production-specific nginx/systemd/`.env`/OAuth settings and do not assume example paths, perform a second FTP bootstrap, or invent a bidirectional sync.
 
 **Acceptance:** Production runs the accepted release tree with source-matched SQLite schema 11, current development FTP/history and all referenced original artifacts, verified private recovery backups and unchanged server-specific setup, and explicit Owner acceptance. Existing development app and backups remain intact.
+
+### FTP-02 — Manual FTP entry after latest recorded date
+
+**Status:** in_progress — Owner requested implementation 2026-10-27; changes on task branch pending local verification and review. [Issue #47](https://github.com/k14krug/rideworks/issues/47); [FTP-02 JIT](docs/tasks/FTP-02.md).
+
+**Purpose:** Allow any previously unrecorded manual date-effective FTP setting, notably after the current last setting, without a qualifying ride. New settings may lower or raise FTP and take effect on their date, with the last effective indefinitely. Retain FTP-01 historical comparison, same-date and stale-write protection, existing dates/values, and training-state/plan recalculation.
+
+**Non-goals:** No general edit/delete, automatic FTP estimates, schema migration, live data mutation, or production-server rollout. OPS-03 stays pending and separate.
+
+**Acceptance:** Run focused/full regressions and browser checks on a disposable Store, obtain review, then Owner acceptance. No deployment or merge implied by a draft PR.

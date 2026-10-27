@@ -562,7 +562,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### FTP-02 — Manual FTP entry after latest recorded date
 
-**Status:** in_progress — Owner requested implementation 2026-10-27; changes on task branch pending local verification and review. [Issue #47](https://github.com/k14krug/rideworks/issues/47); [FTP-02 JIT](docs/tasks/FTP-02.md).
+**Status:** in_progress — implementation and disposable-data verification complete; [draft PR #48](https://github.com/k14krug/rideworks/pull/48) awaits review. [Issue #47](https://github.com/k14krug/rideworks/issues/47); [FTP-02 JIT](docs/tasks/FTP-02.md).
 
 **Purpose:** Allow any previously unrecorded manual date-effective FTP setting, notably after the current last setting, without a qualifying ride. New settings may lower or raise FTP and take effect on their date, with the last effective indefinitely. Retain FTP-01 historical comparison, same-date and stale-write protection, existing dates/values, and training-state/plan recalculation.
 

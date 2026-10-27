@@ -1,0 +1,17 @@
+RideWorks commands
+==================
+
+Open the local RideWorks app (starts it if needed and opens the browser):
+  ./start-rideworks
+
+Run the app directly without opening a browser:
+  .venv/bin/python -m rideworks serve
+
+Show available RideWorks CLI commands:
+  .venv/bin/python -m rideworks --help
+
+Run the Python test suite:
+  .venv/bin/python -m pytest -q
+
+The launcher and commands above use the project-root .venv. `workon rideworks`
+also activates the project's `venv` environment through the workon helper.

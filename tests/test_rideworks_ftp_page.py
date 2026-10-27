@@ -79,6 +79,80 @@ class FTPPageTests(TestCase):
         with Store(self.target) as store:self.assertEqual(snapshot(store),after)
         self.assertIn(b'210',self.app.get('/performance/ftp')[2])
 
+    def test_manual_new_latest_via_secure_form_without_qualifying_ride(self):
+        self.seed()
+        with Store(self.target) as store:
+            before=snapshot(store)
+            self.assertEqual(ftp_on(before['rows'],'2021-01-15')['value'],220)
+        # The form posts a manual value; no performance result or test ride is required.
+        status,headers,body=self.submit(revision=str(before['revision']),
+                                        date='2021-02-01',watts='160')
+        self.assertEqual(status,303)
+        self.assertEqual(headers['Location'],'/performance/ftp')
+        with Store(self.target) as store:
+            after=snapshot(store)
+            self.assertEqual(after['revision'],before['revision']+1)
+            self.assertNotEqual(after['signature'],before['signature'])
+            self.assertEqual(len(after['rows']),len(before['rows'])+1)
+            self.assertEqual(ftp_on(after['rows'],'2021-01-31')['value'],220)
+            self.assertEqual(ftp_on(after['rows'],'2021-02-01')['value'],160)
+            self.assertEqual(ftp_on(after['rows'],'2026-10-27')['value'],160)
+            self.assertIsNone(after['rows'][-1]['effective_until_date_exclusive'])
+            self.assertEqual(after['rows'][:-2],before['rows'][:-1])
+        status,kind,page=self.app.get('/performance/ftp')
+        self.assertEqual(status,200)
+        self.assertIn(b'2021-02-01',page)
+        self.assertIn(b'160',page)
+        self.assertIn(b'Add an FTP value',page)
+        self.assertEqual(self.submit(revision=str(after['revision']),
+                                     date='2021-02-01',watts='180')[0],400)
+        self.assertEqual(self.submit(revision=str(before['revision']),
+                                     date='2021-03-01',watts='150')[0],400)
+        with Store(self.target) as store:self.assertEqual(snapshot(store),after)
+
+    def test_new_latest_ftp_reclassifies_ride_and_recalculates_training_state_and_plan(self):
+        as_of=datetime(2024,11,10,12,tzinfo=timezone.utc)
+        start=int(datetime(2024,11,8,11,33,20,tzinfo=timezone.utc).timestamp())
+        with Store(self.target) as store:
+            seed_ftp(store,[('2024-11-01',200),('2024-11-07',200)])
+            seed_path=self.target.parent/'after-last.fit'
+            seed_path.write_bytes(make_fit(powers=[200]*1200,heart_rates=[143]*1200,
+                timestamps=range(start,start+1200),elapsed=1200,timer=1200,
+                event_timestamps=(start,start+1200),session_timestamp=start+1200))
+            store.import_fit(seed_path)
+            rebuild_performance(store)
+            activity_id=presentation(store.activity_history()[0])['activity_id']
+            previous=snapshot(store)
+            before_state=training_state(store,'America/Los_Angeles',as_of=as_of)
+            before_plan=plan(store,'America/Los_Angeles',as_of=as_of)
+            before_comparison=next(p for p in comparison(store)['points'] if p['activity_id']==activity_id)
+            before_ride=next(r for day in before_state['days'] for r in day['rides']
+                             if r['activity_id']==activity_id)
+            before_cache=store.connection.execute(
+                'SELECT input_signature FROM training_stress_cache WHERE activity_id=?',
+                (activity_id,)).fetchone()['input_signature']
+            self.assertEqual(before_comparison['category'],'below')
+            self.assertEqual(before_plan['history'][0]['ftp']['value'],200)
+            self.assertEqual(before_ride['ftp']['value'],200)
+
+            updated=add_entry(store,'2024-11-08',160,expected_revision=previous['revision'])
+            self.assertEqual(ftp_on(updated['rows'],'2024-11-07')['value'],200)
+            self.assertEqual(ftp_on(updated['rows'],'2024-11-08')['value'],160)
+            self.assertEqual(updated['rows'][-1]['effective_until_date_exclusive'],None)
+            after_state=training_state(store,'America/Los_Angeles',as_of=as_of)
+            after_plan=plan(store,'America/Los_Angeles',as_of=as_of)
+            after_comparison=next(p for p in comparison(store)['points'] if p['activity_id']==activity_id)
+            after_ride=next(r for day in after_state['days'] for r in day['rides']
+                            if r['activity_id']==activity_id)
+            after_cache=store.connection.execute(
+                'SELECT input_signature FROM training_stress_cache WHERE activity_id=?',
+                (activity_id,)).fetchone()['input_signature']
+            self.assertEqual(after_comparison['category'],'above')
+            self.assertEqual(after_plan['history'][0]['ftp']['value'],160)
+            self.assertEqual(after_ride['ftp']['value'],160)
+            self.assertNotEqual(before_cache,after_cache)
+            self.assertGreater(after_ride['selected']['stress'],before_ride['selected']['stress'])
+
     def test_reading_page_and_concurrent_ftp_write_keep_snapshot_without_locking_writer(self):
         self.seed()
         entered,release=Event(),Event()

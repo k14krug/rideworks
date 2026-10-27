@@ -49,8 +49,7 @@ class HistoryTests(TestCase):
             before=snapshot(store)
             for d,w,revision in [('2020-06-01',300,before['revision']),('2020-05-01',220,0),
                                   ('2020-05-01',True,before['revision']),('2020-05-01',0,before['revision']),
-                                  ('2020-5-1',200,before['revision']),
-                                  ('2021-01-01',200,before['revision'])]:
+                                  ('2020-5-1',200,before['revision'])]:
                 with self.assertRaises(ValueError):add_entry(store,d,w,expected_revision=revision)
                 self.assertEqual(snapshot(store),before)
             self.assertEqual(ftp_on(before['rows'],'2020-05-31')['value'],180)
@@ -75,11 +74,36 @@ class HistoryTests(TestCase):
                              [('2020-07-18',180),('2021-01-01',205)])
             with self.assertRaisesRegex(ValueError,'already exists'):
                 add_entry(store,'2020-03-10',170,expected_revision=after['revision'])
-            with self.assertRaisesRegex(ValueError,'After-last'):
-                add_entry(store,'2021-01-02',210,expected_revision=after['revision'])
             with self.assertRaisesRegex(ValueError,'changed'):
                 add_entry(store,'2020-02-01',155,expected_revision=before['revision'])
             self.assertEqual(snapshot(store),after)
+
+    def test_new_latest_manual_entries_can_lower_then_raise_ftp_without_a_ride(self):
+        with Store(self.target) as store:
+            seed_ftp(store,[('2020-07-18',180),('2021-01-01',205)])
+            original=snapshot(store)
+            lowered=add_entry(store,'2021-02-01',160,expected_revision=original['revision'])
+            self.assertEqual(
+                [(r['effective_from_date'],r['ftp_watts']) for r in lowered['rows']],
+                [('2020-07-18',180),('2021-01-01',205),('2021-02-01',160)])
+            self.assertEqual(ftp_on(lowered['rows'],'2021-01-31')['value'],205)
+            self.assertEqual(ftp_on(lowered['rows'],'2021-02-01')['value'],160)
+            self.assertEqual(ftp_on(lowered['rows'],'2026-10-27')['value'],160)
+            self.assertIsNone(lowered['rows'][-1]['effective_until_date_exclusive'])
+            self.assertNotEqual(original['signature'],lowered['signature'])
+            self.assertEqual(lowered['revision'],original['revision']+1)
+            self.assertEqual(lowered['rows'][:2],original['rows'][:1]+[
+                dict(original['rows'][1],effective_until_date_exclusive='2021-02-01')])
+            raised=add_entry(store,'2021-04-01',175,expected_revision=lowered['revision'])
+            self.assertEqual(ftp_on(raised['rows'],'2021-03-31')['value'],160)
+            self.assertEqual(ftp_on(raised['rows'],'2021-04-01')['value'],175)
+            self.assertEqual(ftp_on(raised['rows'],'2026-10-27')['value'],175)
+            self.assertIsNone(raised['rows'][-1]['effective_until_date_exclusive'])
+            with self.assertRaisesRegex(ValueError,'already exists'):
+                add_entry(store,'2021-04-01',150,expected_revision=raised['revision'])
+            with self.assertRaisesRegex(ValueError,'changed'):
+                add_entry(store,'2021-05-01',150,expected_revision=lowered['revision'])
+            self.assertEqual(snapshot(store),raised)
 
     def test_validated_bootstrap_parity_replay_after_insertion(self):
         pairs=validated_sources(self.source,self.mirror)

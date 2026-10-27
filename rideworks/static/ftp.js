@@ -29,13 +29,15 @@
     save.disabled = true;
     const rows=data.rows,d=date.value;
     if (!rows.length) { $('ftp-preview').textContent='No FTP history yet. Manual initialization is a separate workflow.';return; }
+    if(!d){$('ftp-preview').textContent='Choose and confirm an effective calendar date.';return;}
     const existing=rows.find(r=>r.effective_from_date===d);
     if(existing){$('ftp-preview').textContent=`An FTP entry already exists on ${d}: ${existing.ftp_watts} W. It will not be overwritten.`;return;}
     const prev=rows.findLast(r=>r.effective_from_date<d),next=rows.find(r=>r.effective_from_date>d),w=Number(watts.value);
-    if(!d){$('ftp-preview').textContent='Choose and confirm an effective calendar date.';return;}
     if(!prev && next){$('ftp-preview').textContent=`New earliest setting: ${d} becomes the first known FTP date. FTP remains unknown before ${d}; ${next.ftp_watts} W remains unchanged and resumes on ${next.effective_from_date}.`;
       save.disabled=!Number.isSafeInteger(w)||w<1||!watts.validity.valid;return;}
-    if(!prev||!next){$('ftp-preview').textContent=`Choose a date before ${rows[0].effective_from_date} or strictly between existing entries. After-last extension is unavailable.`;return;}
+    if(prev && !next){$('ftp-preview').textContent=`New latest setting: ${prev.ftp_watts} W remains effective through the day before ${d}. The new FTP applies from ${d} onward until another entry is added. Existing entries stay unchanged.`;
+      save.disabled=!Number.isSafeInteger(w)||w<1||!watts.validity.valid;return;}
+    if(!prev||!next){$('ftp-preview').textContent='Choose a valid effective date.';return;}
     $('ftp-preview').textContent=`Existing FTP: ${prev.ftp_watts} W. The new value applies from ${d} inclusive until ${next.effective_from_date} exclusive. Existing entries stay unchanged.`;
     save.disabled=!Number.isSafeInteger(w)||w<1||!watts.validity.valid;
   }

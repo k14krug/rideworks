@@ -139,6 +139,13 @@ async page => {
     const b=await page.locator('#ftp-chart').boundingBox();check(b.width<=width,'chart fits viewport');
   }
   await page.setViewportSize({width:1440,height:1000});
+  // A manual latest-date value is permitted without selecting any ride.
+  const later=plusDay(original.rows.at(-1).effective_from_date,1);
+  await page.locator('#ftp-date').fill(later);await page.locator('#ftp-watts').fill('160');
+  check(!(await page.locator('#ftp-save').isDisabled()),'after-last manual date enables Save');
+  check((await page.locator('#ftp-preview').textContent()).includes('New latest setting'),'after-last preview explains its new interval');
+  check((await page.locator('#ftp-preview').textContent()).includes('until another entry'),'after-last preview explains open-ended FTP');
+  await page.locator('#ftp-cancel').click();
   // Duplicate-day preview never enables overwrite.
   await page.locator('#ftp-date').fill(original.rows[1].effective_from_date);await page.locator('#ftp-watts').fill('211');
   check(await page.locator('#ftp-save').isDisabled(),'duplicate date blocked');

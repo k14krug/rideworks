@@ -552,7 +552,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-03 — Initial accepted-data rollout to separate home-LAN production server
 
-**Status:** pending — Owner requested the separate production-server update on 2026-10-17. [JIT](docs/tasks/OPS-03.md); [issue #44](https://github.com/k14krug/rideworks/issues/44).
+**Status:** in_progress — Owner now requests the accepted FTP-02 release `613b0dccc6cc653ac3500b26ce9f292ac5e86037` on the separate production server (2026-10-27). Analyst reconciled the JIT; Gate 1 exact-target inventory/plan and Owner approval remain open. [JIT](docs/tasks/OPS-03.md); [issue #44](https://github.com/k14krug/rideworks/issues/44).
 
 **Purpose:** Transfer the accepted RideWorks development release and a consistent snapshot of its cycling history, FTP timeline and original activity files to the existing private home-LAN production server, without treating dev and prod as the same machine.
 
@@ -562,10 +562,10 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### FTP-02 — Manual FTP entry after latest recorded date
 
-**Status:** in_progress — implementation and disposable-data verification complete; [draft PR #48](https://github.com/k14krug/rideworks/pull/48) awaits review. [Issue #47](https://github.com/k14krug/rideworks/issues/47); [FTP-02 JIT](docs/tasks/FTP-02.md).
+**Status:** **done — Owner-approved and independently Analyst-accepted 2026-10-27; merged [PR #48](https://github.com/k14krug/rideworks/pull/48) at `613b0dccc6cc653ac3500b26ce9f292ac5e86037`.** [Issue #47](https://github.com/k14krug/rideworks/issues/47); [FTP-02 JIT](docs/tasks/FTP-02.md).
 
 **Purpose:** Allow any previously unrecorded manual date-effective FTP setting, notably after the current last setting, without a qualifying ride. New settings may lower or raise FTP and take effect on their date, with the last effective indefinitely. Retain FTP-01 historical comparison, same-date and stale-write protection, existing dates/values, and training-state/plan recalculation.
 
 **Non-goals:** No general edit/delete, automatic FTP estimates, schema migration, live data mutation, or production-server rollout. OPS-03 stays pending and separate.
 
-**Acceptance:** Run focused/full regressions and browser checks on a disposable Store, obtain review, then Owner acceptance. No deployment or merge implied by a draft PR.
+**Acceptance:** Dex reported 24 focused/497 full tests on PR branch, 30 focused/532 full tests on dev integration and 17 Chromium checks on each disposable Store. Analyst reviewed source and evidence and explicitly accepted the feature; tests were not rerun by Analyst. This acceptance does not authorize production data replacement, a change to the exact target, or bypassing OPS-03 gates.

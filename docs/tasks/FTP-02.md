@@ -1,6 +1,6 @@
 # FTP-02 — Add manual FTP entries after the latest recorded date
 
-**Status:** Owner explicitly requested implementation on 2026-10-27; development change only, not production promotion.
+**Status:** **ACCEPTED 2026-10-27** — Owner accepted the verified behavior and authorized merge, PR #48 merged as `613b0dccc6cc653ac3500b26ce9f292ac5e86037`; independent Analyst review accepted the source diff and Dex's test evidence in PR #48. Deployment is separately governed by OPS-03.
 **Issue:** [#47](https://github.com/k14krug/rideworks/issues/47).
 **Predecessor:** FTP-01 (Owner-accepted, merged). This JIT supersedes FTP-01's intentionally deferred *after-last insertion* restriction, and nothing else.
 
@@ -52,3 +52,9 @@ No automatic FTP rise/drop inference; no change to 20-minute or training analysi
 A user can enter a date later than the latest setting and any positive supported integer FTP, even with no ride. The chart and current FTP reflect the new date-effective value, including a decrease; older date lookup/ride data are unchanged. Duplicate dates and stale/invalid writes still fail. Before-first and between-entry insertion, the 95%-best-20 evidence graph, and dependent training-state/planning calculations remain correct.
 
 Commit the implementation/tests and publish a draft PR for review with actual verification results. **Stop at Owner review**; do not deploy or modify the personal SQLite data store under this task.
+
+## 8. Acceptance record (2026-10-27)
+
+Owner requested and accepted the manual latest-date entry behavior and authorized PR #48 merge. The merged release is `613b0dccc6cc653ac3500b26ce9f292ac5e86037`. Analyst independently reviewed the implementation, synthetic regressions, frontend behavior and dependency preservation; recorded acceptance in [PR #48](https://github.com/k14krug/rideworks/pull/48). Dex reported 24 FTP / 497 full Python tests on PR branch, 30 FTP / 532 full on development integration, and 17 Chromium assertions on each using disposable Store data. The Analyst did not re-execute those suites. No personal FTP entry was changed by these checks.
+
+This completes the FTP-02 **feature**, not production deployment. See [reconciled OPS-03](OPS-03.md) for the authorized release and separate exact-target Owner approval requirement.

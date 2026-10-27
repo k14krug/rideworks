@@ -39,7 +39,7 @@ The Owner's request to deploy the newer commit is **release-selection authorizat
 - **Gate 2 — controlled production cutover; HARD Owner final acceptance.** Enter only after separate, explicit Owner direction approving Gate 1's actual target/path/backup/configuration decision. Re-inventory for drift, stop writers/services carefully, create a **verified recovery backup of current production data/config**, stage source snapshot and artifacts, verify, atomically switch to an approved code-and-data pair, restart through the existing mechanism and smoke-check. Stop for Owner final acceptance; do not close OPS-03 automatically.
 - Any unexplained production-only data, different service/source, unreadable artifact, source inconsistency, unknown auth/secret implications, insufficient storage, failed verification or unclear remote authority is a **mandatory stop**, not permission to force a copy.
 
-No app feature, FTP model, SQLite schema, or application algorithm changes are authorized. If such changes seem necessary, stop for Analyst/Owner before expanding scope. Do not automatically continue to other tasks.
+No **further** app feature, FTP model, SQLite schema, or application algorithm changes are authorized as part of OPS-03. Deploying already accepted FTP-02 at the exact pinned commit is authorized as a release update; modifying its code or adding other features is not. If additional changes seem necessary, stop for Analyst/Owner before expanding scope. Do not automatically continue to other tasks.
 
 ## 4. Gate 1 — read-only discovery and transfer plan
 

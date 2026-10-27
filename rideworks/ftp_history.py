@@ -38,7 +38,7 @@ def validate_entry(effective_date, watts):
 
 
 def add_entry(store, effective_date, watts, *, expected_revision):
-    """Insert an intermediate setting; never overwrite or alter existing rows."""
+    """Insert a new dated setting; never overwrite or alter existing rows."""
     validate_entry(effective_date, watts)
     with store._transaction(write=True):
         current = snapshot(store)
@@ -50,9 +50,8 @@ def add_entry(store, effective_date, watts, *, expected_revision):
         rows = current['rows']
         if not rows:
             raise ValueError('Add FTP history before inserting an intermediate entry.')
-        if not (effective_date < rows[0]['effective_from_date'] or
-                rows[0]['effective_from_date'] < effective_date < rows[-1]['effective_from_date']):
-            raise ValueError('Choose a date before the first FTP entry or between existing entries. After-last extension is not available.')
+        # Any new date is valid: before first, between entries, or after last.
+        # Duplicate dates and stale revisions are checked above.
         store.connection.execute('INSERT INTO ftp_history VALUES (?,?)',(effective_date,watts))
         store.connection.execute('UPDATE ftp_history_state SET revision=revision+1 WHERE singleton=1')
         return snapshot(store)

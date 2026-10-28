@@ -552,13 +552,13 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### OPS-03 — Initial accepted-data rollout to separate home-LAN production server
 
-**Status:** in_progress — Owner now requests the accepted FTP-02 release `613b0dccc6cc653ac3500b26ce9f292ac5e86037` on the separate production server (2026-10-27). Analyst reconciled the JIT; Gate 1 exact-target inventory/plan and Owner approval remain open. [JIT](docs/tasks/OPS-03.md); [issue #44](https://github.com/k14krug/rideworks/issues/44).
+**Status:** **done — production rollout complete and Owner-accepted on 2026-10-28.** The Owner explicitly directed that OPS-03 be closed without further deployment, verification or Analyst review, superseding the earlier administrative closeout requirements for this task only. [JIT](docs/tasks/OPS-03.md); [issue #44](https://github.com/k14krug/rideworks/issues/44).
 
 **Purpose:** Transfer the accepted RideWorks development release and a consistent snapshot of its cycling history, FTP timeline and original activity files to the existing private home-LAN production server, without treating dev and prod as the same machine.
 
-**Execution:** **`/TASK only`**. Gate 1 discovers the actual production host/service/data path and compares production-only state **read-only**, prepares a source snapshot and exact verified runbook, then stops for **HARD Owner** approval of the destination/replacement. Gate 2 performs only the separately authorized controlled copy, backup, restart and smoke verification; stops again for Owner final acceptance. Preserve production-specific nginx/systemd/`.env`/OAuth settings and do not assume example paths, perform a second FTP bootstrap, or invent a bidirectional sync.
+**Historical execution requirements:** The JIT specified **`/TASK only`**, a Gate 1 target-specific Owner approval and a Gate 2 cutover followed by Owner final acceptance. Its original acceptance criteria covered the accepted release, coherent schema-11 history/FTP and referenced original artifacts, verified recovery backups, preserved server-specific configuration and development environment, and Owner acceptance. These remain historical criteria, not instructions to repeat the rollout.
 
-**Acceptance:** Production runs the accepted release tree with source-matched SQLite schema 11, current development FTP/history and all referenced original artifacts, verified private recovery backups and unchanged server-specific setup, and explicit Owner acceptance. Existing development app and backups remain intact.
+**Historical evidence gaps:** Detailed Gate 1/2 approvals, actual deployed commit and data treatment, backup/recovery checks and smoke/verification results are not documented in the reviewed repository and issue records; independent Analyst acceptance of OPS-03 is not recorded. Owner-directed closure does not assert that undocumented checks were performed or passed. No further evidence collection, verification, Analyst review or closeout task is requested. Do not access production, resume either gate or automatically start another task.
 
 ### FTP-02 — Manual FTP entry after latest recorded date
 
@@ -566,6 +566,6 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 **Purpose:** Allow any previously unrecorded manual date-effective FTP setting, notably after the current last setting, without a qualifying ride. New settings may lower or raise FTP and take effect on their date, with the last effective indefinitely. Retain FTP-01 historical comparison, same-date and stale-write protection, existing dates/values, and training-state/plan recalculation.
 
-**Non-goals:** No general edit/delete, automatic FTP estimates, schema migration, live data mutation, or production-server rollout. OPS-03 stays pending and separate.
+**Non-goals:** No general edit/delete, automatic FTP estimates, schema migration, live data mutation, or production-server rollout. OPS-03 is separate.
 
 **Acceptance:** Dex reported 24 focused/497 full tests on PR branch, 30 focused/532 full tests on dev integration and 17 Chromium checks on each disposable Store. Analyst reviewed source and evidence and explicitly accepted the feature; tests were not rerun by Analyst. This acceptance does not authorize production data replacement, a change to the exact target, or bypassing OPS-03 gates.

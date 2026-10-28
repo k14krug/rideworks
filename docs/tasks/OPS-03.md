@@ -1,7 +1,18 @@
 # OPS-03 — Roll out accepted RideWorks to the home-LAN production server
 
-**Status:** Analyst-reconciled on 2026-10-27 for the accepted FTP-02 release. Gate 1 discovery and exact-target Owner approval remain required.
+**Status:** **done — production rollout complete and Owner-accepted on 2026-10-28.** The Owner explicitly directed that OPS-03 be marked done and issue #44 closed, with no further deployment, verification or Analyst review.
 **Issue:** [#44](https://github.com/k14krug/rideworks/issues/44).
+
+## Owner-directed closure — controlling record (2026-10-28)
+
+The Owner's explicit closure decision supersedes the earlier requirements to collect additional closeout evidence and obtain independent Analyst acceptance for OPS-03 only. No deployment, production access, verification, Analyst review or new closeout task remains requested. Do not resume either rollout gate or automatically begin another task.
+
+**Historical evidence gaps:** Detailed Gate 1/2 approvals, the actual deployed commit and data treatment, backup/recovery checks and smoke/verification results are not documented in the reviewed repository and issue records. Independent Analyst acceptance of OPS-03 is not recorded; the recorded acceptance of the FTP-02 feature is separate. Closure records the Owner's decision and does not claim undocumented checks were performed or passed, nor establish whether each historical step was performed.
+
+The remainder of this brief is retained as the historical rollout specification, including its original invocation, gates, acceptance criteria and stop conditions. It is not authorization or a request to repeat deployment or verification.
+
+---
+
 **Owner direction:** On 2026-10-17 Owner requested transferring accepted RideWorks code/history to the **separate production server**. On 2026-10-27 Owner explicitly requested deploying the newer FTP-02 release `613b0dccc6cc653ac3500b26ce9f292ac5e86037`. Owner reports little or no independent activity on production; **verify**, do not assume that the production store can safely be overwritten. Release selection is not approval of an undisclosed destination or destructive data replacement.
 
 ## 1. Purpose and scope

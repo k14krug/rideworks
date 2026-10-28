@@ -1,12 +1,14 @@
 """Home presentation using the existing RideWorks shell and evidence boundary."""
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from html import escape
 import json
+from math import isfinite
 from urllib.parse import urlencode
 
 from .dashboard import dashboard
 from .goals import query_zone
+from .performance_view import months_before
 from .web import browser_time, detail_rows, duration, icon, local_time, shell
 
 
@@ -57,6 +59,69 @@ def weekly_chart(weeks):
 <output id="mileage-tooltip" class="home-mileage-tooltip" role="status" hidden></output>'''
 
 
+def trend_axes(start, end, low, high, months, step, *, years=False):
+    """Shared Home SVG frame; calendar ticks do not resample source values."""
+    span = (end-start).total_seconds() if isinstance(start, datetime) else (end-start).days
+    parts = [f'<line class="chart-grid" x1="80" x2="570" y1="{y}" y2="{y}"/>' for y in (36,156)]
+    for value, py in ((high,40),(low,160)):
+        label = f'{value:.0f}' if years else f'{value:.1f}'
+        parts.append(f'<text x="72" y="{py}" text-anchor="end">{label}</text>')
+    for offset in range(months, -1, -step):
+        tick = months_before(end,offset)
+        delta = (tick-start).total_seconds() if isinstance(start, datetime) else (tick-start).days
+        px = 80+490*delta/(span or 1)
+        anchor = 'start' if offset == months else 'end' if offset == 0 else 'middle'
+        label = tick.strftime('%b %Y' if years else '%b')
+        label_class = 'home-axis-year' if years else 'home-axis-month'
+        if offset not in (0,months): label_class += ' home-axis-intermediate'
+        parts.append(f'<line class="chart-grid" x1="{px:.3f}" x2="{px:.3f}" y1="36" y2="156"/><text class="{label_class}" x="{px:.3f}" y="186" text-anchor="{anchor}">{label}</text>')
+    return ''.join(parts)
+
+
+def fitness_chart(data):
+    """Present accepted daily Fitness, using the full page's calendar cutoff."""
+    end = date.fromisoformat(data['today'])
+    start = months_before(end,6)
+    days = [d for d in data['days'] if start.isoformat() < d['day'] <= end.isoformat()]
+    known = [d for d in days if d['fitness'] is not None and isfinite(d['fitness'])]
+    if not known:
+        return '<p class="empty">No usable Fitness history in the last six months.</p>'
+    values = [d['fitness'] for d in known]
+    padding = max((max(values)-min(values))*.1,.5)
+    low, high = max(0,min(values)-padding), max(values)+padding
+    span = (end-start).days
+    parts, path, previous = [], '', None
+    for day in days:
+        stamp = date.fromisoformat(day['day'])
+        value = day['fitness']
+        if value is None or not isfinite(value):
+            if path: parts.append(f'<path class="home-power-line" d="{path}"/>')
+            path, previous = '', None
+            continue
+        if previous is not None and stamp-previous != timedelta(days=1):
+            parts.append(f'<path class="home-power-line" d="{path}"/>')
+            path = ''
+        px = 80+490*(stamp-start).days/span
+        py = 156-120*(value-low)/(high-low)
+        path += f'{"L" if path else "M"}{px:.3f},{py:.3f} '
+        # A dot also makes isolated source days visible without bridging gaps.
+        parts.append(f'<circle class="home-power-point home-fitness-point" data-day="{day["day"]}" data-value="{value}" cx="{px:.3f}" cy="{py:.3f}" r="1.5"/>')
+        previous = stamp
+    if path: parts.append(f'<path class="home-power-line" d="{path}"/>')
+    latest = known[-1]
+    px = 80+490*(date.fromisoformat(latest['day'])-start).days/span
+    py = 156-120*(latest['fitness']-low)/(high-low)
+    label = f'{latest["fitness"]:.1f}'
+    # Short histories can end at the left edge. Keep their label in the frame.
+    anchor = 'start' if px < 150 else 'end'
+    parts.append(f'<g class="home-chart-endpoint" data-day="{latest["day"]}" data-value="{latest["fitness"]}"><circle class="home-power-point" cx="{px:.3f}" cy="{py:.3f}" r="4"/><text x="{px:.3f}" y="{py-12:.3f}" text-anchor="{anchor}">{label}</text></g>')
+    note = f'<p class="home-trend-note">Latest available: {latest["day"]}.</p>' if latest['day'] != data['today'] else ''
+    provisional = ' Early history is provisional.' if any(d.get('early_history_provisional') for d in days) else ''
+    return f'''<svg class="home-chart home-trend-chart" id="home-fitness-chart" viewBox="0 0 600 200" role="img" aria-labelledby="fitness-chart-title fitness-chart-desc" data-range-start="{start}" data-range-end="{end}" data-y-min="{low}" data-y-max="{high}">
+<title id="fitness-chart-title">Fitness (42-day) over the last six months</title><desc id="fitness-chart-desc">Latest available Fitness: {label} on {latest['day']}. Model of selected daily cycling stress, not measured physiology or readiness. Unscored rides can understate load; dates without records are not confirmed rest.{provisional}</desc>
+{trend_axes(start,end,low,high,6,1)}{''.join(parts)}</svg>{note}'''
+
+
 def power_chart(performance, zone):
     series = performance['rolling']
     known = [s['point']['average_watts'] for s in series if s['point']]
@@ -66,8 +131,8 @@ def power_chart(performance, zone):
     end = datetime.fromisoformat(performance['range_end'])
     span = (end-start).total_seconds()
     low, high = max(0,min(known)-15), max(known)+15
-    x = lambda stamp:40+545*(datetime.fromisoformat(stamp)-start).total_seconds()/span
-    y = lambda watts:140-120*(watts-low)/(high-low)
+    x = lambda stamp:80+490*(datetime.fromisoformat(stamp)-start).total_seconds()/(span or 1)
+    y = lambda watts:156-120*(watts-low)/(high-low)
     parts = []
     path = ''
     for i, step in enumerate(series):
@@ -77,15 +142,18 @@ def power_chart(performance, zone):
                 parts.append(f'<path class="home-power-line" d="{path}"/>'); path = ''
             continue
         px, py = x(step['at']), y(point['average_watts'])
-        until = x(series[i+1]['at']) if i+1 < len(series) else 585
+        until = x(series[i+1]['at']) if i+1 < len(series) else 570
         path += f'{"L" if path else "M"}{px:.3f},{py:.3f} H{until:.3f} '
         parts.append(f'<a href="/activities/{point["activity_id"]}"><circle class="home-power-point" data-activity-id="{point["activity_id"]}" data-at="{step["at"]}" cx="{px:.3f}" cy="{py:.3f}" r="3"><title>{point["rounded_watts"]} W · {escape(point["title"])}</title></circle></a>')
     if path:
         parts.append(f'<path class="home-power-line" d="{path}"/>')
-    return f'''<svg class="home-chart" id="home-power-chart" viewBox="0 0 600 180" role="img" aria-labelledby="power-chart-title"><title id="power-chart-title">20-minute rolling 42-day best over the past year, from current Performance history</title>
-<line class="chart-grid" x1="40" x2="585" y1="20" y2="20"/><line class="chart-grid" x1="40" x2="585" y1="140" y2="140"/>
-<text x="35" y="24" text-anchor="end">{high:.0f}</text><text x="35" y="143" text-anchor="end">{low:.0f}</text>
-<text x="40" y="160">{start.astimezone(zone).strftime('%b %Y')}</text><text x="585" y="160" text-anchor="end">{end.astimezone(zone).strftime('%b %Y')}</text>{''.join(parts)}</svg>'''
+    current = performance['current']
+    description = 'Current rolling 42-day best unavailable; no eligible result in the current window.'
+    if current is not None:
+        description = f'Current rolling 42-day best: {current["rounded_watts"]} W as of {performance["range_end"]}.'
+        parts.append(f'<g class="home-chart-endpoint" data-at="{performance["range_end"]}" data-value="{current["average_watts"]}"><circle class="home-power-point" cx="570" cy="{y(current["average_watts"]):.3f}" r="4"/><text x="570" y="{y(current["average_watts"])-12:.3f}" text-anchor="end">{current["rounded_watts"]} W</text></g>')
+    return f'''<svg class="home-chart home-trend-chart" id="home-power-chart" viewBox="0 0 600 200" role="img" aria-labelledby="power-chart-title power-chart-desc" data-range-start="{performance['range_start']}" data-range-end="{performance['range_end']}"><title id="power-chart-title">20-minute rolling 42-day best over the past year, from current Performance history</title><desc id="power-chart-desc">{escape(description)} Gaps mean no eligible result.</desc>
+{trend_axes(start.astimezone(zone),end.astimezone(zone),low,high,12,4,years=True)}{''.join(parts)}</svg>'''+('' if current else '<p class="home-trend-note">Current 42-day best unavailable.</p>')
 
 
 def home_page(store, query=''):
@@ -173,7 +241,7 @@ def _home_page(store, query=''):
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
     return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
 <div class="home-lead"><section class="panel home-summary" id="home-recent-mileage" aria-label="Recent mileage and eligible power"><div class="home-quick-grid">{recent_mileage}{card('current','Current 42-day best',current,current_note,'power')}{card('latest','Latest eligible 20-minute ride',latest,latest_note,'power')}</div></section>{advisor}</div>
-<div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section><div class="home-companions">{training}<section class="panel home-performance"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div>{power_chart(performance,zone)}<p>Rolling 42-day best · past year · current Performance-v2 evidence. Gaps mean no eligible result.</p></section></div></div>
+<div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section><div class="home-companions">{training}<section class="panel home-performance home-trend"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div><p class="home-trend-subtitle">Best 20-minute power · Last 12 months</p>{power_chart(performance,zone)}<p class="home-trend-note">Rolling 42-day best · current Performance-v2 evidence. Gaps mean no eligible result.</p></section></div></div>
 <div class="home-progress-layout"><section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Outlined current week is partial · actual Monday-through-today mileage.</p></section><section class="panel home-goal-progress"><h2>Annual Mileage Goal</h2><strong>{miles(ytd['miles'])} YTD</strong>{progress}<p>Arithmetic goal progress, not a training recommendation.</p></section></div>
 <section class="panel home-supporting" aria-labelledby="home-supporting-title"><h2 id="home-supporting-title">Context &amp; supporting details</h2>{insight_panel}<details class="home-weekly-details"><summary>Weekly distances</summary><p>Monday–Sunday weeks; outlined current bar is actual Monday-through-today mileage. Needed pace uses remaining mileage and calendar days after each Sunday; current pace uses today. Required points apply to the goal year.</p><div class="home-evidence-table"><table><thead><tr><th>Week of</th><th>Actual mi</th><th>Needed mi/week</th><th>File</th><th>API</th><th>Missing</th></tr></thead><tbody>{week_rows}</tbody></table></div></details>
 <details class="home-diagnostics"><summary>Mileage evidence &amp; calendar boundaries</summary>{detail_rows(details)}<p>File-backed understood distance precedes current API summary distance. Unspecified CSV units are excluded. Known zero distance counts. Supported dates with unknown timezone use their source date; missing dates are excluded from period totals. Future Activities are excluded from totals. Weekly periods are local calendar buckets; YTD includes evidence through the as-of instant. Mileage is recalculated from retained source summaries. Needed weekly average is remaining goal mileage divided by remaining calendar days after today, times seven; it is arithmetic goal progress, not a training recommendation. Recent Avg Pwr prefers file session or a single TCX lap summary, then current API summary; CSV watts and raw streams are not used.</p></details></section>

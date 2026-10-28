@@ -1,0 +1,12 @@
+{
+  "fixed_clock_cases": 6,
+  "timezones": 2,
+  "compared": true,
+  "unchanged_home_outside_two_cards": true,
+  "unchanged_full_pages": true,
+  "unchanged_models": true,
+  "unchanged_tables": 28,
+  "unchanged_original_artifacts": 2,
+  "integrity": "ok",
+  "foreign_key_violations": 0
+}

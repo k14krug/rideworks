@@ -1,6 +1,6 @@
 # HOME-UI-02 — Home trend cards
 
-Status: ready for **HARD — Analyst** technical review. **HARD — Owner** running-UI visual acceptance follows; the task remains `in_progress`. Branch: `task/home-ui-02-trend-cards`, based on refreshed `main` at `453a52f`.
+Status: ready for **HARD — Analyst** technical review in [draft PR #50](https://github.com/k14krug/rideworks/pull/50). **HARD — Owner** running-UI visual acceptance follows; the task remains `in_progress`. Branch: `task/home-ui-02-trend-cards`, based on refreshed `main` at `453a52f`; implementation commit `b86039e`.
 
 ## Behavior and implementation
 

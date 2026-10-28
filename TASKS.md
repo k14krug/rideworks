@@ -573,7 +573,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### HOME-UI-02 — Home Training State and 20-minute Performance trend cards
 
-**Status:** in_progress — implementation and local verification complete; ready for **HARD — Analyst** technical review, then **HARD — Owner** running-UI acceptance. [JIT](docs/tasks/HOME-UI-02.md); [implementation and evidence](reports/HOME-UI-02/implementation.md), 2026-10-28. Follow-up to completed HOME-UI-01; not a reopening of it.
+**Status:** in_progress — implementation and local verification complete in [PR #50](https://github.com/k14krug/rideworks/pull/50); ready for **HARD — Analyst** technical review, then **HARD — Owner** running-UI acceptance. [JIT](docs/tasks/HOME-UI-02.md); [implementation and evidence](reports/HOME-UI-02/implementation.md), 2026-10-28. Follow-up to completed HOME-UI-01; not a reopening of it.
 
 **Purpose:** Update the Home Training State card to show the actual six-month Fitness (42-day) history with dynamic Y-axis and endpoint value (no Fitness/Fatigue/Form tiles); update the adjacent 20-minute Performance card to show the actual 12-month rolling 42-day best eligible 20-minute power (not the latest eligible ride), using the Owner's private Home mockup as visual guidance.
 

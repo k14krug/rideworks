@@ -569,3 +569,12 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Non-goals:** No general edit/delete, automatic FTP estimates, schema migration, live data mutation, or production-server rollout. OPS-03 is separate.
 
 **Acceptance:** Dex reported 24 focused/497 full tests on PR branch, 30 focused/532 full tests on dev integration and 17 Chromium checks on each disposable Store. Analyst reviewed source and evidence and explicitly accepted the feature; tests were not rerun by Analyst. This acceptance does not authorize production data replacement, a change to the exact target, or bypassing OPS-03 gates.
+
+
+### HOME-UI-02 — Home Training State and 20-minute Performance trend cards
+
+**Status:** pending — Analyst-authored [JIT](docs/tasks/HOME-UI-02.md), 2026-10-28. Follow-up to completed HOME-UI-01; not a reopening of it.
+
+**Purpose:** Update the Home Training State card to show the actual six-month Fitness (42-day) history with dynamic Y-axis and endpoint value (no Fitness/Fatigue/Form tiles); update the adjacent 20-minute Performance card to show the actual 12-month rolling 42-day best eligible 20-minute power (not the latest eligible ride), using the Owner's private Home mockup as visual guidance.
+
+**Scope and acceptance:** Keep Training State above Performance to the right of Recent Activities, approximately matching table height at desktop; preserve accepted data semantics, other Home sections, full Training State/Performance pages, responsive layout and honest empty states. No new algorithms or production changes. Dex implements via `/TASK HOME-UI-02` or `/AUTOTASK HOME-UI-02`; **HARD — Analyst** technical review and **HARD — Owner** running-UI visual acceptance before `done`. The private screenshot and real rider data stay out of Git.

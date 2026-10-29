@@ -44,3 +44,52 @@ The existing branch incorporates the Analyst's §12 amendment. The chart now cli
 - The synthetic fixed-clock preview was checked in Chromium at 1440, 1024, 768, 390 and 320 CSS px. October labels read Jul–Nov without overlap; no page horizontal overflow was observed. At 1440 the annual card measured 332.05 px against Mileage Progress at 359.58 px; at 1024 and below the cards stacked. At 320 the legend wrapped without clipping. Computed series colors were blue `#2563eb`, amber `#d97706`, and teal `#0d9488`, with solid, long-dashed and short-dashed strokes. The synthetic current endpoint and YTD both read 1,163.7 mi; prior legend totals were 874.4 and 852.0 recorded miles. Keyboard focus and Escape operated the endpoint readout; dispatched pointer-enter/leave events exercised its pointer handler. The weekly readout and all five Home section headings remained present, and Activities, Performance, Training State, Plan and the Settings annual-goal page returned successfully. The synthetic rendering was inspected; the private reference remains uncommitted. Owner running-app approval remains outstanding.
 
 Reproduce using the commands above with a new disposable data directory. Inspect abbreviated month labels and full-year legend totals in place of the superseded numeric-axis check. The browser's direct pointer-hover automation did not reliably reach the SVG endpoint in this integrated session; keyboard focus and the dispatched pointer handler were verified, but a physical-pointer check remains for running-UI review.
+
+## Owner-directed chart-first refinement — 2026-10-29
+
+The Owner directly requested removal of the prominent duplicate YTD headline, relocation of the remaining-goal and needed-weekly text below the chart, a taller chart within a card matching Mileage Progress, a Y-axis floor at the lowest starting cumulative value, and removal of the visible coverage paragraph. This newer Owner direction supersedes the corresponding presentation details in §§5.1 and 12 of the original brief; the Analyst-authored JIT and its review gates were not edited.
+
+`rideworks/home.py` now renders heading → chart → yearly legend → goal text, retaining the existing source data, endpoint/YTD legend values and goal arithmetic. The Y-axis minimum is the smallest starting value among visible series, including the cumulative value carried into the left edge. The maximum is the largest visible value. Flat/zero histories get a finite upper span without moving the actual lower bound. Missing years stay absent. The coverage explanation and missing-distance count remain in the accessible SVG description and existing diagnostics, using no card height. Transparent endpoint hit areas improve actual pointer targeting without altering values or tooltip semantics.
+
+Scoped CSS lets the annual card take the neighboring desktop row height while excluding its own intrinsic size from the row calculation; Mileage Progress itself remains unchanged. The annual chart fills the reclaimed space, and stacked tablet/phone layouts remain content-sized. Wider Y-axis margins and mobile text sizes keep labels readable.
+
+Verification performed on this refinement:
+
+- **31 focused dashboard tests passed**, including new tests for a nonzero minimum across three series, safe flat/zero scaling, goal placement after the chart/legend, removal of the duplicate headline/visible caption and retained accessible missing-data context.
+- **515 full Python tests passed** with `DEBUG=0` and loopback access for existing local-server tests. No actual rider Store or network API was used.
+- **139 Chromium assertions passed** at 1440/1024/768/390/320 CSS px, with no JavaScript errors. Checks compare dashboard JSON, unchanged Home card markup and original Mileage Progress height against `a17bce1`; verify the new floor independently from the source points, all card content and SVG labels fit, and exercise actual pointer hover/leave, keyboard focus/Escape, weekly tooltip and destination routes. The earlier physical-hover verification limitation is resolved by this pass. See [results](refinement-browser-checks.json).
+- At 1440px, **both bottom-row cards are 363px tall**, unchanged from the original Mileage Progress height. The annual SVG grew from **106.88px to 207.31px**. The top cards, weekly chart, goal arithmetic, source service and shared breakpoints were preserved.
+- Visually inspected [desktop synthetic capture](refinement-desktop-synthetic.png) and [320px synthetic capture](refinement-mobile-synthetic.png), alongside the Owner's private reference and requested changes. Stacked layouts may have different card heights to keep their contents readable. No personal screenshot or activity data is included.
+- `git diff --check`, JavaScript syntax and the unchanged `.vscode/settings.json` SHA-256 passed. The task remains ready for Analyst review, followed by Owner running-UI acceptance; no merge or deployment is authorized.
+
+Reproduce with a fresh synthetic directory and the prior code snapshot:
+
+```bash
+mkdir -p /tmp/home-ui-03-refinement-baseline
+git archive a17bce1 | tar -x -C /tmp/home-ui-03-refinement-baseline
+.venv/bin/python tools/preview_home_ui03.py --data-dir /tmp/home-ui-03-refinement-synthetic
+.venv/bin/python -m unittest discover -s tests -p 'test_rideworks_dashboard.py' -q
+DEBUG=0 .venv/bin/python -m unittest discover -s tests -q
+```
+
+Run these synthetic fixed-clock servers in separate terminals:
+
+```bash
+.venv/bin/python tools/verify_home_trends.py --data-dir /tmp/home-ui-03-refinement-synthetic --serve-port 8791
+.venv/bin/python tools/verify_home_trends.py --data-dir /tmp/home-ui-03-refinement-synthetic --code-root /tmp/home-ui-03-refinement-baseline --serve-port 8792
+```
+
+With a managed Chromium Playwright CLI session named `home-ui03-refinement` open, execute the committed checks using a structured subprocess argument:
+
+```python
+from pathlib import Path
+import subprocess
+result = subprocess.run([
+    'playwright-cli', '-s=home-ui03-refinement', 'run-code',
+    Path('tools/verify_home_ui03_refinement.js').read_text(),
+], capture_output=True, text=True)
+assert result.returncode == 0 and '### Error' not in result.stdout, result.stdout
+print(result.stdout)
+```
+
+This run used installed Chromium at `/home/kkrug/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome` with a local Playwright config. Captures and browser logs remain in ignored `output/playwright/` or `/tmp`, except for the deliberately synthetic images and aggregate JSON committed above. Production, personal source data, and unrelated files were untouched.

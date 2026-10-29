@@ -686,10 +686,12 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-trend-chart .home-chart-endpoint text { font-size: 24px; font-weight: 650; fill: var(--blue); }
 .home-redesign .home-chart-endpoint { pointer-events: none; }
 .home-redesign .home-progress-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; align-items: start; margin-top: 16px; }
-.home-redesign .home-goal-progress { border-top: 1px solid var(--border); margin: 0; }
-.home-redesign .home-goal-progress > strong { display: block; font-size: 25px; margin: 8px 0 2px; font-variant-numeric: tabular-nums; }
-.home-redesign .home-goal-progress > p { font-size: 12px; margin: 3px 0; }
-.home-redesign .home-goal-progress > .home-annual-remaining { font-weight: 650; color: var(--navy); }
+.home-redesign .home-goal-progress { border-top: 1px solid var(--border); margin: 0; display: flex; flex-direction: column; align-self: stretch; contain: size; min-height: 0; }
+.home-redesign .home-goal-progress > h2 { margin-bottom: 8px; }
+.home-redesign .home-annual-chart { flex: 1; min-height: 0; height: 100%; }
+.home-redesign .home-annual-goal { margin-top: 8px; font-size: 12px; line-height: 1.4; }
+.home-redesign .home-annual-goal p { margin: 3px 0 0; }
+.home-redesign .home-annual-goal .home-annual-remaining { font-weight: 650; color: var(--navy); }
 .home-redesign .home-annual-chart text { font-size: 18px; }
 .home-redesign .home-annual-chart .home-annual-endpoint { fill: var(--blue); font-size: 21px; font-weight: 650; }
 .home-annual-line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
@@ -699,6 +701,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-annual-point.home-annual-0 { fill: #2563eb; }
 .home-annual-point.home-annual-1 { fill: #d97706; }
 .home-annual-point.home-annual-2 { fill: #0d9488; }
+.home-annual-hit { fill: transparent; }
+.home-annual-point { pointer-events: none; }
 .home-annual-chart [tabindex]:focus { outline: 2px solid var(--navy); }
 .home-redesign .home-goal-progress > .home-annual-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; line-height: 1.25; margin: 0; }
 .home-annual-legend > span { border-left: 3px solid; padding-left: 5px; }
@@ -706,7 +710,6 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-annual-legend-0 { border-color: #2563eb !important; }
 .home-annual-legend-1 { border-color: #d97706 !important; }
 .home-annual-legend-2 { border-color: #0d9488 !important; }
-.home-redesign .home-goal-progress > .home-annual-coverage { font-size: 11px; line-height: 1.3; margin-top: 5px; }
 .home-redesign .home-supporting { margin-top: 16px; }
 .home-redesign .home-supporting > h2 { margin-bottom: 12px; }
 .home-redesign .home-supporting details { margin-top: 12px; font-size: 12px; }
@@ -723,6 +726,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .home-quick-fact:last-child { border-right: 0; }
   .home-redesign .home-layout, .home-redesign .home-progress-layout { grid-template-columns: minmax(0, 1fr); }
   .home-redesign .home-companions { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+  .home-redesign .home-goal-progress { contain: none; }
+  .home-redesign .home-annual-chart { flex: none; height: 220px; }
 }
 @media (max-width: 620px) {
   .home-redesign { margin-top: 0; }
@@ -741,6 +746,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .home-companions { grid-template-columns: minmax(0, 1fr); }
   .home-redesign .home-chart { overflow: visible; }
   .home-redesign .home-chart text { font-size: 20px; }
+  .home-redesign .home-annual-chart { height: auto; }
+  .home-redesign .home-annual-chart text { font-size: 24px; }
   .home-redesign .home-annual-chart .home-annual-month { font-size: 24px; }
   .home-redesign .home-annual-chart .home-annual-endpoint { font-size: 25px; }
   .home-redesign .home-trend-chart text { font-size: 26px; }

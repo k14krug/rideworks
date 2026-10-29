@@ -583,11 +583,13 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### HOME-UI-03 — Home Mileage by Year card
 
-**Status:** in_progress — implementation underway on `task/home-ui-03-mileage-by-year`.
+**Status:** in_progress — Owner's 2026-10-29 refinements implemented and verified on `task/home-ui-03-mileage-by-year`; [PR #51](https://github.com/k14krug/rideworks/pull/51) ready for Analyst review. [Results](reports/HOME-UI-03/implementation.md).
 
 **Purpose:** Replace the compact Annual Mileage Goal Home card with an equally short Mileage by Year view comparing cumulative cycling mileage for the current and preceding two calendar years, retaining YTD, miles remaining and the rounded-up whole-mile needed/week goal arithmetic.
 
 **Owner-approved direction:** Three cumulative lines in a calendar-clamped five-month window, blue/amber/teal series and recorded yearly totals in the legend; current-year emphasis and actual endpoint; no goal line/bar or old annual-target text; chart card no taller than Mileage Progress. Existing P3-01 distance eligibility, local calendar, annual target Settings, and needed-weekly semantics remain authoritative. The approved private mockup is shared directly with Dex, not committed; numbers are illustrative.
+
+**Latest Owner refinement (2026-10-29):** Remove the duplicate prominent YTD headline, place remaining-goal and needed-weekly text below the chart, match the neighboring desktop Mileage Progress card height without enlarging it, use the lowest visible starting mileage as the Y-axis floor, and remove the visible coverage paragraph. Coverage remains in accessible chart descriptions and existing diagnostics. This directly supersedes the prior card presentation; JIT execution/review controls are unchanged.
 
 **Acceptance:** [HOME-UI-03 JIT](docs/tasks/HOME-UI-03.md), including focused tests, compact responsive layout, source-aware missing states, HARD — Analyst technical review and HARD — Owner running-UI visual approval.
 

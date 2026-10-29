@@ -587,7 +587,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 **Purpose:** Replace the compact Annual Mileage Goal Home card with an equally short Mileage by Year view comparing cumulative cycling mileage for the current and preceding two calendar years, retaining YTD, miles remaining and the rounded-up whole-mile needed/week goal arithmetic.
 
-**Owner-approved direction:** Three actual cumulative lines, numeric 1–12 month axis, present-year emphasis and actual endpoint; no goal line/bar or old annual-target text; chart card no taller than Mileage Progress. Existing P3-01 distance eligibility, local calendar, annual target Settings, and needed-weekly semantics remain authoritative. The approved private mockup is shared directly with Dex, not committed; numbers are illustrative.
+**Owner-approved direction:** Three cumulative lines in a calendar-clamped five-month window, blue/amber/teal series and recorded yearly totals in the legend; current-year emphasis and actual endpoint; no goal line/bar or old annual-target text; chart card no taller than Mileage Progress. Existing P3-01 distance eligibility, local calendar, annual target Settings, and needed-weekly semantics remain authoritative. The approved private mockup is shared directly with Dex, not committed; numbers are illustrative.
 
 **Acceptance:** [HOME-UI-03 JIT](docs/tasks/HOME-UI-03.md), including focused tests, compact responsive layout, source-aware missing states, HARD — Analyst technical review and HARD — Owner running-UI visual approval.
 

@@ -58,15 +58,49 @@ class CalendarTests(TestCase):
     def test_annual_chart_empty_missing_year_and_calendar_alignment(self):
         rows=[activity('1','2024-03-01T12:00:00+00:00',1609.344),
               activity('2','2026-03-01T12:00:00+00:00',1609.344)]
-        series=mileage(rows,'UTC',as_of=datetime(2026,3,1,18,tzinfo=timezone.utc))['annual_series']
-        chart=annual_mileage_chart(series)
-        self.assertIn('2025 · no data',chart)
+        data=mileage(rows,'UTC',as_of=datetime(2026,3,1,18,tzinfo=timezone.utc))
+        chart=annual_mileage_chart(data['annual_series'],data['today'])
+        self.assertIn('<b>2025</b><span>No data</span>',chart)
         self.assertNotIn('data-year="2025"',chart)
         paths=re.findall(r'<path class="home-annual-line home-annual-[02]"[^>]+d="([^"]+)',chart)
         self.assertEqual(len(paths),2)
         self.assertEqual(re.search(r'H([\d.]+)',paths[0]).group(1), re.search(r'H([\d.]+)',paths[1]).group(1))
-        empty=mileage([],'UTC',as_of=datetime(2026,3,1,tzinfo=timezone.utc))['annual_series']
-        self.assertIn('No recorded cycling distances',annual_mileage_chart(empty))
+        empty=mileage([],'UTC',as_of=datetime(2026,3,1,tzinfo=timezone.utc))
+        self.assertIn('No recorded cycling distances',annual_mileage_chart(empty['annual_series'],empty['today']))
+
+    def test_annual_chart_window_totals_and_edges(self):
+        rows=[activity('1','2026-01-15T12:00:00+00:00',10*1609.344),
+              activity('2','2026-09-15T12:00:00+00:00',20*1609.344),
+              activity('3','2026-10-28T12:00:00+00:00',30*1609.344),
+              activity('4','2026-11-15T12:00:00+00:00',999*1609.344),
+              activity('5','2025-01-15T12:00:00+00:00',100*1609.344),
+              activity('6','2025-11-15T12:00:00+00:00',200*1609.344),
+              activity('7','2025-12-15T12:00:00+00:00',300*1609.344),
+              activity('8','2024-08-15T12:00:00+00:00',40*1609.344)]
+        data=mileage(rows,'UTC',as_of=datetime(2026,10,28,18,tzinfo=timezone.utc))
+        chart=annual_mileage_chart(data['annual_series'],data['today'])
+        labels=re.findall(r'class="home-annual-month"[^>]*>([^<]+)',chart)
+        self.assertEqual(labels,['Jul','Aug','Sep','Oct','Nov'])
+        self.assertIn('<b>2026</b><span>60.0 mi YTD</span>',chart)
+        self.assertIn('<b>2025</b><span>600.0 mi recorded</span>',chart)
+        self.assertIn('<b>2024</b><span>40.0 mi recorded</span>',chart)
+        self.assertIn('2026: 60.0 mi recorded through 2026-10-28',chart)
+        self.assertNotIn('2025: 600.0 mi recorded through',chart)
+        current=re.search(r'<path class="home-annual-line home-annual-0"[^>]+d="([^"]+)',chart).group(1)
+        self.assertRegex(current,r'^M55\.000,(?!135\.000)')  # January mileage is retained at the left edge.
+        previous=re.search(r'<path class="home-annual-line home-annual-1"[^>]+d="([^"]+)',chart).group(1)
+        self.assertIn('H575.000',previous)  # November is real past-year data, cropped at December.
+        boundary=mileage([activity('9','2025-12-01T12:00:00+00:00',1609.344)],'UTC',
+                         as_of=datetime(2026,10,28,18,tzinfo=timezone.utc))
+        boundary_chart=annual_mileage_chart(boundary['annual_series'],boundary['today'])
+        self.assertNotIn('2025: 1.0 mi recorded through 2025-12-01',boundary_chart)
+        self.assertIn('<b>2025</b><span>1.0 mi recorded</span>',boundary_chart)
+        for month, expected in [(1,['Jan','Feb']), (2,['Jan','Feb','Mar']),
+                                (11,['Aug','Sep','Oct','Nov','Dec']),
+                                (12,['Sep','Oct','Nov','Dec'])]:
+            snapshot=mileage(rows,'UTC',as_of=datetime(2026,month,28,18,tzinfo=timezone.utc))
+            rendered=annual_mileage_chart(snapshot['annual_series'],snapshot['today'])
+            self.assertEqual(re.findall(r'class="home-annual-month"[^>]*>([^<]+)',rendered),expected)
 
     def test_cycling_distance_provenance_zero_and_missing_evidence(self):
         rows=[activity('1','2026-02-01T12:00:00+00:00',1609.344),

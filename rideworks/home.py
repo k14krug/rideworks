@@ -1,6 +1,6 @@
 """Home presentation using the existing RideWorks shell and evidence boundary."""
 from datetime import date, datetime, timedelta
-from calendar import monthrange
+from calendar import month_abbr, monthrange
 from decimal import Decimal
 from html import escape
 import json
@@ -54,41 +54,69 @@ def weekly_chart(weeks):
 <output id="mileage-tooltip" class="home-mileage-tooltip" role="status" hidden></output>'''
 
 
-def annual_mileage_chart(series):
-    """Calendar-aligned recorded distances; absent years are not zero series."""
-    known = [s for s in series if s['points']]
-    if not known:
-        return '<p class="home-annual-empty">No recorded cycling distances for these years.</p>'
-    maximum = max((p['miles'] for s in known for p in s['points']), default=0) or 1
-    def x(day):
-        d = date.fromisoformat(day)
-        return 55 + 520 * ((d.month-1)+(d.day-1)/monthrange(d.year,d.month)[1])/12
+def annual_mileage_chart(series, today):
+    """Show a calendar-clamped window of cumulative recorded yearly mileage."""
+    current = date.fromisoformat(today)
+    first, last = max(1, current.month-3), min(12, current.month+1)
+    count = last-first+1
+
+    def position(day):
+        # Month fractions align March in leap and common years; Jan 1 of the
+        # next year denotes the right boundary of a December window.
+        return 55+520*((day.month-first)+(day.day-1)/monthrange(day.year,day.month)[1])/count
+
+    visible = []
+    for s in series:
+        start = date(s['year'], first, 1)
+        end = date(s['year']+1, 1, 1) if last == 12 else date(s['year'], last+1, 1)
+        points = [(date.fromisoformat(p['day']), p['miles']) for p in s['points']]
+        if not points or points[-1][0] < start:
+            visible.append([])
+            continue
+        before = [p for p in points if p[0] <= start]
+        clipped = [(start, before[-1][1])] if before else []
+        clipped.extend(p for p in points if start < p[0] < end)
+        if points[-1][0] >= end:
+            prior = [p for p in points if p[0] < end]
+            clipped.append((end, prior[-1][1]))
+        visible.append(clipped)
+
+    legend = ''.join(
+        f'<span class="home-annual-legend-{i}"><b>{s["year"]}</b><span>{miles(s["points"][-1]["miles"]) + (" YTD" if i == 0 else " recorded") if s["points"] else "No data"}</span></span>'
+        for i, s in enumerate(series))
+    legend_html = f'<div class="home-annual-legend">{legend}</div>'
+    if not any(visible):
+        return '<p class="home-annual-empty">No recorded cycling distances in this window.</p>'+legend_html
+    maximum = max(value for points in visible for _, value in points) or 1
+    def x(day, year):
+        return 575 if day.year > year else position(day)
     def y(value):
-        return 155-115*value/maximum
-    axes = [f'<line class="chart-grid" x1="55" x2="575" y1="{v}" y2="{v}"/>' for v in (40, 97.5, 155)]
-    for value, pos in ((maximum,44),(maximum/2,101.5),(0,159)):
+        return 135-100*value/maximum
+    axes = [f'<line class="chart-grid" x1="55" x2="575" y1="{v}" y2="{v}"/>' for v in (35, 85, 135)]
+    for value, pos in ((maximum,39),(maximum/2,89),(0,139)):
         axes.append(f'<text x="48" y="{pos}" text-anchor="end">{value:,.0f}</text>')
-    for month in range(1,13):
-        px = 55+520*(month-1)/12
-        axes.append(f'<line class="chart-grid" x1="{px:.3f}" x2="{px:.3f}" y1="40" y2="155"/><text class="home-annual-month" x="{px:.3f}" y="177" text-anchor="middle">{month}</text>')
+    for month in range(first,last+1):
+        px = 55+520*(month-first+.5)/count
+        axes.append(f'<text class="home-annual-month" x="{px:.3f}" y="157" text-anchor="middle">{month_abbr[month]}</text>')
     paths = []
     for index in (2,1,0):
-        s = series[index]
-        if not s['points']:
+        s, points = series[index], visible[index]
+        if not points:
             continue
-        points = s['points']
-        path = f'M{x(points[0]["day"]):.3f},{y(points[0]["miles"]):.3f} '
-        for point in points[1:]:
-            path += f'H{x(point["day"]):.3f} V{y(point["miles"]):.3f} '
-        last = points[-1]
-        description = f'{s["year"]}: {miles(last["miles"])} recorded through {last["day"]}'
-        paths.append(f'<path class="home-annual-line home-annual-{index}" data-year="{s["year"]}" d="{path}"/><g tabindex="0" role="img" aria-label="{description}" aria-describedby="annual-tooltip" data-annual-value="{description}"><circle class="home-annual-point home-annual-{index}" cx="{x(last["day"]):.3f}" cy="{y(last["miles"]):.3f}" r="4"/></g>')
-        if index == 0:
-            px, py = x(last['day']), y(last['miles'])
-            anchor = 'start' if px < 200 else 'end'
-            paths.append(f'<text class="home-annual-endpoint" x="{px:.3f}" y="{max(20,py-10):.3f}" text-anchor="{anchor}">{last["miles"]:,.1f}</text>')
-    legend = ''.join(f'<span class="home-annual-legend-{i}">{s["year"]}{" · no data" if not s["points"] else ""}</span>' for i,s in enumerate(series))
-    return f'''<svg class="home-chart home-annual-chart" id="home-annual-chart" viewBox="0 0 600 190" role="group" aria-labelledby="annual-chart-title annual-chart-desc"><title id="annual-chart-title">Recorded cumulative cycling mileage by year</title><desc id="annual-chart-desc">Calendar months align across years. Lines show recorded distances only; history may be incomplete. Prior years end at the last known distance. Endpoints provide dates and values.</desc>{''.join(axes)}{''.join(paths)}</svg><output id="annual-tooltip" class="home-mileage-tooltip" role="status" hidden></output><p class="home-annual-legend">{legend}</p>'''
+        path = f'M{x(points[0][0],s["year"]):.3f},{y(points[0][1]):.3f} '
+        for day, value in points[1:]:
+            path += f'H{x(day,s["year"]):.3f} V{y(value):.3f} '
+        paths.append(f'<path class="home-annual-line home-annual-{index}" data-year="{s["year"]}" d="{path}"/>')
+        last_day = date.fromisoformat(s['points'][-1]['day'])
+        if points[-1][0] == last_day and last_day.month <= last:
+            value = points[-1][1]
+            px, py = x(last_day,s['year']), y(value)
+            description = f'{s["year"]}: {miles(value)} recorded through {last_day.isoformat()}'
+            paths.append(f'<g tabindex="0" role="img" aria-label="{description}" aria-describedby="annual-tooltip" data-annual-value="{description}"><circle class="home-annual-point home-annual-{index}" cx="{px:.3f}" cy="{py:.3f}" r="4"/></g>')
+            if index == 0:
+                anchor = 'start' if px < 200 else 'end'
+                paths.append(f'<text class="home-annual-endpoint" x="{px:.3f}" y="{max(18,py-10):.3f}" text-anchor="{anchor}">{value:,.1f}</text>')
+    return f'''<svg class="home-chart home-annual-chart" id="home-annual-chart" viewBox="0 0 600 165" role="group" aria-labelledby="annual-chart-title annual-chart-desc"><title id="annual-chart-title">Recorded cumulative cycling mileage by year</title><desc id="annual-chart-desc">Calendar months align across years. Lines show recorded distances only; history may be incomplete. Prior years end at the last known distance. Endpoints provide dates and values.</desc>{''.join(axes)}{''.join(paths)}</svg><output id="annual-tooltip" class="home-mileage-tooltip" role="status" hidden></output>{legend_html}'''
 
 
 def trend_axes(start, end, low, high, months, step, *, years=False):
@@ -215,7 +243,7 @@ def _home_page(store, query=''):
                 progress += f'<p>Ride {ceil(needed):,} miles/week to meet yearly goal of {escape(display_target)} miles.</p>'
         else:
             progress = '<p>Remaining miles unavailable; no supported YTD distance.</p>'
-    annual_chart = annual_mileage_chart(data['annual_series'])
+    annual_chart = annual_mileage_chart(data['annual_series'], data['today'])
     missing_distances = sum(s['distance_unavailable'] for s in data['annual_series'])
     coverage = 'Recorded distances; prior years end at the last known distance. History may be incomplete.'
     if missing_distances:

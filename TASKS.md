@@ -578,3 +578,19 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 **Purpose:** Update the Home Training State card to show the actual six-month Fitness (42-day) history with dynamic Y-axis and endpoint value (no Fitness/Fatigue/Form tiles); update the adjacent 20-minute Performance card to show the actual 12-month rolling 42-day best eligible 20-minute power (not the latest eligible ride), using the Owner's private Home mockup as visual guidance.
 
 **Scope and acceptance:** Training State appears above Performance beside Recent Activities at desktop, with responsive mobile layouts; accepted data semantics, other Home sections and full pages are preserved. Dex reported 509 passing Python tests, 543 Chromium assertions and six fixed-clock preservation comparisons. Analyst independently reviewed source, tests, reports and synthetic screenshots and recorded **technical acceptance** on PR #50 (review ID 5691249344); Analyst did not rerun tests. The Owner subsequently instructed that HOME-UI-02 be closed, satisfying the final Owner gate; this is an explicit closure decision, **not a claim that a real-rider running-UI visual check was independently observed or verified**. No new algorithms, production changes, or private data/screenshots in Git. No further HOME-UI-02 review requested.
+
+---
+
+### HOME-UI-03 — Home Mileage by Year card
+
+**Status:** pending — Analyst JIT committed 2026-10-28. No implementation started.
+
+**Purpose:** Replace the compact Annual Mileage Goal Home card with an equally short Mileage by Year view comparing cumulative cycling mileage for the current and preceding two calendar years, retaining YTD, miles remaining and the rounded-up whole-mile needed/week goal arithmetic.
+
+**Owner-approved direction:** Three actual cumulative lines, numeric 1–12 month axis, present-year emphasis and actual endpoint; no goal line/bar or old annual-target text; chart card no taller than Mileage Progress. Existing P3-01 distance eligibility, local calendar, annual target Settings, and needed-weekly semantics remain authoritative. The approved private mockup is shared directly with Dex, not committed; numbers are illustrative.
+
+**Acceptance:** [HOME-UI-03 JIT](docs/tasks/HOME-UI-03.md), including focused tests, compact responsive layout, source-aware missing states, HARD — Analyst technical review and HARD — Owner running-UI visual approval.
+
+**Allowed invocation:** /TASK or /AUTOTASK.
+
+**Dependency:** Accepted/merged HOME-UI-02 (PR #50); completed P3-01/HOME-UI-01. No production deployment authorized.

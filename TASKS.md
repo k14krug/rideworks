@@ -583,7 +583,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### HOME-UI-03 — Home Mileage by Year card
 
-**Status:** pending — Analyst JIT committed 2026-10-28. No implementation started.
+**Status:** in_progress — implementation underway on `task/home-ui-03-mileage-by-year`.
 
 **Purpose:** Replace the compact Annual Mileage Goal Home card with an equally short Mileage by Year view comparing cumulative cycling mileage for the current and preceding two calendar years, retaining YTD, miles remaining and the rounded-up whole-mile needed/week goal arithmetic.
 

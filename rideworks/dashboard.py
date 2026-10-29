@@ -67,12 +67,33 @@ def mileage(rows, zone_name, *, as_of=None):
         cutoff = date.fromisoformat(week['end_exclusive'])
         week['ytd_miles'] = (period(date(today.year,1,1), cutoff)['miles']
                              if cutoff > date(today.year,1,1) else None)
+    annual_series = []
+    for year in range(today.year, today.year-3, -1):
+        start = date(year, 1, 1)
+        last = today if year == today.year else date(year, 12, 31)
+        selected = [(r, day) for r, day in dated if start <= day <= last]
+        known = [(r, day) for r, day in selected if r['distance'] is not None]
+        points = []
+        if known:
+            points.append(dict(day=start.isoformat(), miles=0))
+            amounts = []
+            for day in sorted({day for _, day in known}):
+                amounts.extend(r['distance'] for r, d in known if d == day)
+                points.append(dict(day=day.isoformat(), miles=fsum(amounts)/METRES_PER_MILE))
+            # Current YTD uses the accepted as-of cutoff. Historical source
+            # coverage is unknown, so do not project prior years beyond their
+            # last recorded distance.
+            if year == today.year and points[-1]['day'] != last.isoformat():
+                points.append(dict(day=last.isoformat(), miles=points[-1]['miles']))
+        annual_series.append(dict(year=year, points=points,
+                                  contributing_activities=len(known),
+                                  distance_unavailable=len(selected)-len(known)))
     recent = sorted(cycling, key=lambda r:r['activity_id'])
     recent.sort(key=lambda r:(r['date_key'] is not None, r['date_key'] or ''), reverse=True)
     return dict(timezone=zone_name, as_of=as_of.isoformat(), today=today.isoformat(), year=today.year,
                 ytd=period(date(today.year,1,1), end), last7=period(today-timedelta(days=6), end),
                 prior7=period(today-timedelta(days=13), today-timedelta(days=6)), weeks=weeks,
-                this_week=dict(weeks[-1]),
+                this_week=dict(weeks[-1]), annual_series=annual_series,
                 recent=recent[:6], diagnostics=dict(cycling_activities=len(cycling),
                     excluded_noncycling=len(rows)-len(cycling), date_unavailable=missing,
                     timezone_unknown=unknown, future_excluded=future,

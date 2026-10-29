@@ -1,9 +1,10 @@
 """Home presentation using the existing RideWorks shell and evidence boundary."""
 from datetime import date, datetime, timedelta
+from calendar import monthrange
 from decimal import Decimal
 from html import escape
 import json
-from math import isfinite
+from math import ceil, isfinite
 from urllib.parse import urlencode
 
 from .dashboard import dashboard
@@ -18,12 +19,6 @@ def safe_json(value):
 
 def miles(value):
     return 'Unavailable' if value is None else f'{value:,.1f} mi'
-
-
-def pace(value):
-    if round(value,1) == 0:
-        return 'On calendar pace'
-    return f'{abs(value):,.1f} mi {"ahead of" if value > 0 else "behind"} calendar pace'
 
 
 def weekly_chart(weeks):
@@ -57,6 +52,43 @@ def weekly_chart(weeks):
 <line class="chart-grid" x1="40" x2="585" y1="140" y2="140"/><line class="chart-grid" x1="40" x2="585" y1="20" y2="20"/>
 <text x="35" y="143" text-anchor="end">0</text><text x="35" y="24" text-anchor="end">{maximum:.0f}</text>{''.join(bars)}{''.join(lines)}{''.join(points)}</svg>
 <output id="mileage-tooltip" class="home-mileage-tooltip" role="status" hidden></output>'''
+
+
+def annual_mileage_chart(series):
+    """Calendar-aligned recorded distances; absent years are not zero series."""
+    known = [s for s in series if s['points']]
+    if not known:
+        return '<p class="home-annual-empty">No recorded cycling distances for these years.</p>'
+    maximum = max((p['miles'] for s in known for p in s['points']), default=0) or 1
+    def x(day):
+        d = date.fromisoformat(day)
+        return 55 + 520 * ((d.month-1)+(d.day-1)/monthrange(d.year,d.month)[1])/12
+    def y(value):
+        return 155-115*value/maximum
+    axes = [f'<line class="chart-grid" x1="55" x2="575" y1="{v}" y2="{v}"/>' for v in (40, 97.5, 155)]
+    for value, pos in ((maximum,44),(maximum/2,101.5),(0,159)):
+        axes.append(f'<text x="48" y="{pos}" text-anchor="end">{value:,.0f}</text>')
+    for month in range(1,13):
+        px = 55+520*(month-1)/12
+        axes.append(f'<line class="chart-grid" x1="{px:.3f}" x2="{px:.3f}" y1="40" y2="155"/><text class="home-annual-month" x="{px:.3f}" y="177" text-anchor="middle">{month}</text>')
+    paths = []
+    for index in (2,1,0):
+        s = series[index]
+        if not s['points']:
+            continue
+        points = s['points']
+        path = f'M{x(points[0]["day"]):.3f},{y(points[0]["miles"]):.3f} '
+        for point in points[1:]:
+            path += f'H{x(point["day"]):.3f} V{y(point["miles"]):.3f} '
+        last = points[-1]
+        description = f'{s["year"]}: {miles(last["miles"])} recorded through {last["day"]}'
+        paths.append(f'<path class="home-annual-line home-annual-{index}" data-year="{s["year"]}" d="{path}"/><g tabindex="0" role="img" aria-label="{description}" aria-describedby="annual-tooltip" data-annual-value="{description}"><circle class="home-annual-point home-annual-{index}" cx="{x(last["day"]):.3f}" cy="{y(last["miles"]):.3f}" r="4"/></g>')
+        if index == 0:
+            px, py = x(last['day']), y(last['miles'])
+            anchor = 'start' if px < 200 else 'end'
+            paths.append(f'<text class="home-annual-endpoint" x="{px:.3f}" y="{max(20,py-10):.3f}" text-anchor="{anchor}">{last["miles"]:,.1f}</text>')
+    legend = ''.join(f'<span class="home-annual-legend-{i}">{s["year"]}{" · no data" if not s["points"] else ""}</span>' for i,s in enumerate(series))
+    return f'''<svg class="home-chart home-annual-chart" id="home-annual-chart" viewBox="0 0 600 190" role="group" aria-labelledby="annual-chart-title annual-chart-desc"><title id="annual-chart-title">Recorded cumulative cycling mileage by year</title><desc id="annual-chart-desc">Calendar months align across years. Lines show recorded distances only; history may be incomplete. Prior years end at the last known distance. Endpoints provide dates and values.</desc>{''.join(axes)}{''.join(paths)}</svg><output id="annual-tooltip" class="home-mileage-tooltip" role="status" hidden></output><p class="home-annual-legend">{legend}</p>'''
 
 
 def trend_axes(start, end, low, high, months, step, *, years=False):
@@ -170,19 +202,24 @@ def _home_page(store, query=''):
     target = data['target_miles']
     settings = '/settings?'+urlencode({'tz':zone.key})+'#annual-goal'
     progress = f'<p><a href="{settings}">Set annual goal</a></p>'
-    goal_note = progress
-    goal_summary = ''
     if target is not None:
         display_target = format(Decimal(target),',f')
-        progress = f'<p>Annual target: {escape(display_target)} mi · <a href="{settings}">Edit goal</a></p>'
         if goal:
-            goal_summary = f'<p>{goal["percent"]:.1f}% complete · {miles(goal["remaining_miles"])} remaining</p>'
-            goal_note = f'<p>{pace(goal["pace_difference"])}</p>'
             needed = goal['needed_miles_per_week']
-            needed_text = 'Unavailable' if needed is None else f'{needed:,.1f} mi/week'
-            progress += f'<progress id="annual-mileage-progress" value="{min(goal["actual_miles"],goal["target_miles"])}" max="{goal["target_miles"]}" aria-label="Annual mileage progress"></progress>{goal_summary}<p id="needed-weekly">Needed average: {needed_text}</p>{goal_note}'
+            progress = f'<p class="home-annual-remaining">{miles(goal["remaining_miles"])} to goal</p>'
+            if goal['remaining_miles'] == 0:
+                progress += '<p>Yearly goal reached.</p>'
+            elif needed is None:
+                progress += '<p>Year ended; weekly goal pace unavailable.</p>'
+            else:
+                progress += f'<p>Ride {ceil(needed):,} miles/week to meet yearly goal of {escape(display_target)} miles.</p>'
         else:
-            progress += '<p>Remaining miles: Unavailable</p><p id="needed-weekly">Needed average: Unavailable</p><p>No supported YTD distance.</p>'
+            progress = '<p>Remaining miles unavailable; no supported YTD distance.</p>'
+    annual_chart = annual_mileage_chart(data['annual_series'])
+    missing_distances = sum(s['distance_unavailable'] for s in data['annual_series'])
+    coverage = 'Recorded distances; prior years end at the last known distance. History may be incomplete.'
+    if missing_distances:
+        coverage += f' {missing_distances} cycling Activities lack distance.'
     def card(name,title,value,note,symbol):
         missing = ' class="metric-unavailable"' if value == 'Unavailable' else ''
         return f'<div class="home-quick-fact" id="home-{name}"><h2>{icon(symbol)}{title}</h2><strong{missing}>{value}</strong>{note}</div>'
@@ -242,7 +279,7 @@ def _home_page(store, query=''):
     return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
 <div class="home-lead"><section class="panel home-summary" id="home-recent-mileage" aria-label="Recent mileage and eligible power"><div class="home-quick-grid">{recent_mileage}{card('current','Current 42-day best',current,current_note,'power')}{card('latest','Latest eligible 20-minute ride',latest,latest_note,'power')}</div></section>{advisor}</div>
 <div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section><div class="home-companions">{training}<section class="panel home-performance home-trend"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div><p class="home-trend-subtitle">Best 20-minute power · Last 12 months</p>{power_chart(performance,zone)}<p class="home-trend-note">Rolling 42-day best · current Performance-v2 evidence. Gaps mean no eligible result.</p></section></div></div>
-<div class="home-progress-layout"><section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Outlined current week is partial · actual Monday-through-today mileage.</p></section><section class="panel home-goal-progress"><h2>Annual Mileage Goal</h2><strong>{miles(ytd['miles'])} YTD</strong>{progress}<p>Arithmetic goal progress, not a training recommendation.</p></section></div>
+<div class="home-progress-layout"><section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Outlined current week is partial · actual Monday-through-today mileage.</p></section><section class="panel home-goal-progress"><h2>Mileage by Year</h2><strong>{miles(ytd['miles'])} YTD</strong>{progress}{annual_chart}<p class="home-annual-coverage">{coverage}</p></section></div>
 <section class="panel home-supporting" aria-labelledby="home-supporting-title"><h2 id="home-supporting-title">Context &amp; supporting details</h2>{insight_panel}<details class="home-weekly-details"><summary>Weekly distances</summary><p>Monday–Sunday weeks; outlined current bar is actual Monday-through-today mileage. Needed pace uses remaining mileage and calendar days after each Sunday; current pace uses today. Required points apply to the goal year.</p><div class="home-evidence-table"><table><thead><tr><th>Week of</th><th>Actual mi</th><th>Needed mi/week</th><th>File</th><th>API</th><th>Missing</th></tr></thead><tbody>{week_rows}</tbody></table></div></details>
 <details class="home-diagnostics"><summary>Mileage evidence &amp; calendar boundaries</summary>{detail_rows(details)}<p>File-backed understood distance precedes current API summary distance. Unspecified CSV units are excluded. Known zero distance counts. Supported dates with unknown timezone use their source date; missing dates are excluded from period totals. Future Activities are excluded from totals. Weekly periods are local calendar buckets; YTD includes evidence through the as-of instant. Mileage is recalculated from retained source summaries. Needed weekly average is remaining goal mileage divided by remaining calendar days after today, times seven; it is arithmetic goal progress, not a training recommendation. Recent Avg Pwr prefers file session or a single TCX lap summary, then current API summary; CSV watts and raw streams are not used.</p></details></section>
 <script id="dashboard-data" type="application/json">{safe_json(compact)}</script><script src="/static/planning.js" defer></script><script src="/static/home.js" defer></script></div>''',active='home')

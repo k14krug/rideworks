@@ -583,7 +583,7 @@ Phase 4 is now explicitly Owner-authorized. Phase 5 must not begin automatically
 
 ### HOME-UI-03 — Home Mileage by Year card
 
-**Status:** done — Analyst technical acceptance and Owner final visual acceptance on 2026-10-29; [PR #51](https://github.com/k14krug/rideworks/pull/51). [Results](reports/HOME-UI-03/implementation.md). No remaining implementation/review work; PR merge is mechanical. No production deployment authorized.
+**Status:** done — Analyst technical acceptance and Owner final visual acceptance on 2026-10-29; [PR #51](https://github.com/k14krug/rideworks/pull/51). [Results](reports/HOME-UI-03/implementation.md). No remaining implementation/review work; PR #51 merged to `main` as `7f16b6e91560ff5d89bd447adcc9509f195f2a90`. No production deployment authorized.
 
 **Purpose:** Replace the compact Annual Mileage Goal Home card with an equally short Mileage by Year view comparing cumulative cycling mileage for the current and preceding two calendar years, retaining YTD, miles remaining and the rounded-up whole-mile needed/week goal arithmetic.
 

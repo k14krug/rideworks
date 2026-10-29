@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RE-02 — Relative Effort UI verification and integration
 
-**Status:** in_progress — integrating the Owner-accepted `relative-effort-v1` feature from `dev` into current `main`. No additional calibration research required.
+**Status:** done — Analyst technical acceptance and Owner visual/closeout acceptance on 2026-10-29. [PR #53](https://github.com/k14krug/rideworks/pull/53) merged to `main` as `178e8065ffc780118b44f3e04b73a481e472ed65`. Relative Effort `relative-effort-v1` is unchanged; no additional calibration research required. The Owner-requested Home Recent Activities compacting removes ride-type sublines and fits more complete rows while preserving colored dots.
 
 **Purpose:** Verify the existing `dev` Relative Effort indicators on Home, Activities, and Activity Review, then prepare a focused, safe integration into current `main` without replacing later accepted dashboard work.
 
@@ -25,7 +25,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 **Execution:** `/TASK only`. Dex starts from refreshed `main`, works on a task branch, opens a draft PR targeting `main`, and stops for Analyst review. Owner authorization is required before final merge or deployment.
 
-**Acceptance:** [Analyst JIT](docs/tasks/RE-02.md). Preserve completed HOME-UI work, keep all accepted training calculations unchanged, and report real test/browser evidence.
+**Acceptance:** Complete. [Analyst JIT](docs/tasks/RE-02.md) · [Integration evidence](docs/reviews/2026-10-29-re-02-integration.md) · [Merged PR #53](https://github.com/k14krug/rideworks/pull/53). Dex reports 534 Python tests and 275 synthetic browser checks passing at seven widths. No production deployment or separate-server changes were performed; deployment requires separate Owner authorization.
 
 ---
 

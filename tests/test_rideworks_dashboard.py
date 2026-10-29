@@ -31,6 +31,15 @@ def activity(identity, stamp, metres, kind='Virtual Ride', origin='file'):
 
 
 class CalendarTests(TestCase):
+    def test_recent_selection_is_bounded_and_newest_first(self):
+        rows = [activity(f'{i:02}', f'2026-01-{i:02}T12:00:00+00:00', 1609.344)
+                for i in range(1, 29)]
+        rows.extend([activity('run', '2026-01-29T12:00:00+00:00', 100, 'Run'),
+                     activity('undated', None, 100)])
+        result = mileage(rows, 'UTC', as_of=datetime(2026, 2, 1, tzinfo=timezone.utc))
+        self.assertEqual([r['activity_id'] for r in result['recent']],
+                         [f'{i:02}' for i in range(28, 4, -1)])
+
     def test_annual_series_uses_local_dates_and_only_available_cycling_evidence(self):
         rows = [activity('1','2024-02-29T12:00:00+00:00',1609.344),
                 activity('2','2024-03-01T00:30:00+00:00',2*1609.344,'Ride','api'),

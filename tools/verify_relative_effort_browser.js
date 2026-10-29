@@ -15,11 +15,37 @@ async page => {
   for (const width of widths) {
     await page.setViewportSize({width, height: 900});
     await open('/');
-    const home = await page.locator('.home-recent-ride').evaluateAll(ns => ns.map(n => ({
+    const home = await page.locator('.home-recent-row:not([hidden]) .home-recent-ride').evaluateAll(ns => ns.map(n => ({
       href:n.getAttribute('href'), label:n.getAttribute('aria-label').split('Relative effort: ')[1],
       color:getComputedStyle(n.querySelector('.home-effort-dot')).backgroundColor
     })));
-    check(home.length === 6, 'six recent activities');
+    check(home.length >= 6, 'at least six recent activities');
+    const recent = await page.locator('.home-recent').evaluate(card => {
+      const list = card.querySelector('.home-recent-list');
+      const rows = [...card.querySelectorAll('.home-recent-row')];
+      const visible = rows.filter(row => !row.hidden);
+      const listBounds = list.getBoundingClientRect();
+      const cardBounds = card.getBoundingClientRect();
+      const style = getComputedStyle(card);
+      const limit = (innerWidth > 1100 ? cardBounds.bottom : cardBounds.top + (innerWidth <= 620 ? 1036 : 495))
+        - parseFloat(style.paddingBottom) - parseFloat(style.borderBottomWidth);
+      const next = rows.find(row => row.hidden);
+      if (next) next.hidden = false;
+      const nextExceeds = !next || next.getBoundingClientRect().bottom > limit - 1;
+      if (next) next.hidden = true;
+      return {
+        height:cardBounds.height, visible:visible.length,
+        allComplete:visible.every(row => row.getBoundingClientRect().bottom <= listBounds.bottom + 1),
+        ordered:rows.every((row, i) => i < visible.length ? !row.hidden : row.hidden),
+        nextExceeds,
+        typeLine:rows.some(row => row.querySelector('td:nth-child(2) > span')),
+        companion:document.querySelector('.home-companions').getBoundingClientRect().height
+      };
+    });
+    check(recent.allComplete && recent.ordered && !recent.typeLine, 'complete ordered rows without ride-type lines');
+    check(recent.nextExceeds, 'no additional complete row fits');
+    if (width > 1100) check(Math.abs(recent.height - recent.companion) < 1, 'recent card matches companion height');
+    else check(recent.height <= (width <= 620 ? 1036 : 495) + 1, 'recent card stays within prior height');
     check(home.some(x => x.label === 'Not rated') && home.some(x => x.label !== 'Not rated'), 'rated and unrated synthetic rides');
     check(await page.locator('#home-annual-chart, #home-power-chart, #home-fitness-chart').count() === 3, 'current Home charts');
     check((await page.locator('.home-annual-goal').innerText()).includes('2,200'), 'annual goal');
@@ -60,7 +86,25 @@ async page => {
       check(await card.locator('details').evaluate(n => n.open), 'keyboard explanation');
       check(await page.locator('.review-section-nav a').count() === 5, 'review navigation');
     }
-    geometry.push({width, minTitle:Math.round(minTitle), maxRowHeight:Math.round(Math.max(...list.map(x=>x.height)))});
+    geometry.push({width, recentRows:recent.visible, recentHeight:Math.round(recent.height), minTitle:Math.round(minTitle), maxRowHeight:Math.round(Math.max(...list.map(x=>x.height)))});
+  }
+  await page.setViewportSize({width:1440, height:900});
+  await open('/');
+  await page.locator('.home-recent-ride').first().evaluate(link => {
+    link.append(document.createTextNode(' Synthetic long title '.repeat(12)));
+    window.dispatchEvent(new Event('resize'));
+  });
+  for (const width of [390, 320, 850, 1440]) {
+    await page.setViewportSize({width, height:900});
+    await page.waitForTimeout(100);
+    check(await page.locator('.home-recent-list').evaluate(list => {
+      const rows = [...list.querySelectorAll('.home-recent-row')];
+      const visible = rows.filter(row => !row.hidden);
+      const bottom = list.getBoundingClientRect().bottom;
+      return visible.length > 0 && !rows[0].hidden &&
+        visible.every(row => row.getBoundingClientRect().bottom <= bottom + 1) &&
+        rows.slice(visible.length).every(row => row.hidden);
+    }), 'long title and resize preserve complete ordered rows');
   }
   for (const path of ['/training-state','/plan','/performance','/settings']) await open(path);
   check(errors.length === 0, 'no browser script errors');

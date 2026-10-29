@@ -22,3 +22,9 @@ The shared classifier is byte-for-byte identical to the dev reference. Home keep
 ## Review boundary
 
 Stop for HARD — Analyst review of the focused draft PR. The Owner's running-UI visual acceptance and explicit authorization remain required before merging to main or deploying.
+
+## Owner-requested Recent Activities update
+
+The Owner subsequently requested removing the ride-type line and fitting more rides into the existing card height, superseding the initial six-row preservation requirement. The Home card now selects up to 24 newest cycling activities and displays the maximum whole rows that fit, retaining effort dots, links and metrics. The desktop card remains aligned to the adjacent trend cards; stacked layouts use height caps based on the previous synthetic card. Additional rides remain accessible through View all Activities. Without JavaScript, the list remains scrollable; an exceptionally tall first row also remains scrollable.
+
+Verification after this update: `.venv/bin/python -m unittest discover -s tests` passed 534 tests with loopback access. Focused Dashboard, Home effort, Relative Effort and Home trends suites passed 55 tests. `tools/verify_relative_effort_browser.js` passed 275 assertions on a disposable synthetic Store at widths 1440, 1024, 850, 768, 650, 390 and 320 px, covering complete ordered rows, whether the next row would fit, effort consistency including Not rated, links, charts, goal and overflow. The displayed row counts were respectively 12, 10, 10, 7, 6, 10 and 8; actual counts vary with title and metric wrapping. A long-title resize sequence across desktop, tablet and mobile retained complete rows. The synthetic desktop card remained 561 px at 1440 px, and the 390 px card was 1032 px versus its previous 1036 px. The classification algorithm and source data were not changed.

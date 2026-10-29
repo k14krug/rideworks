@@ -1,8 +1,8 @@
 # STATUS.md
 
-**Product:** RideWorks.
-**Current task:** HOME-UI-03 — Home Mileage by Year card, **in_progress**.
-**Branch:** `task/home-ui-03-mileage-by-year` · [draft PR #51](https://github.com/k14krug/rideworks/pull/51).
-**State:** **ready_for_review** — Owner's 2026-10-29 card refinements implemented: chart first, goal text below, matching desktop card height and starting-value Y-axis floor. [Report and synthetic captures](reports/HOME-UI-03/implementation.md).
-**Verification:** 31 focused / 515 full Python tests and 139 Chromium assertions passed at five widths. Real pointer hover, keyboard readouts, unchanged dashboard data/other Home sections and unchanged Mileage Progress height verified.
-**Next action:** HARD — Analyst technical review, then HARD — Owner running-UI visual approval. Task remains `in_progress`; no production deployment authorized.
+**Product:** RideWorks.  
+**Current task:** None active. **HOME-UI-03 is done** — Analyst technical acceptance and Owner final visual acceptance on 2026-10-29 for [PR #51](https://github.com/k14krug/rideworks/pull/51).  
+**State:** **done**. The Home Mileage by Year card now displays the current year plus two preceding years in a compact five-month window, blue/amber/teal cumulative lines, full recorded yearly totals, and the existing rounded-up weekly goal arithmetic. The Owner approved the final chart-first running view with goal text below and equal-height desktop mileage cards.  
+**Verification:** Dex reported 31 focused and 515 full Python tests and 139 browser assertions at five widths; the Analyst reviewed source changes, test evidence and synthetic browser reports, but did not independently rerun the tests. [Evidence](reports/HOME-UI-03/implementation.md).  
+**PR:** [#51 — Mileage by Year](https://github.com/k14krug/rideworks/pull/51). Mechanical merge may follow task acceptance; it is not outstanding product or review work.  
+**Next action:** No active task or automatic next task. Await Owner direction. No production access or deployment authorized. Phase 6 remains deferred.

@@ -1,6 +1,26 @@
 /* Immediate display of server-calculated mileage values; no chart arithmetic. */
 (() => {
   'use strict';
+  // Fit complete recent rows in the card; retain a scrollable fallback without JS.
+  const recentList = document.querySelector('.home-recent-list');
+  if (recentList) {
+    const rows = [...recentList.querySelectorAll('.home-recent-row')];
+    const fitRows = () => {
+      for (const row of rows) row.hidden = false;
+      const bottom = recentList.getBoundingClientRect().bottom;
+      let full = false;
+      for (const [index, row] of rows.entries()) {
+        // An exceptionally tall first row stays available through scrolling.
+        if (full || (index > 0 && row.getBoundingClientRect().bottom > bottom + 0.5)) {
+          full = true;
+          row.hidden = true;
+        }
+      }
+    };
+    new ResizeObserver(fitRows).observe(recentList);
+    window.addEventListener('resize', fitRows);
+    fitRows();
+  }
   const setup = (chart, tooltip, attribute, field) => {
     if (!chart || !tooltip) return;
     let focusedItem = null;

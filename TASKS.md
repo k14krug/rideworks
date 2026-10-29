@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RE-02 — Relative Effort UI verification and integration
 
-**Status:** pending — Owner accepted the existing mixed-source `relative-effort-v1` ratings for practical use on 2026-10-29; Analyst-authored JIT is committed on `main`. No additional calibration research required.
+**Status:** in_progress — integrating the Owner-accepted `relative-effort-v1` feature from `dev` into current `main`. No additional calibration research required.
 
 **Purpose:** Verify the existing `dev` Relative Effort indicators on Home, Activities, and Activity Review, then prepare a focused, safe integration into current `main` without replacing later accepted dashboard work.
 

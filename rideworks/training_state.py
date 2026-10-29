@@ -656,6 +656,9 @@ def ride_results(store, zone_name, *, as_of=None, hr_history=None,
     today=as_of.astimezone(zone).date()
     rows=[]; excluded=Counter(); own_cache_writes=cache_writes is None
     pending_cache_writes=[] if own_cache_writes else cache_writes
+    # Later Home consumers can reuse this request's already calculated batch,
+    # without taking a database writer lock or skipping signature validation.
+    pending_results={entry[0]:entry[1:] for entry in pending_cache_writes}
     with store._transaction():
         history,digest=ftp_history(store)
         for snapshot in store.activity_history():
@@ -676,7 +679,9 @@ def ride_results(store, zone_name, *, as_of=None, hr_history=None,
                 WHERE s.activity_id=? ORDER BY s.source_id''',(row['activity_id'],))]
             signature=sha256(json.dumps([VERSION,POWER_SOURCE_POLICY,SESSION_POWER_METHOD,SESSION_POWER_POLICY,SELECTION_POLICY,SESSION_REFERENCE_COMMIT,
                 SESSION_PARAMETERS,HR_SOURCE_POLICY,input_signature(snapshot,store),streams,ftp,settings,digest],sort_keys=True).encode()).hexdigest()
-            saved=store.connection.execute('SELECT input_signature,result_json FROM training_stress_cache WHERE activity_id=?',(row['activity_id'],)).fetchone()
+            saved=pending_results.get(row['activity_id'])
+            if not saved or saved[0]!=signature:
+                saved=store.connection.execute('SELECT input_signature,result_json FROM training_stress_cache WHERE activity_id=?',(row['activity_id'],)).fetchone()
             if saved and saved[0]==signature:
                 result=json.loads(saved[1])
             else:
@@ -740,8 +745,8 @@ def daily_series(rides, today):
     return rows
 
 
-def training_state(store, zone_name, *, as_of=None, hr_history=None):
-    rides,context=ride_results(store,zone_name,as_of=as_of,hr_history=hr_history)
+def training_state(store, zone_name, *, as_of=None, hr_history=None, cache_writes=None):
+    rides,context=ride_results(store,zone_name,as_of=as_of,hr_history=hr_history,cache_writes=cache_writes)
     days=daily_series(rides,context['today'])
     return context|dict(days=days,coverage=dict(rides=len(rides),scored=sum(r['selected']['stress'] is not None for r in rides),
                        selected_classes=dict(Counter(r['selected']['status'] for r in rides)),

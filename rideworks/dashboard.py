@@ -94,7 +94,7 @@ def mileage(rows, zone_name, *, as_of=None):
                 ytd=period(date(today.year,1,1), end), last7=period(today-timedelta(days=6), end),
                 prior7=period(today-timedelta(days=13), today-timedelta(days=6)), weeks=weeks,
                 this_week=dict(weeks[-1]), annual_series=annual_series,
-                recent=recent[:6], diagnostics=dict(cycling_activities=len(cycling),
+                recent=recent[:24], diagnostics=dict(cycling_activities=len(cycling),
                     excluded_noncycling=len(rows)-len(cycling), date_unavailable=missing,
                     timezone_unknown=unknown, future_excluded=future,
                     included_classifications=dict(Counter(r['activity_type'] for r in cycling)),

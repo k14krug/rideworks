@@ -21,6 +21,20 @@ def miles(value):
     return 'Unavailable' if value is None else f'{value:,.1f} mi'
 
 
+def recent_ride_link(row, rating):
+    """Ride title with the same Relative Effort category used on Activities."""
+    label = rating['category'] if rating and rating.get('status') == 'available' else 'Not rated'
+    slug = rating['slug'] if rating and rating.get('status') == 'available' else 'unavailable'
+    title = escape(row['title'])
+    identity = escape(row['activity_id'], quote=True)
+    description = escape(f'Relative effort: {label}', quote=True)
+    accessible = escape(f'{row["title"]} · Relative effort: {label}', quote=True)
+    return (f'<a class="home-recent-ride" href="/activities/{identity}" '
+            f'title="{description}" aria-label="{accessible}">'
+            f'<span class="home-effort-dot effort-{slug}" aria-hidden="true"></span>'
+            f'{title}</a>')
+
+
 def weekly_chart(weeks):
     values = [value for w in weeks for value in (w['bar_miles'],w['needed_miles_per_week']) if value is not None]
     maximum = max(values,default=0) or 1
@@ -221,12 +235,18 @@ def power_chart(performance, zone):
 {trend_axes(start.astimezone(zone),end.astimezone(zone),low,high,12,4,years=True)}{''.join(parts)}</svg>'''+('' if current else '<p class="home-trend-note">Current 42-day best unavailable.</p>')
 
 
-def home_page(store, query=''):
+def home_page(store, query='', *, cache_writes=None):
+    own_cache_writes = cache_writes is None
+    pending = ([], []) if own_cache_writes else cache_writes
     with store._transaction(write=True):
-        return _home_page(store, query)
+        html = _home_page(store, query, cache_writes=pending)
+        if own_cache_writes:
+            from .planning import write_history_caches
+            write_history_caches(store, pending)
+        return html
 
 
-def _home_page(store, query=''):
+def _home_page(store, query='', *, cache_writes):
     zone = query_zone(query,'home_tz')
     if zone is None:
         return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel"><h2>Cycling mileage and Performance</h2><p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')
@@ -272,10 +292,16 @@ def _home_page(store, query=''):
         text = f'Latest eligible best-20: {abs(diff)} W {"above" if diff>0 else "below"} the previous six-week best.' if diff else 'Latest eligible best-20 matches the previous six-week best.'
         insights.append(text)
     insight_panel = '<details class="home-insights"><summary>Recent performance context</summary>'+''.join(f'<p>{escape(text)}</p>' for text in insights)+'<p>The best-20 comparison uses the accepted (Activity start − 42 days, Activity start) window, excluding both endpoints and the current ride. Details are available in Activity Review.</p></details>' if insights else ''
+    # Defer both cache batches until the full response has been rendered.
+    from .planning import plan
+    from .planning_page import today_card
+    advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of']),cache_writes=cache_writes),compact=True)
+    from .relative_effort import for_store as relative_effort_ratings
+    ratings = relative_effort_ratings(store, cache_writes=cache_writes[0]) if data['recent'] else {}
     rows = []
     for row in data['recent']:
-        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride"><a href="/activities/{row['activity_id']}">{escape(row['title'])}</a><span>{escape(row['activity_type'])}</span></td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
-    recent = f'<table class="home-recent-table"><thead><tr><th>Date</th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table>' if rows else '<p class="empty">No cycling Activities yet.</p>'
+        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride">{recent_ride_link(row, ratings.get(row['activity_id']))}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
+    recent = f'<div class="home-recent-list"><table class="home-recent-table"><thead><tr><th>Date</th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>' if rows else '<p class="empty">No cycling Activities yet.</p>'
     week_rows = ''.join(f'<tr><td>{w["start"]}</td><td>{miles(w["miles"])}</td><td>{miles(g["needed_miles_per_week"])}</td><td>{w["file_count"]}</td><td>{w["api_count"]}</td><td>{w["distance_unavailable"]}</td></tr>' for w,g in zip(data['weeks'],data['weekly_goal']))
     details = [('Browser timezone',zone.key),('YTD start',ytd['start']),('As of',data['as_of']),
         ('YTD contributing Activities',ytd['contributing_activities']),('YTD file distance',miles(ytd['file_miles'])),
@@ -295,14 +321,8 @@ def _home_page(store, query=''):
                     ('Needed average miles per week',goal['needed_miles_per_week'])]
     sync_status = 'Last sync: '+local_time(data['successful_sync'],compact=True) if data['successful_sync'] else 'No successful sync recorded'
     sync = f'<p class="home-sync">{sync_status} · <a href="/settings">Settings</a></p>'
-    # Planning computes classifications after its stress calculations and
-    # flushes both cache batches at the end. Run it before the Home-only
-    # Training State summary so no expensive calculation follows that write.
-    from .planning import plan
-    from .planning_page import today_card
-    advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of'])),compact=True)
     from .training_state_page import training_home
-    training = training_home(store, zone.key)
+    training = training_home(store, zone.key, cache_writes=cache_writes[0])
     compact = {k:v for k,v in data.items() if k!='recent'}
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
     return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>

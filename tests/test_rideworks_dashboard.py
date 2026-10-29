@@ -15,6 +15,7 @@ from rideworks import store as store_module
 from rideworks.dashboard import average_power, dashboard, goal_progress, mileage, needed_weekly, weekly_goal
 from rideworks.goals import annual_goal, browser_zone, set_annual_goal, target_miles
 from rideworks.history import presentation
+from rideworks.home import annual_mileage_chart
 from rideworks.performance import rebuild_performance
 from rideworks.settings import Settings
 from rideworks.store import Store
@@ -30,6 +31,100 @@ def activity(identity, stamp, metres, kind='Virtual Ride', origin='file'):
 
 
 class CalendarTests(TestCase):
+    def test_annual_series_uses_local_dates_and_only_available_cycling_evidence(self):
+        rows = [activity('1','2024-02-29T12:00:00+00:00',1609.344),
+                activity('2','2024-03-01T00:30:00+00:00',2*1609.344,'Ride','api'),
+                activity('3','2025-12-31T12:00:00',3*1609.344),
+                activity('4','2026-01-01T00:30:00+00:00',4*1609.344),
+                activity('5','2026-03-01T12:00:00+00:00',5*1609.344),
+                activity('6','2026-03-01T15:00:00+00:00',99999),
+                activity('7','2026-02-01T12:00:00+00:00',None),
+                activity('8',None,99999),
+                activity('9','2026-02-01T12:00:00+00:00',99999,'Run')]
+        data = mileage(rows,'America/Los_Angeles',as_of=datetime(2026,3,1,14,tzinfo=timezone.utc))
+        current, previous, older = data['annual_series']
+        self.assertEqual([s['year'] for s in data['annual_series']],[2026,2025,2024])
+        self.assertEqual(current['points'][-1],dict(day='2026-03-01',miles=5))
+        self.assertEqual(current['distance_unavailable'],1)
+        self.assertEqual(previous['points'][-1]['day'],'2025-12-31')
+        self.assertAlmostEqual(previous['points'][-1]['miles'],7)
+        self.assertEqual(older['points'][-1],dict(day='2024-02-29',miles=3))
+        self.assertEqual(older['points'][1]['day'],'2024-02-29')
+        self.assertEqual(data['ytd']['miles'],current['points'][-1]['miles'])
+        rollover = mileage(rows,'UTC',as_of=datetime(2027,1,1,tzinfo=timezone.utc))
+        self.assertEqual([s['year'] for s in rollover['annual_series']],[2027,2026,2025])
+        self.assertEqual(rollover['annual_series'][0]['points'],[])
+
+    def test_annual_chart_empty_missing_year_and_calendar_alignment(self):
+        rows=[activity('1','2024-03-01T12:00:00+00:00',1609.344),
+              activity('2','2026-03-01T12:00:00+00:00',1609.344)]
+        data=mileage(rows,'UTC',as_of=datetime(2026,3,1,18,tzinfo=timezone.utc))
+        chart=annual_mileage_chart(data['annual_series'],data['today'])
+        self.assertIn('<b>2025</b><span>No data</span>',chart)
+        self.assertNotIn('data-year="2025"',chart)
+        paths=re.findall(r'<path class="home-annual-line home-annual-[02]"[^>]+d="([^"]+)',chart)
+        self.assertEqual(len(paths),2)
+        self.assertEqual(re.search(r'H([\d.]+)',paths[0]).group(1), re.search(r'H([\d.]+)',paths[1]).group(1))
+        empty=mileage([],'UTC',as_of=datetime(2026,3,1,tzinfo=timezone.utc))
+        self.assertIn('No recorded cycling distances',annual_mileage_chart(empty['annual_series'],empty['today']))
+
+    def test_annual_chart_window_totals_and_edges(self):
+        rows=[activity('1','2026-01-15T12:00:00+00:00',10*1609.344),
+              activity('2','2026-09-15T12:00:00+00:00',20*1609.344),
+              activity('3','2026-10-28T12:00:00+00:00',30*1609.344),
+              activity('4','2026-11-15T12:00:00+00:00',999*1609.344),
+              activity('5','2025-01-15T12:00:00+00:00',100*1609.344),
+              activity('6','2025-11-15T12:00:00+00:00',200*1609.344),
+              activity('7','2025-12-15T12:00:00+00:00',300*1609.344),
+              activity('8','2024-08-15T12:00:00+00:00',40*1609.344)]
+        data=mileage(rows,'UTC',as_of=datetime(2026,10,28,18,tzinfo=timezone.utc))
+        chart=annual_mileage_chart(data['annual_series'],data['today'])
+        labels=re.findall(r'class="home-annual-month"[^>]*>([^<]+)',chart)
+        self.assertEqual(labels,['Jul','Aug','Sep','Oct','Nov'])
+        self.assertIn('<b>2026</b><span>60.0 mi YTD</span>',chart)
+        self.assertIn('<b>2025</b><span>600.0 mi recorded</span>',chart)
+        self.assertIn('<b>2024</b><span>40.0 mi recorded</span>',chart)
+        self.assertIn('2026: 60.0 mi recorded through 2026-10-28',chart)
+        self.assertNotIn('2025: 600.0 mi recorded through',chart)
+        current=re.search(r'<path class="home-annual-line home-annual-0"[^>]+d="([^"]+)',chart).group(1)
+        self.assertRegex(current,r'^M80\.000,(?!260\.000)')  # January mileage is retained at the left edge.
+        previous=re.search(r'<path class="home-annual-line home-annual-1"[^>]+d="([^"]+)',chart).group(1)
+        self.assertIn('H575.000',previous)  # November is real past-year data, cropped at December.
+        boundary=mileage([activity('9','2025-12-01T12:00:00+00:00',1609.344)],'UTC',
+                         as_of=datetime(2026,10,28,18,tzinfo=timezone.utc))
+        boundary_chart=annual_mileage_chart(boundary['annual_series'],boundary['today'])
+        self.assertNotIn('2025: 1.0 mi recorded through 2025-12-01',boundary_chart)
+        self.assertIn('<b>2025</b><span>1.0 mi recorded</span>',boundary_chart)
+        for month, expected in [(1,['Jan','Feb']), (2,['Jan','Feb','Mar']),
+                                (11,['Aug','Sep','Oct','Nov','Dec']),
+                                (12,['Sep','Oct','Nov','Dec'])]:
+            snapshot=mileage(rows,'UTC',as_of=datetime(2026,month,28,18,tzinfo=timezone.utc))
+            rendered=annual_mileage_chart(snapshot['annual_series'],snapshot['today'])
+            self.assertEqual(re.findall(r'class="home-annual-month"[^>]*>([^<]+)',rendered),expected)
+
+    def test_annual_chart_floor_is_lowest_visible_start_and_flat_series_are_safe(self):
+        from xml.etree import ElementTree as ET
+        rows=[activity('1','2026-01-15T12:00:00+00:00',100*1609.344),
+              activity('2','2026-10-15T12:00:00+00:00',50*1609.344),
+              activity('3','2025-02-15T12:00:00+00:00',80*1609.344),
+              activity('4','2025-11-15T12:00:00+00:00',120*1609.344),
+              activity('5','2024-05-15T12:00:00+00:00',90*1609.344),
+              activity('6','2024-12-15T12:00:00+00:00',10*1609.344)]
+        data=mileage(rows,'UTC',as_of=datetime(2026,10,29,18,tzinfo=timezone.utc))
+        html=annual_mileage_chart(data['annual_series'],data['today'])
+        chart=ET.fromstring(re.search(r'<svg\b.*?</svg>',html,re.S)[0])
+        self.assertAlmostEqual(float(chart.get('data-y-min')),80)
+        self.assertAlmostEqual(float(chart.get('data-y-max')),200)
+        self.assertNotIn('>0</text>',html)
+        for amount in (0,87.5):
+            flat=mileage([activity('flat','2026-01-15T12:00:00+00:00',amount*1609.344)],'UTC',
+                         as_of=datetime(2026,10,29,18,tzinfo=timezone.utc))
+            rendered=annual_mileage_chart(flat['annual_series'],flat['today'])
+            graph=ET.fromstring(re.search(r'<svg\b.*?</svg>',rendered,re.S)[0])
+            self.assertAlmostEqual(float(graph.get('data-y-min')),amount)
+            self.assertGreater(float(graph.get('data-y-max')),amount)
+            self.assertNotRegex(rendered,r'(?i)nan|infinity')
+
     def test_cycling_distance_provenance_zero_and_missing_evidence(self):
         rows=[activity('1','2026-02-01T12:00:00+00:00',1609.344),
               activity('2','2026-02-02T12:00:00+00:00',3218.688,'Ride','api'),
@@ -161,6 +256,47 @@ class DashboardTests(TestCase):
     def post(self,**fields):
         fields={'nonce':self.settings.nonce,'tz':'America/Los_Angeles',**fields}
         return self.settings.post('/settings/annual-goal',urlencode(fields).encode(),'http://127.0.0.1:8765')
+
+    def test_annual_card_goal_states_and_ceiling(self):
+        value=dashboard(self.store,'UTC',as_of=datetime(2026,10,7,18,tzinfo=timezone.utc))
+        value['target_miles']='1000'
+        for target,expected in (('155','55'),('155.1','56')):
+            value['target_miles']=target
+            value['goal']=goal_progress(2026,'2026-12-24',100,target)
+            with patch('rideworks.home.dashboard',return_value=value):
+                html=self.app.get('/?home_tz=UTC')[2].decode()
+            self.assertIn(f'Ride {expected} miles/week to meet yearly goal of {target} miles.',html)
+            self.assertNotIn('annual-mileage-progress',html)
+            self.assertNotIn('Annual target:',html)
+        value['target_miles']='1000'
+        value['goal']=goal_progress(2026,'2026-12-31',1000,'1000')
+        with patch('rideworks.home.dashboard',return_value=value):
+            html=self.app.get('/?home_tz=UTC')[2].decode()
+        self.assertIn('0.0 mi to goal',html);self.assertIn('Yearly goal reached.',html)
+        value['goal']=goal_progress(2026,'2026-12-31',999,'1000')
+        with patch('rideworks.home.dashboard',return_value=value):
+            html=self.app.get('/?home_tz=UTC')[2].decode()
+        self.assertIn('Year ended; weekly goal pace unavailable.',html)
+        value['target_miles']=None;value['goal']=None
+        with patch('rideworks.home.dashboard',return_value=value):
+            html=self.app.get('/?home_tz=UTC')[2].decode()
+        self.assertIn('Set annual goal',html);self.assertIn('Mileage by Year',html)
+
+    def test_annual_card_puts_goal_below_chart_without_duplicate_ytd_or_coverage_paragraph(self):
+        value=dashboard(self.store,'UTC',as_of=datetime(2026,10,29,18,tzinfo=timezone.utc))
+        value['target_miles']='1000'
+        value['goal']=goal_progress(2026,value['today'],100,'1000')
+        value['annual_series'][0]['points']=[dict(day='2026-01-01',miles=0),dict(day='2026-10-29',miles=100)]
+        value['annual_series'][0]['distance_unavailable']=2
+        with patch('rideworks.home.dashboard',return_value=value):
+            html=self.app.get('/?home_tz=UTC')[2].decode()
+        card=re.search(r'<section class="panel home-goal-progress".*?</section>',html,re.S)[0]
+        self.assertNotIn('<strong>',card)
+        self.assertNotIn('home-annual-coverage',card)
+        self.assertLess(card.index('id="home-annual-chart"'),card.index('class="home-annual-goal"'))
+        self.assertLess(card.index('class="home-annual-legend"'),card.index('900.0 mi to goal'))
+        self.assertEqual(card.count('100.0 mi YTD'),1)
+        self.assertIn('2 cycling Activities lack distance.',card.split('<desc')[1].split('</desc>')[0])
 
     def test_goal_unset_set_update_clear_restart_and_no_default(self):
         year=datetime.now(timezone.utc).astimezone(browser_zone('America/Los_Angeles')).year
@@ -315,7 +451,7 @@ class DashboardTests(TestCase):
         self.assertEqual(summary.count('class="home-quick-fact"'),4)
         self.assertEqual(summary.count('<h2>'),4)
         self.assertIn('id="home-recent-mileage"',html)
-        self.assertIn('Needed average:',html)
+        self.assertIn('miles/week to meet yearly goal',html)
         chart=html.split('id="home-mileage-chart"')[1].split('</svg>')[0]
         self.assertNotIn('<title',chart)
         self.assertEqual(chart.count('data-bar-kind="actual"'),12)

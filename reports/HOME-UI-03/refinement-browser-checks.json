@@ -1,0 +1,49 @@
+{
+  "checks": 139,
+  "geometry": [
+    {
+      "width": 1440,
+      "weeklyHeight": 363,
+      "annualHeight": 363,
+      "chartHeight": 207.3125,
+      "previousChartHeight": 106.875
+    },
+    {
+      "width": 1024,
+      "weeklyHeight": 377.1875,
+      "annualHeight": 371.6875,
+      "chartHeight": 220,
+      "previousChartHeight": 217.796875
+    },
+    {
+      "width": 768,
+      "weeklyHeight": 300.390625,
+      "annualHeight": 371.6875,
+      "chartHeight": 220,
+      "previousChartHeight": 147.390625
+    },
+    {
+      "width": 390,
+      "weeklyHeight": 249.890625,
+      "annualHeight": 358.984375,
+      "chartHeight": 163,
+      "previousChartHeight": 89.640625
+    },
+    {
+      "width": 320,
+      "weeklyHeight": 275.890625,
+      "annualHeight": 323.984375,
+      "chartHeight": 128,
+      "previousChartHeight": 70.390625
+    }
+  ],
+  "widths": [
+    1440,
+    1024,
+    768,
+    390,
+    320
+  ],
+  "physicalPointerHover": true,
+  "errors": []
+}

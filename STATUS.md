@@ -1,8 +1,10 @@
 # STATUS.md
 
-**Product:** RideWorks.  
-**Current task:** None active. **HOME-UI-03 is done** — Analyst technical acceptance and Owner final visual acceptance on 2026-10-29 for [PR #51](https://github.com/k14krug/rideworks/pull/51).  
-**State:** **done**. The Home Mileage by Year card now displays the current year plus two preceding years in a compact five-month window, blue/amber/teal cumulative lines, full recorded yearly totals, and the existing rounded-up weekly goal arithmetic. The Owner approved the final chart-first running view with goal text below and equal-height desktop mileage cards.  
-**Verification:** Dex reported 31 focused and 515 full Python tests and 139 browser assertions at five widths; the Analyst reviewed source changes, test evidence and synthetic browser reports, but did not independently rerun the tests. [Evidence](reports/HOME-UI-03/implementation.md).  
-**PR:** [#51 — Mileage by Year](https://github.com/k14krug/rideworks/pull/51), merged to `main` as `7f16b6e91560ff5d89bd447adcc9509f195f2a90`.  
-**Next action:** No active task or automatic next task. Await Owner direction. No production access or deployment authorized. Phase 6 remains deferred.
+**Product:** RideWorks.
+**Current task:** RE-02 — Relative Effort UI verification and integration.
+**State:** `pending` — Owner has authorized proceeding with the existing Relative Effort model; the Analyst-authored [JIT](docs/tasks/RE-02.md) and [task register](TASKS.md) are committed on `main`. Dex has **not** been invoked by this handoff.
+**Starting branch:** refreshed `main`; implementation should use a new task branch and a draft PR targeting `main`. Use `dev` as the feature reference only.
+**Owner decision (2026-10-29):** Accept practical mixed-source effort colors; power typically for indoor and HR-estimated stress for outdoor rides. Do not conduct additional calibration research or change `relative-effort-v1`. [Recorded on PR #52](https://github.com/k14krug/rideworks/pull/52).
+**Scope:** Verify Home Recent Activities dots, Activities effort column and Activity Review compact card; transplant the minimum compatible changes without disturbing newer accepted Home UI (HOME-UI-02/03) or training calculations. Verify tablet/mobile and Home/FTP concurrency behavior. No broad `dev` merge, production deployment, or Store mutation.
+**Last completed task:** HOME-UI-03 was accepted and merged to `main` via [PR #51](https://github.com/k14krug/rideworks/pull/51) on 2026-10-29. It remains accepted and must be preserved.
+**Next action:** Owner invokes `/TASK RE-02` with Dex. Dex must fetch origin, verify a clean checkout and current main, read AGENTS.md/TASKS.md/STATUS.md and the JIT, then begin the task. After implementation and required tests, hand off a draft PR for HARD — Analyst review. HARD — Owner final running-UI acceptance and authorization are required before merging to `main` or deployment.

@@ -15,6 +15,20 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### RE-02 — Relative Effort UI verification and integration
+
+**Status:** pending — Owner accepted the existing mixed-source `relative-effort-v1` ratings for practical use on 2026-10-29; Analyst-authored JIT is committed on `main`. No additional calibration research required.
+
+**Purpose:** Verify the existing `dev` Relative Effort indicators on Home, Activities, and Activity Review, then prepare a focused, safe integration into current `main` without replacing later accepted dashboard work.
+
+**Scope:** Preserve the existing 42-day five-color model and Not rated behavior; verify responsive/accessibility and cache-write/FTP concurrency; adapt only necessary code and tests. `dev` and `main` have diverged; no wholesale branch merge, live database changes, model redesign or production deployment.
+
+**Execution:** `/TASK only`. Dex starts from refreshed `main`, works on a task branch, opens a draft PR targeting `main`, and stops for Analyst review. Owner authorization is required before final merge or deployment.
+
+**Acceptance:** [Analyst JIT](docs/tasks/RE-02.md). Preserve completed HOME-UI work, keep all accepted training calculations unchanged, and report real test/browser evidence.
+
+---
+
 ### STRAVA-001 — Inventory latest Strava bulk export
 
 **Status:** done

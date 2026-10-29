@@ -1,12 +1,9 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** RE-02 — Relative Effort UI verification and integration.
-**State:** `ready_for_review` — focused integration and local verification complete; awaiting HARD — Analyst review.
-**Branch:** `task/re-02-relative-effort`, based on refreshed `main`; `dev` is the feature reference only.
-**PR:** [#53 — RE-02 integration](https://github.com/k14krug/rideworks/pull/53) (draft, targeting `main`).
-**Owner decision (2026-10-29):** Accept practical mixed-source effort colors; power typically for indoor and HR-estimated stress for outdoor rides. Do not conduct additional calibration research or change `relative-effort-v1`. [Recorded on PR #52](https://github.com/k14krug/rideworks/pull/52).
-**Scope:** Verify Home Recent Activities dots, Activities effort column and Activity Review compact card; transplant the minimum compatible changes without disturbing newer accepted Home UI (HOME-UI-02/03) or training calculations. Verify tablet/mobile and Home/FTP concurrency behavior. No broad `dev` merge, production deployment, or Store mutation.
-**Last completed task:** HOME-UI-03 was accepted and merged to `main` via [PR #51](https://github.com/k14krug/rideworks/pull/51) on 2026-10-29. It remains accepted and must be preserved.
-**Verification:** 534 full-suite tests and 275 synthetic browser assertions passed across seven widths after the Owner's Recent Activities compacting request. [Integration evidence](docs/reviews/2026-10-29-re-02-integration.md).
-**Next action:** HARD — Analyst review of the draft PR. HARD — Owner final running-UI acceptance and authorization are required before merging to `main` or deployment.
+**Current task:** None active. RE-02 is complete.
+**State:** `done` — Relative Effort UI integration accepted by the Analyst and Owner on 2026-10-29, and merged to `main` via [PR #53](https://github.com/k14krug/rideworks/pull/53) at `178e8065ffc780118b44f3e04b73a481e472ed65`.
+**Delivered:** The existing five-color `relative-effort-v1` and Not rated behavior now appear on Home Recent Activities, Activities and Activity Review. The Home card omits the second-line ride type and fits as many complete recent rows as the existing height allows. Later accepted Mileage by Year, Fitness/power trends, goal cards, and the Home cache-write/FTP concurrency protections are preserved. Mixed power/HR calibration is accepted pragmatically and intentionally unchanged.
+**Verification:** Dex reported **534 passing Python tests** and **275 synthetic browser assertions** over seven widths after the Owner's final Recent Activities change. The Analyst reviewed the source, PR diff and [integration evidence](docs/reviews/2026-10-29-re-02-integration.md), without independently rerunning the suites. [Analyst review](https://github.com/k14krug/rideworks/pull/53).
+**Approval:** Owner said they were pleased with the final result and ready to close out RE-02, treated as final UI acceptance and authorization to merge PR #53.
+**Next action:** None for RE-02. No automatic subsequent task. **No production deployment or live production Store changes** were made or authorized; a separate production rollout requires explicit Owner direction.

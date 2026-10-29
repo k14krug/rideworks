@@ -110,9 +110,22 @@ def browser_time(row, *, compact=False):
     return escape(row['date_text']) + ' · source date text · timezone unknown' if row['date_text'] else 'Date unavailable'
 
 
+def relative_effort_ratings(store):
+    """Read historical ratings without making Activity views mutate the caches."""
+    from .relative_effort import for_store
+    store.connection.execute('SAVEPOINT review_effort')
+    try:
+        return for_store(store)
+    finally:
+        store.connection.execute('ROLLBACK TO review_effort')
+        store.connection.execute('RELEASE review_effort')
+
+
 def activities_page(store, query_string=''):
     result = browse(store, query_string)
     rows, query = result['rows'], result['query']
+    from .relative_effort import chip as effort_chip
+    ratings = relative_effort_ratings(store) if rows else {}
     def options(choices, current):
         return ''.join(f'<option value="{escape(value, quote=True)}"{" selected" if value == current else ""}>{escape(text)}</option>'
                        for value, text in choices)
@@ -139,8 +152,8 @@ def activities_page(store, query_string=''):
             types = row['activity_type'] + (f" · {row['subtype']}" if row['subtype'] and row['subtype'] != row['activity_type'] else '')
             duration_context = row['duration_source']['context'] if row['duration_source'] else 'Duration unavailable'
             distance_context = row['distance_source']['context'] if row['distance_source'] else 'Distance unavailable'
-            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'])}"><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}</div><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-type">{escape(types)}</span><div class="list-metrics"><span title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="open-ride" aria-hidden="true">→</span></div></a></li>''')
-        columns = '<div class="activity-columns" aria-hidden="true"><span>Title</span><span>Date</span><span>Type</span><div class="list-metrics"><span>Distance</span><span>Duration</span><span></span></div></div>'
+            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'])}"><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}</div><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-type">{escape(types)}</span><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="list-metrics"><span title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="open-ride" aria-hidden="true">→</span></div></a></li>''')
+        columns = '<div class="activity-columns" aria-hidden="true"><span>Title</span><span>Date</span><span>Type</span><span>Relative Effort</span><div class="list-metrics"><span>Distance</span><span>Duration</span><span></span></div></div>'
         body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0
@@ -239,7 +252,7 @@ def activity_review_layout(title, *, identity, metrics, chart, summary, best, ev
 {identity}{metrics}</section>
 <nav class="review-section-nav" aria-label="Ride detail sections"><a href="#overview">Overview</a><a href="#ride-chart-section">Power &amp; HR</a><a href="#power-curve-panel">Power Curve</a><a href="#bests">Best Efforts</a><a href="#sources">Source Evidence</a></nav>
 <div class="review-layout"><div class="review-main" id="ride-chart-section">{chart}</div>
-{summary}</div>
+<div class="review-sidebar">{summary}<!-- review-relative-effort --></div></div>
 <!-- review-power-curve -->
 <div class="review-context-layout"><!-- review-workout-context --><!-- review-current-next --></div>
 <section class="review-best-efforts" id="bests" aria-labelledby="bests-title"><h2 id="bests-title">Best efforts</h2>{best}</section>
@@ -262,11 +275,9 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
         ('Average heart rate', sensor(summary.get('avg_heart_rate'), 'bpm'), 'heart'),
     ])
     summary_rows = [
-        ('Elapsed duration', duration(summary.get('total_elapsed_time'))),
         ('Timer duration', duration(summary.get('total_timer_time'))),
-        ('Distance', distance(summary.get('total_distance'))),
         ('Ascent', ascent(summary.get('total_ascent'))),
-        ('Average power', sensor(summary.get('avg_power'), 'W')),
+        ('Best 20-minute power', sensor(best['rounded_watts'], 'W') if best['eligible'] else 'Unavailable'),
         ('Maximum power', sensor(summary.get('max_power'), 'W')),
         ('Average heart rate', sensor(summary.get('avg_heart_rate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heart_rate'), 'bpm')),
@@ -333,14 +344,12 @@ def review_page(analysis, metadata=None, recent=None, streams=None):
                               type_text, subtype, 'FIT source')
     chart = f'''<section class="panel chart-panel" aria-labelledby="chart-title">
 <div class="panel-heading"><h2 id="chart-title">Ride power &amp; heart rate</h2>{chart_legend()}</div>
-<div id="ride-chart" data-record-count="{len(records)}" data-start-time="{escape(summary.get('start_time') or '', quote=True)}"><svg id="chart-svg" role="img" aria-label="Native power and heart rate over elapsed ride time" aria-describedby="chart-help"></svg></div>
-<div id="sample-readout" role="status" aria-live="polite">Move over the chart to inspect power and heart rate.</div>
-<div class="chart-footer"><span>{len(records):,} recorded samples · elapsed time</span><span id="chart-help">Focus chart + arrow keys to inspect</span></div>
-<noscript>Enable JavaScript to review the native chart and display dates in your local timezone.</noscript></section>'''
+<div id="sample-readout" role="status" aria-live="polite">Select a point on the chart to inspect power and heart rate.</div>
+<div id="ride-chart" data-record-count="{len(records)}" data-start-time="{escape(summary.get('start_time') or '', quote=True)}"><svg id="chart-svg" tabindex="0" role="img" aria-label="Native power and heart rate over elapsed ride time. Click the chart to focus, then use left and right arrow keys to inspect samples." aria-describedby="sample-readout"></svg></div></section>'''
     best_panel = f'''<section class="panel best-panel"><div><h2>{icon('power')}Best 20-minute power</h2><p>RideWorks-calculated</p></div><strong class="best-value">{sensor(best['rounded_watts'], 'W')}</strong><p class="window-context">{escape(window_text)}</p>
 {recent_context_panel(recent)}</section>'''
     evidence = f'''<details><summary>Calculation details</summary>{detail_rows(best_rows)}<p>Complete 1,200-sample windows with one-second timestamps and no missing power. Earliest window wins a tie; whole watts round half up. No repaired or estimated samples.</p></details><details class="panel provenance"><summary>Source &amp; provenance</summary><p>Ride summary values are FIT session source evidence. Sensor origins remain unknown; presence does not establish measurement origin.</p>{detail_rows(source_rows)}</details>{stream_details(streams or [])}'''
-    summary_panel = f'''<aside class="panel ride-summary"><h2>{icon('summary')}Ride summary</h2><p class="source-caption">FIT session source evidence</p>{detail_rows(summary_rows)}</aside>'''
+    summary_panel = f'''<aside class="panel ride-summary"><h2>{icon('summary')}Ride summary</h2><p class="source-caption">FIT session source evidence · 20-minute best calculated by RideWorks</p>{detail_rows(summary_rows)}</aside>'''
     return activity_review_layout(title, identity=identity,
         metrics=f'<section class="metrics" aria-label="FIT session source summary">{cards}</section>',
         chart=chart, summary=summary_panel, best=best_panel, evidence=evidence,
@@ -371,12 +380,8 @@ def stream_chart(observation):
     return f'''<section class="panel chart-panel" aria-labelledby="chart-title">
 <h2 id="chart-title">Ride power &amp; heart rate</h2><p class="source-caption">Strava API stream evidence</p>
 {chart_legend()}
-<div id="ride-chart" data-api-sample-count="{len(samples)}" data-start-time="{escape(observation['start_date'],quote=True)}"><svg id="chart-svg" role="img" aria-label="Strava API power and heart rate at returned elapsed time offsets" aria-describedby="chart-help"></svg></div>
-<div id="sample-readout" role="status" aria-live="polite">Move over the chart to inspect returned Strava samples.</div>
-<div class="chart-footer"><span>{len(samples):,} returned samples · elapsed time</span><span id="chart-help">Focus chart + arrow keys to inspect</span></div>
-<p class="source-caption">Returned time offsets are used directly. Missing values and gaps longer than one second break the lines; no intermediate samples are invented. Performance eligibility follows the versioned evidence policy.</p>
-<details><summary>Time mapping</summary><p>For local date/time inspection, the related Strava summary start_date plus the returned time offset supplies a presentation timestamp. Original offsets and source metadata are retained separately.</p></details>
-<noscript>Enable JavaScript to review the Strava stream chart.</noscript></section>
+<div id="sample-readout" role="status" aria-live="polite">Select a point on the chart to inspect power and heart rate.</div>
+<div id="ride-chart" data-api-sample-count="{len(samples)}" data-start-time="{escape(observation['start_date'],quote=True)}"><svg id="chart-svg" tabindex="0" role="img" aria-label="Strava API power and heart rate at returned elapsed time offsets. Click the chart to focus, then use left and right arrow keys to inspect samples." aria-describedby="sample-readout"></svg></div></section>
 <script id="api-stream-samples" type="application/json">{payload}</script>'''
 
 
@@ -390,19 +395,21 @@ def api_review_page(row, observation, observations, source_details, recent=None)
         ('Average power', sensor(summary.get('average_watts'), 'W'), 'power'),
         ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm'), 'heart'),
     ])
-    summary_rows = [
-        ('Elapsed duration', duration(summary.get('elapsed_time'))),
-        ('Moving duration', duration(summary.get('moving_time'))),
-        ('Distance', distance(summary.get('distance'))),
+    best = review_best20(observation)
+    summary_rows = []
+    # Compare displayed precision: omit a duplicate, not a distinct moving duration.
+    if (summary.get('moving_time') is not None and
+            duration(summary.get('moving_time')) != duration(summary.get('elapsed_time'))):
+        summary_rows.append(('Moving duration', duration(summary['moving_time'])))
+    summary_rows += [
         ('Ascent', ascent(summary.get('total_elevation_gain'))),
-        ('Average power', sensor(summary.get('average_watts'), 'W')),
+        ('Best 20-minute power', sensor(best['rounded_watts'], 'W') if best['status'] == 'available' else 'Unavailable'),
         ('Maximum power', sensor(summary.get('max_watts'), 'W')),
         ('Average heart rate', sensor(summary.get('average_heartrate'), 'bpm')),
         ('Maximum heart rate', sensor(summary.get('max_heartrate'), 'bpm')),
         ('Average cadence', sensor(summary.get('average_cadence'), 'rpm')),
         ('Energy', sensor(summary.get('kilojoules'), 'kJ')),
     ]
-    best = review_best20(observation)
     reasons = {
         'watts_stream_missing': 'No Strava watts stream is available.',
         'time_missing': 'No Strava time stream is available.',
@@ -445,8 +452,8 @@ def api_review_page(row, observation, observations, source_details, recent=None)
     best_panel = f'''<section class="panel best-panel api-best20" data-best20-status="{best['status']}"><div><h2>{icon('power')}Best 20-minute power</h2><p>RideWorks-calculated from Strava API stream evidence</p></div><strong class="best-value">{sensor(best['rounded_watts'],'W')}</strong><p class="window-context">{escape(window_text)}</p>
 <p class="source-caption">{escape(eligibility_note)}</p>
 {recent_context_panel(recent) if eligible else ''}</section>'''
-    summary_panel = f'''<aside class="panel ride-summary"><h2>{icon('summary')}Ride summary</h2><p class="source-caption">Strava API summary evidence</p>{detail_rows(summary_rows)}<details><summary>Summary source</summary>{detail_rows([('Source ID',summary_source['source']['source_id']),('Retrieved at (UTC)',summary_source['source']['imported_at']),('Mapping',summary_source['extraction']['mapping_version'])])}<p>Values are supplied by Strava; averages are not calculated from the retained API stream. Stream observations retain their own related summary Source.</p></details></aside>'''
-    evidence = f'''<details><summary>Calculation details</summary>{detail_rows(best_rows)}<p>Exactly 1,200 complete power samples at consecutive one-second returned offsets. Zero watts count. Highest raw average wins; exact ties choose the earliest window; displayed watts round half up. No interpolation or repaired samples.</p></details>{stream_details(observations)}<section class="thin-sources" aria-label="Associated source evidence">{source_details}</section>'''
+    summary_panel = f'''<aside class="panel ride-summary"><h2>{icon('summary')}Ride summary</h2><p class="source-caption">Strava API summary evidence · 20-minute best calculated by RideWorks</p>{detail_rows(summary_rows)}<details><summary>Summary source</summary>{detail_rows([('Source ID',summary_source['source']['source_id']),('Retrieved at (UTC)',summary_source['source']['imported_at']),('Mapping',summary_source['extraction']['mapping_version'])])}<p>Values are supplied by Strava; averages are not calculated from the retained API stream. Stream observations retain their own related summary Source.</p></details></aside>'''
+    evidence = f'''<details><summary>Calculation details</summary>{detail_rows(best_rows)}<p>Exactly 1,200 complete power samples at consecutive one-second returned offsets. Zero watts count. Highest raw average wins; exact ties choose the earliest window; displayed watts round half up. No interpolation or repaired samples.</p></details><details><summary>Stream display and time mapping</summary><p>Returned time offsets are used directly. Missing values and gaps longer than one second break the lines; no intermediate samples are invented. Performance eligibility follows the versioned evidence policy.</p><p>For local date/time inspection, the related Strava summary start_date plus the returned time offset supplies a presentation timestamp. Original offsets and source metadata are retained separately.</p></details>{stream_details(observations)}<section class="thin-sources" aria-label="Associated source evidence">{source_details}</section>'''
     return activity_review_layout(row['title'], identity=identity, metrics=metrics,
         chart=stream_chart(observation), summary=summary_panel, best=best_panel, evidence=evidence)
 
@@ -636,7 +643,12 @@ class Application:
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':
                 from .home import home_page
-                return 200, 'text/html', self.page(store, home_page(store,url.query), display_zone=zone.key)
+                from .planning import write_history_caches
+                cache_writes = ([], [])
+                html = home_page(store, url.query, cache_writes=cache_writes)
+                body = self.page(store, html, display_zone=zone.key)
+                write_history_caches(store, cache_writes)
+                return 200, 'text/html', body
             if path == '/plan':
                 from .planning_page import plan_page
                 return 200, 'text/html', self.page(store, plan_page(store,url.query,self.settings.nonce), display_zone=zone.key)
@@ -683,7 +695,10 @@ class Application:
         from .power_curve_page import panel as curve_panel
         context, next_ride = activity_panels(store,activity_id,self.settings.nonce,query)
         curve = curve_panel(store,self.settings.nonce,activity_id=activity_id,query=query)
-        slots = {'<!-- review-workout-context -->': context,
+        from .relative_effort import card as effort_card
+        rating = relative_effort_ratings(store).get(activity_id)
+        slots = {'<!-- review-relative-effort -->': effort_card(rating),
+                 '<!-- review-workout-context -->': context,
                  '<!-- review-current-next -->': next_ride,
                  '<!-- review-power-curve -->': curve}
         for slot, content in slots.items():

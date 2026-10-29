@@ -62,6 +62,33 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.html('/activities/not-an-id')[0], 404)
         self.assertEqual(self.html('/unknown')[0], 404)
 
+    def test_relative_effort_is_identical_in_list_and_review(self):
+        activity_id, _ = self.import_activity()
+        from rideworks.relative_effort import classify
+        from datetime import date, timedelta
+        start = date(2026, 10, 10)
+        rides = [dict(activity_id=str(i),day=(start+timedelta(days=i)).isoformat(),
+                      timezone_unknown=False,
+                      selected=dict(method='power',status='calculated',stress=(i+1)*10),
+                      power=dict(intervals=[dict(seconds=3600)]))
+                 for i in range(6)]
+        rides.append(dict(activity_id=activity_id,day='2026-10-17',timezone_unknown=False,
+                          selected=dict(method='power',status='calculated',stress=30),
+                          power=dict(intervals=[dict(seconds=900)])))
+        rating = classify(rides)[activity_id]
+        self.assertEqual(rating['category'], 'High')
+        with patch('rideworks.web.relative_effort_ratings', return_value={activity_id:rating}):
+            _, listing = self.html('/activities')
+            _, details = self.html(f'/activities/{activity_id}')
+        self.assertIn('class="row-effort"', listing)
+        self.assertIn('effort-pill effort-high', listing)
+        self.assertIn('class="panel relative-effort-card"', details)
+        self.assertIn('class="relative-effort-overall effort-high"', details)
+        self.assertIn('class="relative-effort-accent"', details)
+        self.assertEqual(details.count('class="effort-meter"'), 2)
+        self.assertIn('Training load', details)
+        self.assertIn('Intensity', details)
+
     def test_accepted_analysis_boundary_is_used(self):
         activity_id, analysis = self.import_activity()
         analysis['best_20_minute_power'].update(rounded_watts=321, eligible=True,
@@ -104,7 +131,16 @@ class WebTests(unittest.TestCase):
                       'unknown', '2 present / 1 missing / 3 total', 'synthetic.fit']:
             self.assertIn(value, html)
         self.assertIn('<dt>Maximum heart rate</dt><dd>Unavailable</dd>', html)
-        self.assertIn('<dt>Elapsed duration</dt><dd>1:00:00</dd>', html)
+        self.assertIn('<strong>1:00:00</strong>', html)
+        self.assertNotIn('<dt>Elapsed duration</dt>', html)
+        summary = html.split('<aside class="panel ride-summary">', 1)[1].split('</aside>', 1)[0]
+        for duplicate in ('Elapsed duration', 'Distance', 'Average power'):
+            self.assertNotIn('<dt>' + duplicate + '</dt>', summary)
+        self.assertIn('<dt>Average heart rate</dt>', summary)
+        self.assertIn('<dt>Best 20-minute power</dt><dd>Unavailable</dd>', summary)
+        chart = html.split('<section class="panel chart-panel"', 1)[1].split('</section>', 1)[0]
+        self.assertLess(chart.index('id="sample-readout"'), chart.index('id="ride-chart"'))
+        self.assertIn('tabindex="0"', chart)
         self.assertIn('<dt>Timer duration</dt><dd>59:59</dd>', html)
         self.assertNotIn(str(self.data_dir), html)
         self.assertNotIn(str(self.input_path), html)
@@ -119,7 +155,8 @@ class WebTests(unittest.TestCase):
             timestamps=tuple(1100000000 + i for i in range(1200)), elapsed=1200, timer=1199)
         html = review_page(analysis)
         self.assertIn('120 W', html)
-        self.assertIn('<dt>Average power</dt><dd>Unavailable</dd>', html)
+        self.assertIn('<strong class="metric-unavailable">Unavailable</strong>', html)
+        self.assertNotIn('<dt>Average power</dt>', html)
         self.assertIn('1,200 native samples', html)
         self.assertIn('Window end, exclusive (UTC)', html)
 

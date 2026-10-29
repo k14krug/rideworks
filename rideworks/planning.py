@@ -119,13 +119,14 @@ def classify_activity(store, snapshot, row, result, *, cache_result=True,
     return outcome
 
 
-def completed_history(store, zone_name, *, as_of):
+def completed_history(store, zone_name, *, as_of, cache_writes=None):
     with store._transaction():
-        return _completed_history(store, zone_name, as_of=as_of)
+        return _completed_history(store, zone_name, as_of=as_of, cache_writes=cache_writes)
 
 
-def _completed_history(store, zone_name, *, as_of):
-    stress_cache_writes=[];classification_cache_writes=[]
+def _completed_history(store, zone_name, *, as_of, cache_writes=None):
+    own_cache_writes=cache_writes is None
+    stress_cache_writes,classification_cache_writes=([],[]) if own_cache_writes else cache_writes
     results, _ = ride_results(store,zone_name,as_of=as_of,
                               cache_writes=stress_cache_writes)
     by_id = {r['activity_id']:r for r in results}
@@ -152,8 +153,16 @@ def _completed_history(store, zone_name, *, as_of):
                 cache_writes=classification_cache_writes),
             duration=row['duration'],average_power=average_power(row)[0],
             stress=result['selected'],ftp=result['ftp']))
-    # Training stress and classification misses are committed together only
-    # after every ride has been calculated on this same read snapshot.
+    # Home may still have expensive work on this same read snapshot. Its caller
+    # owns the final flush; standalone Plan keeps its existing batch behavior.
+    if own_cache_writes:
+        write_history_caches(store,(stress_cache_writes,classification_cache_writes))
+    return sorted(history,key=lambda r:(r['start_time'],r['activity_id'])), undated
+
+
+def write_history_caches(store, cache_writes):
+    """Write (stress, classification) batches within the caller's transaction."""
+    stress_cache_writes,classification_cache_writes=cache_writes
     if stress_cache_writes:
         store.connection.executemany('''INSERT INTO training_stress_cache VALUES (?,?,?) ON CONFLICT(activity_id)
             DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
@@ -162,7 +171,6 @@ def _completed_history(store, zone_name, *, as_of):
         store.connection.executemany('''INSERT INTO planning_classification_cache VALUES (?,?,?) ON CONFLICT(activity_id)
             DO UPDATE SET input_signature=excluded.input_signature,result_json=excluded.result_json''',
             classification_cache_writes)
-    return sorted(history,key=lambda r:(r['start_time'],r['activity_id'])), undated
 
 
 def recommendation(category, reason, *, second=False):
@@ -246,12 +254,12 @@ def project(history, today, *, fresh=True, legs='unknown', unknown_dates=0, limi
                 provisional=not fresh or bool(recent_uncertain) or bool(unknown_dates))
 
 
-def plan(store, zone_name, *, as_of=None):
+def plan(store, zone_name, *, as_of=None, cache_writes=None):
     zone = browser_zone(zone_name); as_of = as_of or datetime.now(timezone.utc)
     if as_of.tzinfo is None: raise ValueError('Planner as-of must be absolute.')
     today = as_of.astimezone(zone).date()
     with store._transaction():
-        history, undated = completed_history(store,zone_name,as_of=as_of)
+        history, undated = completed_history(store,zone_name,as_of=as_of,cache_writes=cache_writes)
         row = store.connection.execute('SELECT successful_at FROM strava_sync_state WHERE singleton=1').fetchone()
         synced = datetime.fromtimestamp(row[0],timezone.utc) if row else None
         fresh = bool(synced and synced <= as_of and synced.astimezone(zone).date()==today)

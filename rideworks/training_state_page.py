@@ -1,9 +1,8 @@
 """Training State in the established local shell."""
-from html import escape
 from .goals import query_zone
 from .training_state import training_state
 from .web import shell
-from .home import safe_json
+from .home import fitness_chart, safe_json
 
 HELP = '''<details class="training-help"><summary>How these numbers work</summary>
 <p>Fitness and Fatigue are 42- and 7-day exponential models of selected daily cycling stress. Form is yesterday’s Fitness minus yesterday’s Fatigue: the modeled start of the selected day. These describe your own training trend, rather than measured physiology or readiness.</p>
@@ -47,6 +46,4 @@ def training_page(store, query=''):
 
 def training_home(store, zone_name):
     data=training_state(store,zone_name)
-    day=data['days'][-1] if data['days'] else None
-    values=(f'Fitness {day["fitness"]:.1f} · Fatigue {day["fatigue"]:.1f} · Form {day["form"]:.1f}' if day else 'No usable training stress yet')
-    return f'''<section class="panel home-training"><div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div><p>{escape(values)}</p><p>42-/7-day modeled trend · Form at start of day · selected cycling stress</p></section>'''
+    return f'''<section class="panel home-training home-trend"><div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div><p class="home-trend-subtitle">Fitness (42-day) · Last 6 months</p>{fitness_chart(data)}<p class="home-trend-note">Modeled cycling stress · missing stress can understate load.</p></section>'''

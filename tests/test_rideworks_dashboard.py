@@ -245,7 +245,8 @@ class DashboardTests(TestCase):
             self.assertIn('data-label="'+label+'"',html)
         self.assertIn('Last sync:',html)
         self.assertIn('No current eligible result.',html)
-        self.assertIn('Form at start of day',html)
+        self.assertIn('Fitness (42-day) · Last 6 months',html)
+        self.assertNotIn('Form at start of day',html)
         self.assertNotIn('home-redesign',self.app.get('/activities')[2].decode())
 
     def test_actual_file_distance_precedence_api_fallback_and_metadata_only(self):

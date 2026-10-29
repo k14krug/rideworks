@@ -668,8 +668,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-quick-fact strong.metric-unavailable { font-size: 19px; }
 .home-redesign .home-quick-fact :is(p, a) { font-size: 11px; }
 .home-redesign .home-quick-fact > a { display: block; margin-top: 4px; }
-.home-redesign .home-layout { grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; }
-.home-redesign .home-companions { display: grid; gap: 16px; min-width: 0; }
+.home-redesign .home-layout { grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; align-items: stretch; }
+.home-redesign .home-companions { display: grid; grid-template-rows: repeat(2, minmax(min-content, 1fr)); gap: 16px; min-width: 0; }
 .home-redesign .home-panel-heading { flex-wrap: wrap; margin-bottom: 14px; gap: 6px 12px; }
 .home-redesign .home-panel-heading a { font-size: 12px; }
 .home-redesign .home-recent-table th:first-child { width: 21%; }
@@ -679,8 +679,15 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-recent-table time { white-space: normal; }
 .home-redesign .home-recent-table :is(th, td) { padding: 12px 6px; }
 .home-redesign .home-recent-table td:nth-child(2) a { font-weight: 600; }
-.home-redesign .home-training > p:first-of-type { font-size: 16px; font-weight: 650; color: var(--navy); }
-.home-redesign .home-training > p:last-of-type { font-size: 12px; }
+.home-redesign .home-trend { display: flex; flex-direction: column; }
+.home-redesign .home-trend .home-panel-heading { margin-bottom: 8px; }
+.home-redesign .home-trend > .home-trend-subtitle { font-size: 12px; margin: 0 0 8px; }
+.home-redesign .home-trend > .home-trend-note { font-size: 11px; line-height: 1.4; margin: 8px 0 0; }
+.home-redesign .home-trend-chart { flex: 1; min-height: 110px; }
+.home-redesign .home-trend-chart text { font-size: 20px; }
+.home-redesign .home-trend-chart .home-power-line { stroke-width: 2; vector-effect: non-scaling-stroke; }
+.home-redesign .home-trend-chart .home-chart-endpoint text { font-size: 24px; font-weight: 650; fill: var(--blue); }
+.home-redesign .home-chart-endpoint { pointer-events: none; }
 .home-redesign .home-progress-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; align-items: start; margin-top: 16px; }
 .home-redesign .home-goal-progress { border-top: 1px solid var(--border); margin: 0; }
 .home-redesign .home-goal-progress > strong { display: block; font-size: 28px; margin: 12px 0; font-variant-numeric: tabular-nums; }
@@ -701,7 +708,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .home-quick-fact:nth-child(n) { border: 0; border-right: 1px solid var(--border); }
   .home-redesign .home-quick-fact:last-child { border-right: 0; }
   .home-redesign .home-layout, .home-redesign .home-progress-layout { grid-template-columns: minmax(0, 1fr); }
-  .home-redesign .home-companions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-redesign .home-companions { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
 }
 @media (max-width: 620px) {
   .home-redesign { margin-top: 0; }
@@ -720,6 +727,9 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .home-companions { grid-template-columns: minmax(0, 1fr); }
   .home-redesign .home-chart { overflow: visible; }
   .home-redesign .home-chart text { font-size: 20px; }
+  .home-redesign .home-trend-chart text { font-size: 26px; }
+  .home-redesign .home-trend-chart .home-axis-year.home-axis-intermediate { display: none; }
+  .home-redesign .home-trend-chart .home-chart-endpoint text { font-size: 28px; }
   .home-redesign .home-power-line { stroke-width: 3; }
   .home-redesign .home-recent-table, .home-redesign .home-recent-table :is(tbody, tr, td) { display: block; width: 100%; }
   .home-redesign .home-recent-table thead { display: none; }

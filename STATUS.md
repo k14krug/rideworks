@@ -1,9 +1,9 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** **HOME-UI-02 — Home Training State and 20-minute Performance trend cards**, [JIT](docs/tasks/HOME-UI-02.md).
-**State:** **pending**, ready for Dex after refreshing `main`. HOME-UI-01 is completed.
-**Owner-approved target:** Training State: actual six-month Fitness (42-day) line, dynamic Y-axis, right-endpoint value, no Fitness/Fatigue/Form Home tiles. Performance: actual 12-month rolling 42-day best eligible 20-minute power, distinct from latest eligible ride. Both cards sit beside Recent Activities; the Owner shares the private mockup with Dex.
-**Execution:** `/TASK HOME-UI-02` or `/AUTOTASK HOME-UI-02`. Preserve existing calculations, source rules and other Home behavior. Dex implements, verifies, opens PR, and stops for Analyst technical review and Owner running-UI acceptance.
-**Previous task:** OPS-03 **done** by explicit Owner direction 2026-10-28; [issue #44](https://github.com/k14krug/rideworks/issues/44) closed and [PR #49](https://github.com/k14krug/rideworks/pull/49) merged. Historical evidence gaps remain documented in the OPS-03 task record, not pending work.
-**Next action:** Dex starts HOME-UI-02 only when invoked, after reading the JIT and private visual reference. No production work; Phase 6 remains deferred.
+**Current task:** None active. **HOME-UI-02 is done** — Analyst technical acceptance on [PR #50](https://github.com/k14krug/rideworks/pull/50), followed by the Owner's explicit direction to close on 2026-10-28.
+**State:** **done**. The six-month Fitness (42-day) Home trend and 12-month rolling-best 20-minute Performance trend were implemented with accepted source rules, responsive layout, and source/coverage explanations. HOME-UI-01 remains completed.
+**Verification:** Dex reported 509 passing Python tests, 543 Chromium assertions at five viewport widths, and six fixed-clock preservation comparisons. Analyst reviewed implementation and synthetic evidence without independently rerunning tests. Owner closure is explicit; no independently observed real-rider visual check is asserted. [Evidence](reports/HOME-UI-02/implementation.md).
+**PR:** [#50 — Home Fitness and rolling power cards](https://github.com/k14krug/rideworks/pull/50). Mechanical merge may follow acceptance; it is not outstanding product or review work.
+**Previous task:** OPS-03 remains **done** under Owner direction, with historical evidence gaps documented; do not reopen.
+**Next action:** No active task or automatic next task. Await the Owner's next instruction. No deployment or production access authorized. Phase 6 remains deferred.

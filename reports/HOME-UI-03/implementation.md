@@ -1,6 +1,6 @@
 # HOME-UI-03 — Mileage by Year
 
-Status: ready for HARD — Analyst technical review. HARD — Owner running-UI visual approval follows. The task remains `in_progress`; no production rollout is authorized.
+Status: ready for HARD — Analyst technical review in [draft PR #51](https://github.com/k14krug/rideworks/pull/51). HARD — Owner running-UI visual approval follows. The task remains `in_progress`; no production rollout is authorized.
 
 ## Implementation
 

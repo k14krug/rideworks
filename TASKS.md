@@ -17,13 +17,13 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RE-03 — Fixed-color Strava Relative Effort numbers
 
-**Status:** in_progress — implementation and local verification complete; draft PR awaits Analyst and Owner review. [Analyst JIT](docs/tasks/RE-03.md).
+**Status:** done — Analyst technical acceptance and Owner UI and fixed-threshold approval on 2026-10-30. [PR #54](https://github.com/k14krug/rideworks/pull/54). [Analyst JIT](docs/tasks/RE-03.md).
 
-**Purpose:** Replace RE-02's rolling-history effort dots/labels on Home, Activities and Activity Review with Strava API `suffer_score` numbers, colored by fixed numeric score bands. Historical completeness is not a requirement. The fixed-band proposal is provisional until Owner running-UI acceptance.
+**Purpose:** Replace RE-02's rolling-history effort dots/labels on Home, Activities and Activity Review with Strava API `suffer_score` numbers, colored by Owner-approved fixed numeric score bands. Historical completeness is not a requirement.
 
 **Scope:** Safely admit current API `suffer_score` evidence, verify limited recent availability, display the same number/fixed color across three surfaces, show honest unavailable values, and preserve all RideWorks Fitness/Fatigue/Form, modeled stress and other accepted UI behavior. Bounded targeted recent refresh only; no years-long backfill.
 
-**Execution:** `/TASK only`, task branch from refreshed `main`, draft PR, HARD — Analyst and HARD — Owner before acceptance/merge. No deployment authorized.
+**Execution:** `/TASK only`. Analyst and Owner review gates are complete. No deployment authorized.
 
 **Acceptance:** See `docs/tasks/RE-03.md` for candidate bands, targeted checks, tests, browser verification, stop conditions and gates.
 

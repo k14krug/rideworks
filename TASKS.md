@@ -31,7 +31,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-04 — Home top-row Training Overview
 
-**Status:** in_progress — implementing the approved Training Overview; [Analyst JIT](docs/tasks/HOME-UI-04.md).
+**Status:** done — HOME-UI-04 / [PR #55](https://github.com/k14krug/rideworks/pull/55) merged to `main` on 2026-10-30. Owner described the delivered page as completed and looking nice; Analyst reviewed source and [implementation evidence](reports/HOME-UI-04/implementation.md) as the accepted baseline for HOME-UI-05 (Dex reported 548 Python and 67 synthetic browser checks; not independently rerun). No deployment authorized.
 
 **Purpose:** Replace the old four-fact Home top summary with one compact **Training Overview** showing (1) current 42-day Fitness and real 7-day Fitness-point change, (2) current effective dated FTP with history link and appropriately labeled previous-entry comparison if supported, and (3) last-seven-day cycling mileage with real prior-seven-day comparison. Remove both 20-minute power values from the top summary, not from the accepted dedicated Performance card.
 
@@ -40,6 +40,20 @@ Only one implementation/research task should normally be `in_progress`.
 **Execution:** `/TASK or /AUTOTASK`, after RE-03/any existing in-progress work is cleared according to `AGENTS.md`; task branch and draft PR. Stop at HARD — Analyst technical review and HARD — Owner running-UI visual acceptance. No production deployment authorized.
 
 **Acceptance:** See [HOME-UI-04 JIT](docs/tasks/HOME-UI-04.md) for actual data-source contracts, no-fabricated-data behavior, source/edge-case testing, responsive visual checks, preserving lower cards and review boundaries.
+
+---
+
+### HOME-UI-05 — Compact Training Overview and 90-day Power Bests
+
+**Status:** pending — Owner-approved two-column visual direction, 2026-10-30; [Analyst-authored JIT](docs/tasks/HOME-UI-05.md) committed to `main`.
+
+**Purpose:** Completely replace Home Training Overview's three giant metric tiles with a compact CURRENT STATUS (Fitness, FTP, Last 7 Days) and 90-DAY POWER BESTS (5s, 1m, 5m, 20m), using trusted existing cached Virtual Ride Power Curve data over the exact preceding 90 days. No extra desktop card height and no slowdown from full historical Power Curve validation on each Home request.
+
+**Scope:** One Home card's presentation plus a small read-only, date-bounded Power Curve summary. Preserve all model/source eligibility, dated FTP, the lower 42-day Performance chart, Next Recommended Ride, other cards and Plan behavior. No new tables, background work or production data access. The Owner provides the private mockup to Dex; do not commit it.
+
+**Execution:** `/TASK or /AUTOTASK` from refreshed `main`, draft PR, **HARD — Analyst** technical/performance review and **HARD — Owner** running-UI approval before merge. No deployment.
+
+**Acceptance:** See [HOME-UI-05 JIT](docs/tasks/HOME-UI-05.md) for accuracy, bounded-read semantics, stale/missing data, benchmark and responsive design requirements.
 
 ---
 

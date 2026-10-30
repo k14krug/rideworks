@@ -19,9 +19,13 @@ def day_label(day, today):
     return relative+' · '+date.fromisoformat(day).strftime('%a, %b %d, %Y')
 
 
-def ride_content(rec,*,reason=True):
+def ride_content(rec,*,reason=True,home_visual=False):
     explanation=f'<p class="recommended-reason">{escape(rec["reason"])}</p>' if reason else ''
-    return f'<h3 class="recommended-type">{escape(rec["category"])}</h3><p class="recommended-target">{escape(rec["duration"])} · {escape(rec["power"])}</p>{explanation}'
+    details=f'<h3 class="recommended-type">{escape(rec["category"])}</h3><p class="recommended-target">{escape(rec["duration"])} · {escape(rec["power"])}</p>'
+    if home_visual:
+        bike='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m5 17 4-8 4 8H5m8 0 3-6h-4l-2-3h3m2-2h3l1 11"/></svg>'
+        details=f'<div class="home-recommendation-highlight"><span class="home-recommendation-icon">{bike}</span><div>{details}</div></div>'
+    return details+explanation
 
 
 def completed_card(data,*,compact=False):
@@ -34,7 +38,7 @@ def completed_card(data,*,compact=False):
     return f'<section class="panel plan-completed"><h2>{heading} · <time datetime="{data["today"]}">{date.fromisoformat(data["today"]).strftime("%a, %b %d")}</time></h2>{"".join(rows)}</section>'
 
 
-def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',identifier='next-recommended',show_status=True,include_completed=True):
+def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',identifier='next-recommended',show_status=True,include_completed=True,home_visual=False):
     """The shared primary recommendation is future-dated once today is ridden."""
     rec=data['next_ride'];zone=data['timezone']
     controls=f'<a class="plan-open" href="/plan?{urlencode({"plan_tz":zone})}#rotation-heading">View Plan</a>'
@@ -49,7 +53,7 @@ def today_card(data,nonce=None,*,compact=False,label='Next Recommended Ride',ide
     actual=completed_card(data,compact=True) if compact and label=='Next Recommended Ride' and include_completed else ''
     # calendar-day, rather than recommendation-day, drives midnight reload.
     number=f'<span class="plan-number">Hard day #{rec["hard_number"]}</span>' if rec['hard_number'] else ''
-    return f'<section class="panel next-recommended" data-recommended-day="{data["today"]}" data-next-day="{rec["day"]}" aria-labelledby="{identifier}-heading"><h2 id="{identifier}-heading">{escape(label)}</h2><p class="next-ride-date"><time datetime="{rec["day"]}">{day_label(rec["day"],data["today"])}</time>{number}</p>{ride_content(rec)}{status}{controls}{actual}</section>'
+    return f'<section class="panel next-recommended" data-recommended-day="{data["today"]}" data-next-day="{rec["day"]}" aria-labelledby="{identifier}-heading"><h2 id="{identifier}-heading">{escape(label)}</h2><p class="next-ride-date"><time datetime="{rec["day"]}">{day_label(rec["day"],data["today"])}</time>{number}</p>{ride_content(rec,home_visual=home_visual)}{status}{controls}{actual}</section>'
 
 
 def correction_form(ride,nonce,zone,*,back='plan'):

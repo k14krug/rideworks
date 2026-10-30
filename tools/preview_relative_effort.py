@@ -14,6 +14,7 @@ from ftp_fixture import seed_ftp
 from rideworks.performance import rebuild_performance
 from rideworks.power_curve import rebuild_curves
 from rideworks.store import Store
+from rideworks.strava_api import apply_observations, normalize
 
 
 def main():
@@ -37,6 +38,10 @@ def main():
                 lap_start_time=start, lap_timestamp=start+1800,
                 event_timestamps=(start, start+1800), distance=15000, avg_power=120+i*9))
             store.import_fit(path)
+            observation = dict(id=800000+i, name=f'Synthetic effort {i}', type='Ride',
+                sport_type='VirtualRide', start_date=(now-timedelta(days=20-i*2)).isoformat(),
+                elapsed_time=1800, moving_time=1800, distance=15000, suffer_score=None if i == 9 else i*20)
+            apply_observations(store, [normalize(observation)], 999, int(now.timestamp()))
         rebuild_performance(store)
         rebuild_curves(store)
     print('Synthetic Relative Effort preview created; no personal source data used.')

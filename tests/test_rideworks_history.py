@@ -75,6 +75,18 @@ class HistoryTests(unittest.TestCase):
         for kind in ('Ride', 'Virtual Ride', 'Run'):
             self.assertEqual(browse(self.store, 'type=' + quote(kind))['count'], 25)
 
+    def test_compact_list_uses_home_columns_and_power_evidence(self):
+        path = self.root / 'synthetic.fit'
+        path.write_bytes(make_fit(avg_power=123))
+        self.store.import_fit(path)
+        html = self.html()
+        headings = re.search(r'<div class="activity-columns".*?</div>', html).group()
+        self.assertEqual(re.findall(r'<span>(.*?)</span>', headings),
+                         ['Date', 'Effort', 'Ride', 'Distance', 'Duration', 'Avg Pwr'])
+        self.assertIn('class="row-power" title="FIT session">123 W', html)
+        self.assertIn('Strava Relative Effort unavailable', html)
+        self.assertLess(html.index('class="row-effort"'), html.index('class="row-identity"'))
+
     def test_casefold_partial_literal_punctuation_and_search_old_observations(self):
         self.export([row(title='A&B <sun> 100%_Hill')])
         for q in ('a&b', '<SUN>', '100%_', 'hill'):

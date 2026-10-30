@@ -64,30 +64,17 @@ class WebTests(unittest.TestCase):
 
     def test_relative_effort_is_identical_in_list_and_review(self):
         activity_id, _ = self.import_activity()
-        from rideworks.relative_effort import classify
-        from datetime import date, timedelta
-        start = date(2026, 10, 10)
-        rides = [dict(activity_id=str(i),day=(start+timedelta(days=i)).isoformat(),
-                      timezone_unknown=False,
-                      selected=dict(method='power',status='calculated',stress=(i+1)*10),
-                      power=dict(intervals=[dict(seconds=3600)]))
-                 for i in range(6)]
-        rides.append(dict(activity_id=activity_id,day='2026-10-17',timezone_unknown=False,
-                          selected=dict(method='power',status='calculated',stress=30),
-                          power=dict(intervals=[dict(seconds=900)])))
-        rating = classify(rides)[activity_id]
-        self.assertEqual(rating['category'], 'High')
+        from rideworks.strava_effort import score
+        rating = score(70)
         with patch('rideworks.web.relative_effort_ratings', return_value={activity_id:rating}):
             _, listing = self.html('/activities')
             _, details = self.html(f'/activities/{activity_id}')
         self.assertIn('class="row-effort"', listing)
-        self.assertIn('effort-pill effort-high', listing)
+        self.assertIn('effort-score effort-high', listing)
         self.assertIn('class="panel relative-effort-card"', details)
-        self.assertIn('class="relative-effort-overall effort-high"', details)
-        self.assertIn('class="relative-effort-accent"', details)
-        self.assertEqual(details.count('class="effort-meter"'), 2)
-        self.assertIn('Training load', details)
-        self.assertIn('Intensity', details)
+        self.assertIn('Strava Relative Effort: 70, High', listing)
+        self.assertIn('Strava Relative Effort: 70, High', details)
+        self.assertNotIn('class="effort-meter"', details)
 
     def test_accepted_analysis_boundary_is_used(self):
         activity_id, analysis = self.import_activity()

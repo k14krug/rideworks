@@ -13,7 +13,7 @@ OVERLAP_DAYS = 3
 TEXT = {'name','type','sport_type','start_date','start_date_local','timezone','external_id','gear_id','visibility'}
 NUMBERS = {'utc_offset','elapsed_time','moving_time','distance','total_elevation_gain','workout_type',
            'upload_id','average_watts','weighted_average_watts','kilojoules','max_watts',
-           'average_heartrate','max_heartrate','average_cadence'}
+           'average_heartrate','max_heartrate','average_cadence','suffer_score'}
 BOOLEANS = {'trainer','commute','manual','device_watts','private','has_heartrate'}
 FIELDS = TEXT | NUMBERS | BOOLEANS | {'id'}
 
@@ -47,7 +47,7 @@ def normalize(observation):
     absolute(values.get('start_date'))
     if not (values.get('sport_type') or values.get('type')):
         raise SyncError('Strava SummaryActivity classification is missing')
-    for k in ('elapsed_time','moving_time','distance','total_elevation_gain'):
+    for k in ('elapsed_time','moving_time','distance','total_elevation_gain','suffer_score'):
         if values.get(k) is not None and values[k] < 0:
             raise SyncError('Invalid negative Strava activity summary')
     return values
@@ -108,7 +108,7 @@ def _strong_candidates(store, values):
     return candidates
 
 
-def apply_observations(store, observations, athlete_id, successful_at, *, established_targets=None):
+def apply_observations(store, observations, athlete_id, successful_at, *, established_targets=None, expected_current_sources=None):
     """Atomic observations; targeted maintenance must preserve the sync checkpoint."""
     if established_targets is not None and successful_at is not None:
         raise SyncError('Targeted enrichment cannot advance the forward-sync checkpoint')
@@ -124,6 +124,9 @@ def apply_observations(store, observations, athlete_id, successful_at, *, establ
             external = str(values['id'])
             established = {r[0] for r in store.connection.execute('SELECT DISTINCT activity_id FROM strava_export_sources WHERE external_id=?',(external,))}
             previous = store.connection.execute('SELECT * FROM strava_api_activities WHERE external_id=?',(external,)).fetchone()
+            if expected_current_sources is not None and (previous is None or
+                    previous['current_source_id'] != expected_current_sources.get(external)):
+                raise SyncError('Targeted summary changed during preflight; retry refresh')
             if previous:
                 established.add(previous['activity_id'])
             if len(established)>1:

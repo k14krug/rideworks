@@ -21,18 +21,11 @@ def miles(value):
     return 'Unavailable' if value is None else f'{value:,.1f} mi'
 
 
-def recent_ride_link(row, rating):
-    """Ride title with the same Relative Effort category used on Activities."""
-    label = rating['category'] if rating and rating.get('status') == 'available' else 'Not rated'
-    slug = rating['slug'] if rating and rating.get('status') == 'available' else 'unavailable'
+def recent_ride_link(row):
+    """Link the ride title to its activity review."""
     title = escape(row['title'])
     identity = escape(row['activity_id'], quote=True)
-    description = escape(f'Relative effort: {label}', quote=True)
-    accessible = escape(f'{row["title"]} · Relative effort: {label}', quote=True)
-    return (f'<a class="home-recent-ride" href="/activities/{identity}" '
-            f'title="{description}" aria-label="{accessible}">'
-            f'<span class="home-effort-dot effort-{slug}" aria-hidden="true"></span>'
-            f'{title}</a>')
+    return f'<a class="home-recent-ride" href="/activities/{identity}">{title}</a>'
 
 
 def weekly_chart(weeks):
@@ -296,12 +289,12 @@ def _home_page(store, query='', *, cache_writes):
     from .planning import plan
     from .planning_page import today_card
     advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of']),cache_writes=cache_writes),compact=True)
-    from .relative_effort import for_store as relative_effort_ratings
-    ratings = relative_effort_ratings(store, cache_writes=cache_writes[0]) if data['recent'] else {}
+    from .strava_effort import chip, for_store as relative_effort_ratings
+    ratings = relative_effort_ratings(store) if data['recent'] else {}
     rows = []
     for row in data['recent']:
-        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride">{recent_ride_link(row, ratings.get(row['activity_id']))}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
-    recent = f'<div class="home-recent-list"><table class="home-recent-table"><thead><tr><th>Date</th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>' if rows else '<p class="empty">No cycling Activities yet.</p>'
+        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td class="home-effort">{chip(ratings.get(row['activity_id']))}</td><td data-label="Ride">{recent_ride_link(row)}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
+    recent = f'<div class="home-recent-list"><table class="home-recent-table"><thead><tr><th>Date</th><th><abbr title="Strava Relative Effort">Effort</abbr></th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>' if rows else '<p class="empty">No cycling Activities yet.</p>'
     week_rows = ''.join(f'<tr><td>{w["start"]}</td><td>{miles(w["miles"])}</td><td>{miles(g["needed_miles_per_week"])}</td><td>{w["file_count"]}</td><td>{w["api_count"]}</td><td>{w["distance_unavailable"]}</td></tr>' for w,g in zip(data['weeks'],data['weekly_goal']))
     details = [('Browser timezone',zone.key),('YTD start',ytd['start']),('As of',data['as_of']),
         ('YTD contributing Activities',ytd['contributing_activities']),('YTD file distance',miles(ytd['file_miles'])),

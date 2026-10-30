@@ -722,11 +722,26 @@ latest stored export calendar day, minus **three days**. This is a conservative
 calendar overlap for offset-unknown export dates. Later `after` values use the
 last successful request cutoff minus three days. `before` is the current sync's
 start time; that cutoff becomes the checkpoint only after observations commit.
-Missing/invalid boundaries stop without a historical fallback. The only activity
-endpoint is `GET /api/v3/athlete/activities`, with 100 items per page and a
+Missing/invalid boundaries stop without a historical fallback. Normal sync uses `GET /api/v3/athlete/activities`, with 100 items per page and a
 20-page safety bound. Empty/short pages finish; size/shape/rate/auth/network
 failures leave observations and checkpoint unchanged. Tokens may legitimately
 rotate before a failed sync. Reports contain aggregate counts and rate headers.
+
+Existing stores need an explicit one-time refresh to acquire Strava Relative Effort
+scores for already-associated recent rides. Restarting the app does not populate
+them, and ordinary forward sync does not fill older stored rides. Use the same
+data directory as the running app:
+
+```bash
+.venv/bin/python -m rideworks --data-dir '<same-data-dir>' refresh-strava-effort
+```
+
+The refresh requests at most 30 cycling
+summaries from the last 60 days, skips responses with non-score changes, reports
+aggregate counts, and does not advance the forward-sync checkpoint. It converges
+Performance and Power Curve caches after updating summaries. This is separate
+from modeled training stress; unavailable scores remain unavailable. Future rides
+continue to receive scores through the existing manually initiated `sync-strava`.
 
 API observations retain only the documented allowlist, retrieval timestamp,
 mapping version and source association. Identical observations reuse the Source;

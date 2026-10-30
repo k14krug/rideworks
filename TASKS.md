@@ -15,6 +15,20 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### RE-03 — Fixed-color Strava Relative Effort numbers
+
+**Status:** pending — Owner approved direction on 2026-10-29; [Analyst JIT](docs/tasks/RE-03.md).
+
+**Purpose:** Replace RE-02's rolling-history effort dots/labels on Home, Activities and Activity Review with Strava API `suffer_score` numbers, colored by fixed numeric score bands. Historical completeness is not a requirement. The fixed-band proposal is provisional until Owner running-UI acceptance.
+
+**Scope:** Safely admit current API `suffer_score` evidence, verify limited recent availability, display the same number/fixed color across three surfaces, show honest unavailable values, and preserve all RideWorks Fitness/Fatigue/Form, modeled stress and other accepted UI behavior. Bounded targeted recent refresh only; no years-long backfill.
+
+**Execution:** `/TASK only`, task branch from refreshed `main`, draft PR, HARD — Analyst and HARD — Owner before acceptance/merge. No deployment authorized.
+
+**Acceptance:** See `docs/tasks/RE-03.md` for candidate bands, targeted checks, tests, browser verification, stop conditions and gates.
+
+---
+
 ### RE-02 — Relative Effort UI verification and integration
 
 **Status:** done — Analyst technical acceptance and Owner visual/closeout acceptance on 2026-10-29. [PR #53](https://github.com/k14krug/rideworks/pull/53) merged to `main` as `178e8065ffc780118b44f3e04b73a481e472ed65`. Relative Effort `relative-effort-v1` is unchanged; no additional calibration research required. The Owner-requested Home Recent Activities compacting removes ride-type sublines and fits more complete rows while preserving colored dots.

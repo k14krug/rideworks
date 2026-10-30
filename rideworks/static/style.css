@@ -644,16 +644,23 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-heading { align-items: end; margin-bottom: 16px; gap: 8px 20px; }
 .home-redesign .home-heading p { font-size: 12px; }
 .home-redesign .home-sync { max-width: 50%; text-align: right; }
-.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-bottom: 16px; }
+.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; margin-bottom: 16px; }
 .home-redesign .next-recommended { margin: 0; }
 .home-redesign .next-recommended h2 { font-size: 16px; }
-.home-redesign .recommended-type { font-size: 25px; margin: 8px 0 4px; }
-.home-redesign .recommended-target { font-size: 13px; font-weight: 650; }
+.home-redesign .home-recommendation-highlight { display: flex; align-items: center; gap: 16px; }
+.home-redesign .home-recommendation-highlight > div { min-width: 0; }
+.home-redesign .home-recommendation-icon { display: grid; place-items: center; flex: 0 0 56px; width: 56px; height: 56px; border-radius: 50%; background: #e8f1ff; color: var(--blue); }
+.home-redesign .home-recommendation-icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.home-redesign .recommended-type { font-size: 25px; margin: 0 0 4px; }
+.home-redesign .recommended-target { font-size: 13px; font-weight: 650; margin: 0; }
 .home-redesign .recommended-reason { font-size: 12px; margin: 10px 0; }
 .home-redesign .plan-caveat { font-size: 11px; margin: 8px 0; }
 .home-redesign .plan-open { display: inline-block; font-size: 12px; font-weight: 650; margin-top: 6px; }
 .home-redesign .next-recommended .plan-completed { padding-top: 10px; margin-top: 12px; box-shadow: none; border-radius: 0; }
 .home-redesign .plan-completed :is(h2, h3) { font-size: 13px; }
+.home-redesign .plan-completed article { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 6px; }
+.home-redesign .plan-completed article :is(h3, p) { margin: 0; }
+.home-redesign .plan-completed article a { font-size: 12px; }
 .home-redesign .home-summary > h2 { margin: 0 0 14px; }
 .home-redesign .home-overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .home-redesign .home-overview-metric { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; padding: 0 16px; }

@@ -8,7 +8,7 @@ from time import perf_counter
 
 from .analysis import best_20_minute_power
 from .errors import IntegrityError
-from .history import presentation
+from .history import _date, presentation
 from .performance import classification, file_power_present, input_signature, _check_extractions
 from .performance_view import months_before
 from .training_state import timer_scope
@@ -293,6 +293,66 @@ def curve_history(store):
             if result['points']:
                 profiles.append(result)
         return dict(profiles=profiles,results=results,pending=pending,evaluated=len(snapshots),method=METHOD,grid=GRID)
+
+
+def recent_bests(store, as_of):
+    """Read current cached profiles in [as_of - 90 days, as_of), without rebuilding.
+
+    Prefilter every possible presentation date, not just the cached profile's
+    date: a newly selected file/API/CSV source may have moved an activity into
+    the window. A two-day coarse margin covers all legal UTC offsets; unusual
+    ISO forms bypass the coarse filter and are parsed by the same helper as
+    presentation. The definitive source preference is applied after hydration.
+    """
+    if as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise ValueError('as_of must be timezone aware')
+    end = as_of.astimezone(timezone.utc)
+    start = end - timedelta(days=90)
+    lower = (start - timedelta(days=2)).date().isoformat()
+    upper = (end + timedelta(days=2)).date().isoformat()
+    query = '''SELECT activity_id, stamp FROM (
+        SELECT f.activity_id, s.start_time AS stamp FROM sources f
+        JOIN extractions e ON e.source_id=f.source_id
+        JOIN sessions s ON s.extraction_id=e.extraction_id
+        UNION ALL
+        SELECT s.activity_id, json_extract(s.evidence_json, '$.start_date') AS stamp
+        FROM strava_api_sources s JOIN strava_api_activities a ON a.current_source_id=s.source_id
+        UNION ALL
+        SELECT activity_id, json_extract(evidence_json, '$.date_parsed') AS stamp FROM strava_export_sources
+    ) WHERE stamp IS NOT NULL AND
+      (stamp NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+       OR substr(stamp,1,10) BETWEEN ? AND ?)'''
+    with store._transaction():
+        possible = set()
+        scanned = 0
+        for row in store.connection.execute(query, (lower, upper)):
+            scanned += 1
+            stamp = _date(row['stamp'])
+            if stamp is not None and stamp.tzinfo is not None and start <= stamp.astimezone(timezone.utc) < end:
+                possible.add(row['activity_id'])
+        profiles, pending, validated = [], 0, 0
+        for identity in possible:
+            snapshot = store.activity_history(identity)[0]
+            metadata = presentation(snapshot)
+            if not metadata['absolute_time']:
+                continue
+            stamp = datetime.fromisoformat(metadata['start_time']).astimezone(timezone.utc)
+            if not start <= stamp < end or classification(snapshot)['activity_type'] != 'Virtual Ride':
+                continue
+            row = store.connection.execute('SELECT * FROM power_curve_profiles WHERE activity_id=?', (identity,)).fetchone()
+            validated += 1
+            if row is None or row['method'] != METHOD or row['input_signature'] != signature(store, snapshot):
+                pending += 1
+                continue
+            result = json.loads(row['result_json'])
+            if result.get('method') != METHOD or result.get('policy') != POLICY or result.get('grid') != GRID:
+                pending += 1
+                continue
+            result['activity'] = {k:metadata[k] for k in ('activity_id','title','start_time','absolute_time','date_day')}
+            profiles.append(result)
+        best = envelope(profiles, start=start, end=end)
+        return dict(points={p['duration_seconds']:p for p in best['points'] if p['duration_seconds'] in (5,60,300,1200)},
+                    pending=pending, scanned=scanned, candidates=len(possible), validated=validated)
 
 
 def converge_curves(store):

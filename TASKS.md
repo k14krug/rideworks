@@ -45,7 +45,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-05 — Compact Training Overview and 90-day Power Bests
 
-**Status:** pending — Owner-approved two-column visual direction, 2026-10-30; [Analyst-authored JIT](docs/tasks/HOME-UI-05.md) committed to `main`.
+**Status:** in_progress — implementation and local verification complete; ready for Analyst review. [Analyst-authored JIT](docs/tasks/HOME-UI-05.md).
 
 **Purpose:** Completely replace Home Training Overview's three giant metric tiles with a compact CURRENT STATUS (Fitness, FTP, Last 7 Days) and 90-DAY POWER BESTS (5s, 1m, 5m, 20m), using trusted existing cached Virtual Ride Power Curve data over the exact preceding 90 days. No extra desktop card height and no slowdown from full historical Power Curve validation on each Home request.
 

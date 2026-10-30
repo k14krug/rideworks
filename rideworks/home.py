@@ -21,6 +21,44 @@ def miles(value):
     return 'Unavailable' if value is None else f'{value:,.1f} mi'
 
 
+def training_overview(data, training, current_ftp):
+    """Present existing model, dated FTP and mileage values without deriving them."""
+    days = [d for d in training['days'] if d['day'] <= data['today']
+            and d.get('fitness') is not None and isfinite(d['fitness'])]
+    latest = days[-1] if days else None
+    fitness = f'{latest["fitness"]:,.1f}' if latest else 'Unavailable'
+    change = latest.get('changes7', {}).get('fitness') if latest else None
+    if change is not None and isfinite(change):
+        delta = f'{change:+.1f}' if round(change, 1) else '0.0'
+        fitness_note = f'{delta} points vs. 7 days ago'
+    else:
+        fitness_note = '7-day change unavailable'
+    if latest and latest['day'] != data['today']:
+        fitness_note = f'As of {escape(latest["day"])} · {fitness_note.replace("ago", "earlier")}'
+    if latest and latest.get('early_history_provisional'):
+        fitness_note += ' · Early history provisional'
+    ftp = current_ftp.get('value')
+    ftp_text = f'{ftp:,} W' if ftp is not None else 'Unavailable'
+    last, previous = data['last7']['miles'], data['prior7']['miles']
+    if last is None or previous is None:
+        mileage_note = 'Previous 7-day comparison unavailable'
+    else:
+        difference = last - previous
+        mileage_note = (f'{difference:+,.1f} mi vs. previous 7 days' if round(difference, 1)
+                        else '0.0 mi vs. previous 7 days')
+    if data['last7'].get('distance_unavailable') or data['prior7'].get('distance_unavailable'):
+        mileage_note += ' · Some distances unavailable'
+    def metric(name, title, symbol, value, note, subtitle=''):
+        unavailable = ' class="metric-unavailable"' if value == 'Unavailable' else ''
+        return f'<div class="home-overview-metric" id="home-{name}">{icon(symbol)}<div><h3>{title}</h3>{subtitle}<strong{unavailable}>{value}</strong>{note}</div></div>'
+    fitness_html = metric('fitness', 'Training State', 'heart', fitness,
+                          f'<p>{fitness_note}</p><a href="/training-state">View Training State</a>',
+                          '<p class="home-overview-subtitle">Fitness (42-day)</p>')
+    ftp_html = metric('ftp', 'FTP', 'power', ftp_text, '<a href="/performance/ftp">View FTP History</a>')
+    mileage_html = metric('last7', 'Last 7 Days', 'distance', miles(last), f'<p>{mileage_note}</p>')
+    return f'<section class="panel home-summary" aria-labelledby="home-overview-title"><h2 id="home-overview-title">Training Overview</h2><div class="home-overview-grid">{fitness_html}{ftp_html}{mileage_html}</div></section>'
+
+
 def recent_ride_link(row):
     """Link the ride title to its activity review."""
     title = escape(row['title'])
@@ -262,22 +300,6 @@ def _home_page(store, query='', *, cache_writes):
         else:
             progress = '<p>Remaining miles unavailable; no supported YTD distance.</p>'
     annual_chart = annual_mileage_chart(data['annual_series'], data['today'])
-    def card(name,title,value,note,symbol):
-        missing = ' class="metric-unavailable"' if value == 'Unavailable' else ''
-        return f'<div class="home-quick-fact" id="home-{name}"><h2>{icon(symbol)}{title}</h2><strong{missing}>{value}</strong>{note}</div>'
-    weekly_note = ''
-    if data['last7']['miles'] is not None and data['prior7']['miles'] is not None:
-        difference = data['last7']['miles']-data['prior7']['miles']
-        weekly_note = f'<p>{abs(difference):,.1f} mi {"more" if difference>0 else "less"} than previous 7 days</p>' if round(difference,1) else '<p>Same mileage as previous 7 days</p>'
-    recent_mileage = card('this-week','This Week',miles(data['this_week']['miles']),
-                          '<p>Monday through today · actual cycling miles</p>','distance')
-    recent_mileage += card('last7','Last 7 Days',miles(data['last7']['miles']),weekly_note,'distance')
-    def power_summary(point):
-        if point is None:
-            return 'Unavailable','<p>No current eligible result.</p>'
-        return f'{point["rounded_watts"]} W',f'<p>{browser_time(point,compact=True)}</p><a href="/activities/{point["activity_id"]}">{escape(point["title"])}</a>'
-    current, current_note = power_summary(performance['current'])
-    latest, latest_note = power_summary(performance['latest'])
     comparison = performance['recent']
     insights = []
     if comparison and comparison['available']:
@@ -288,7 +310,8 @@ def _home_page(store, query='', *, cache_writes):
     # Defer both cache batches until the full response has been rendered.
     from .planning import plan
     from .planning_page import today_card
-    advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of']),cache_writes=cache_writes),compact=True)
+    plan_data = plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of']),cache_writes=cache_writes)
+    advisor = today_card(plan_data,compact=True)
     from .strava_effort import chip, for_store as relative_effort_ratings
     ratings = relative_effort_ratings(store) if data['recent'] else {}
     rows = []
@@ -314,12 +337,15 @@ def _home_page(store, query='', *, cache_writes):
                     ('Needed average miles per week',goal['needed_miles_per_week'])]
     sync_status = 'Last sync: '+local_time(data['successful_sync'],compact=True) if data['successful_sync'] else 'No successful sync recorded'
     sync = f'<p class="home-sync">{sync_status} · <a href="/settings">Settings</a></p>'
+    from .training_state import training_state
     from .training_state_page import training_home
-    training = training_home(store, zone.key, cache_writes=cache_writes[0])
+    training_data = training_state(store, zone.key, as_of=datetime.fromisoformat(data['as_of']), cache_writes=cache_writes[0])
+    training = training_home(store, zone.key, data=training_data)
+    overview = training_overview(data, training_data, plan_data['current_ftp'])
     compact = {k:v for k,v in data.items() if k!='recent'}
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
     return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>
-<div class="home-lead"><section class="panel home-summary" id="home-recent-mileage" aria-label="Recent mileage and eligible power"><div class="home-quick-grid">{recent_mileage}{card('current','Current 42-day best',current,current_note,'power')}{card('latest','Latest eligible 20-minute ride',latest,latest_note,'power')}</div></section>{advisor}</div>
+<div class="home-lead">{overview}{advisor}</div>
 <div class="home-layout"><section class="panel home-recent"><div class="home-panel-heading"><h2>Recent Activities</h2><a href="/activities">View all Activities</a></div>{recent}</section><div class="home-companions">{training}<section class="panel home-performance home-trend"><div class="home-panel-heading"><h2>20-minute Performance</h2><a href="/performance">View Performance</a></div><p class="home-trend-subtitle">Best 20-minute power · Last 12 months</p>{power_chart(performance,zone)}<p class="home-trend-note">Rolling 42-day best · current Performance-v2 evidence. Gaps mean no eligible result.</p></section></div></div>
 <div class="home-progress-layout"><section class="panel home-mileage"><div class="home-panel-heading"><h2>Mileage Progress</h2><span>Last 12 weeks · miles</span></div>{weekly_chart(data['weekly_goal'])}<p class="home-mileage-legend"><span class="legend-actual">Bars = actual miles</span><span class="legend-needed">Line = needed average/week</span></p><p>Outlined current week is partial · actual Monday-through-today mileage.</p></section><section class="panel home-goal-progress"><h2>Mileage by Year</h2>{annual_chart}<div class="home-annual-goal">{progress}</div></section></div>
 <section class="panel home-supporting" aria-labelledby="home-supporting-title"><h2 id="home-supporting-title">Context &amp; supporting details</h2>{insight_panel}<details class="home-weekly-details"><summary>Weekly distances</summary><p>Monday–Sunday weeks; outlined current bar is actual Monday-through-today mileage. Needed pace uses remaining mileage and calendar days after each Sunday; current pace uses today. Required points apply to the goal year.</p><div class="home-evidence-table"><table><thead><tr><th>Week of</th><th>Actual mi</th><th>Needed mi/week</th><th>File</th><th>API</th><th>Missing</th></tr></thead><tbody>{week_rows}</tbody></table></div></details>

@@ -644,7 +644,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-heading { align-items: end; margin-bottom: 16px; gap: 8px 20px; }
 .home-redesign .home-heading p { font-size: 12px; }
 .home-redesign .home-sync { max-width: 50%; text-align: right; }
-.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; align-items: start; margin-bottom: 16px; }
+.home-redesign .home-lead { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-bottom: 16px; }
 .home-redesign .next-recommended { margin: 0; }
 .home-redesign .next-recommended h2 { font-size: 16px; }
 .home-redesign .recommended-type { font-size: 25px; margin: 8px 0 4px; }
@@ -654,17 +654,19 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .plan-open { display: inline-block; font-size: 12px; font-weight: 650; margin-top: 6px; }
 .home-redesign .next-recommended .plan-completed { padding-top: 10px; margin-top: 12px; box-shadow: none; border-radius: 0; }
 .home-redesign .plan-completed :is(h2, h3) { font-size: 13px; }
-.home-redesign .home-summary { padding: 0 10px; }
-.home-redesign .home-quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.home-redesign .home-quick-fact { min-width: 0; padding: 14px 14px; }
-.home-redesign .home-quick-fact:nth-child(odd) { border-right: 1px solid var(--border); }
-.home-redesign .home-quick-fact:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
-.home-redesign .home-quick-fact h2 { display: flex; align-items: start; gap: 6px; font-size: 12px; letter-spacing: 0; font-weight: 550; color: var(--muted); }
-.home-redesign .home-quick-fact .icon { width: 16px; height: 16px; color: var(--blue); }
-.home-redesign .home-quick-fact strong { display: block; font-size: 25px; line-height: 1.25; margin: 6px 0; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
-.home-redesign .home-quick-fact strong.metric-unavailable { font-size: 19px; }
-.home-redesign .home-quick-fact :is(p, a) { font-size: 11px; }
-.home-redesign .home-quick-fact > a { display: block; margin-top: 4px; }
+.home-redesign .home-summary > h2 { margin: 0 0 14px; }
+.home-redesign .home-overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-redesign .home-overview-metric { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; padding: 0 16px; }
+.home-redesign .home-overview-metric:first-child { padding-left: 0; }
+.home-redesign .home-overview-metric:last-child { padding-right: 0; }
+.home-redesign .home-overview-metric + .home-overview-metric { border-left: 1px solid var(--border); }
+.home-redesign .home-overview-metric h3 { margin: 0; font-size: 14px; line-height: 1.35; font-weight: 650; color: var(--muted); }
+.home-redesign .home-overview-metric .icon { width: 24px; height: 24px; color: var(--blue); }
+.home-redesign .home-overview-metric strong { display: block; font-size: 30px; line-height: 1.25; margin: 10px 0; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.home-redesign .home-overview-metric strong.metric-unavailable { font-size: 16px; }
+.home-redesign .home-overview-metric :is(p, a) { font-size: 12px; line-height: 1.4; }
+.home-redesign .home-overview-metric .home-overview-subtitle { margin-top: 3px; }
+.home-redesign .home-overview-metric a { display: block; margin-top: 5px; }
 .home-redesign .home-layout { grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 16px; align-items: stretch; }
 .home-redesign .home-companions { display: grid; grid-template-rows: repeat(2, minmax(min-content, 1fr)); gap: 16px; min-width: 0; }
 .home-redesign .home-recent { display: flex; flex-direction: column; min-height: 0; contain: size; }
@@ -725,11 +727,6 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 @media (max-width: 1100px) {
   .home-redesign .panel { padding: 20px; }
   .home-redesign .home-lead { grid-template-columns: minmax(0, 1fr); }
-  .home-redesign .home-summary { padding: 0 8px; }
-  .home-redesign .home-quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .home-redesign .home-quick-fact { padding: 14px 12px; }
-  .home-redesign .home-quick-fact:nth-child(n) { border: 0; border-right: 1px solid var(--border); }
-  .home-redesign .home-quick-fact:last-child { border-right: 0; }
   .home-redesign .home-layout, .home-redesign .home-progress-layout { grid-template-columns: minmax(0, 1fr); }
   /* Match the previous six-row synthetic card height in the stacked layout. */
   .home-redesign .home-recent { contain: none; max-height: 495px; }
@@ -743,14 +740,11 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .panel { padding: 18px; }
   .home-redesign .home-heading { display: block; margin-bottom: 14px; }
   .home-redesign .home-sync { max-width: none; text-align: left; margin-top: 8px; }
-  .home-redesign .home-summary { padding: 0 8px; }
-  .home-redesign .home-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .home-redesign .home-quick-fact { padding: 12px 10px; }
-  .home-redesign .home-quick-fact:nth-child(n) { border: 0; }
-  .home-redesign .home-quick-fact:nth-child(odd) { border-right: 1px solid var(--border); }
-  .home-redesign .home-quick-fact:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
-  .home-redesign .home-quick-fact strong { font-size: 22px; }
-  .home-redesign .home-quick-fact strong.metric-unavailable { font-size: 16px; }
+  .home-redesign .home-overview-metric { grid-template-columns: 16px minmax(0, 1fr); gap: 6px; padding: 0 8px; }
+  .home-redesign .home-overview-metric .icon { width: 16px; height: 16px; }
+  .home-redesign .home-overview-metric h3 { font-size: 12px; }
+  .home-redesign .home-overview-metric strong { font-size: 20px; }
+  .home-redesign .home-overview-metric strong.metric-unavailable { font-size: 14px; }
   .home-redesign .home-companions { grid-template-columns: minmax(0, 1fr); }
   /* The previous mobile card used taller stacked rows. */
   .home-redesign .home-recent { max-height: 1036px; }
@@ -768,6 +762,10 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .home-diagnostics dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 }
 
+@media (max-width: 420px) {
+  .home-redesign .home-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; }
+  .home-redesign .home-overview-metric:last-child { grid-column: 1 / -1; padding: 12px 0 0; border-left: 0; border-top: 1px solid var(--border); }
+}
 @media (max-width: 740px) {
   .home-redesign .home-recent-table, .home-redesign .home-recent-table :is(tbody, tr, td) { display: block; width: 100%; }
   .home-redesign .home-recent-table thead { display: none; }

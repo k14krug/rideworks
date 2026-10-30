@@ -158,7 +158,7 @@ class PerformanceChartTests(TestCase):
         self.assertEqual(endpoint(chart).find('text').text,'0 W')
         self.assertNotIn('<svg',power_chart(performance([],as_of),ZoneInfo('UTC')))
 
-    def test_home_keeps_quick_facts_distinct_and_card_links(self):
+    def test_home_keeps_performance_chart_and_card_links(self):
         with tempfile.TemporaryDirectory() as root,Store(root) as store:
             data=dashboard(store,'UTC',as_of=datetime(2026,10,28,18,tzinfo=timezone.utc))
             data['performance']=performance([point('a','2026-10-10T12:00:00+00:00',208.4),
@@ -168,9 +168,11 @@ class PerformanceChartTests(TestCase):
                 p.update(date_text=None)
             with patch('rideworks.home.dashboard',return_value=data):
                 html=home_page(store,'home_tz=UTC')
-        for name,watts in (('current',208),('latest',137)):
-            fact=re.search('id="home-'+name+'"(.*?)</div>',html,re.S)[1]
-            self.assertIn(f'<strong>{watts} W</strong>',fact)
+        summary=re.search(r'class="panel home-summary"[^>]*>(.*?)</section>',html,re.S)[1]
+        self.assertNotIn('208 W',summary)
+        self.assertNotIn('137 W',summary)
+        self.assertIn('208 W</text>',html)
+        self.assertIn('href="/activities/a"',html)
         self.assertIn('href="/performance">View Performance',html)
         self.assertIn('href="/training-state">View Training State',html)
         self.assertLess(html.index('class="panel home-training'),html.index('class="panel home-performance'))

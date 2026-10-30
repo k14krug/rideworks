@@ -44,6 +44,7 @@ def training_page(store, query=''):
     return shell('Training State',content,active='training',page_class='training-redesign')
 
 
-def training_home(store, zone_name, *, cache_writes=None):
-    data=training_state(store,zone_name,cache_writes=cache_writes)
+def training_home(store, zone_name, *, cache_writes=None, data=None):
+    if data is None:
+        data=training_state(store,zone_name,cache_writes=cache_writes)
     return f'''<section class="panel home-training home-trend"><div class="home-panel-heading"><h2>Training State</h2><a href="/training-state">View Training State</a></div><p class="home-trend-subtitle">Fitness (42-day) · Last 6 months</p>{fitness_chart(data)}<p class="home-trend-note">Modeled cycling stress · missing stress can understate load.</p></section>'''

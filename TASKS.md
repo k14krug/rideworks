@@ -31,7 +31,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-04 — Home top-row Training Overview
 
-**Status:** pending — Owner approved the selected private mockup direction on 2026-10-30; [Analyst JIT](docs/tasks/HOME-UI-04.md) committed.
+**Status:** in_progress — implementing the approved Training Overview; [Analyst JIT](docs/tasks/HOME-UI-04.md).
 
 **Purpose:** Replace the old four-fact Home top summary with one compact **Training Overview** showing (1) current 42-day Fitness and real 7-day Fitness-point change, (2) current effective dated FTP with history link and appropriately labeled previous-entry comparison if supported, and (3) last-seven-day cycling mileage with real prior-seven-day comparison. Remove both 20-minute power values from the top summary, not from the accepted dedicated Performance card.
 

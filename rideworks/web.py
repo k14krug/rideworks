@@ -141,14 +141,18 @@ def activities_page(store, query_string=''):
     elif not rows:
         body = '<section class="panel empty"><h2>No matching activities</h2><p>Try a different title, type or date range.</p><p><a href="/activities">Reset filters</a></p></section>'
     else:
+        from .dashboard import average_power
         items = []
         for row in rows:
             origin = f'<p class="title-origin">{escape(row["title_origin"])}</p>' if row['title_source'] is None else ''
             types = row['activity_type'] + (f" · {row['subtype']}" if row['subtype'] and row['subtype'] != row['activity_type'] else '')
             duration_context = row['duration_source']['context'] if row['duration_source'] else 'Duration unavailable'
             distance_context = row['distance_source']['context'] if row['distance_source'] else 'Distance unavailable'
-            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'])}"><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}</div><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-type">{escape(types)}</span><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="list-metrics"><span title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="open-ride" aria-hidden="true">→</span></div></a></li>''')
-        columns = '<div class="activity-columns" aria-hidden="true"><span>Title</span><span>Date</span><span>Type</span><span>Relative Effort</span><div class="list-metrics"><span>Distance</span><span>Duration</span><span></span></div></div>'
+            power, power_source = average_power(row)
+            power_context = power_source['context'] if power_source else 'Average power unavailable'
+            power_text = 'Unavailable' if power is None else f'{power:,g} W'
+            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span></a></li>''')
+        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Avg Pwr</span></div>'
         body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0

@@ -672,14 +672,15 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-recent-table tr.home-recent-row[hidden] { display: none; }
 .home-redesign .home-panel-heading { flex-wrap: wrap; margin-bottom: 14px; gap: 6px 12px; }
 .home-redesign .home-panel-heading a { font-size: 12px; }
-.home-redesign .home-recent-table th:first-child { width: 21%; }
-.home-redesign .home-recent-table th:nth-child(2) { width: 39%; }
-.home-redesign .home-recent-table th:nth-child(3) { width: 14%; }
-.home-redesign .home-recent-table th:nth-child(4) { width: 13%; }
+.home-redesign .home-recent-table th:first-child { width: 20%; }
+.home-redesign .home-recent-table th:nth-child(2) { width: 48px; }
+.home-redesign .home-recent-table th:nth-child(3) { width: auto; }
+.home-redesign .home-recent-table th:nth-child(4) { width: 12%; }
+.home-redesign .home-recent-table th:nth-child(5), .home-redesign .home-recent-table th:nth-child(6) { width: 13%; }
 .home-redesign .home-recent-table time { white-space: normal; }
-.home-redesign .home-recent-table :is(th, td) { padding: 8px 6px; }
-.home-redesign .home-recent-table td:nth-child(2) a { font-weight: 600; }
-.home-redesign .home-recent-ride .effort-score { margin-right: 7px; }
+.home-redesign .home-recent-table :is(th, td) { padding: 8px 4px; }
+.home-redesign .home-recent-ride { font-weight: 600; }
+.home-redesign .home-recent-table abbr { text-decoration: none; }
 
 .home-redesign .home-trend { display: flex; flex-direction: column; }
 .home-redesign .home-trend .home-panel-heading { margin-bottom: 8px; }
@@ -763,17 +764,22 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .home-redesign .home-trend-chart .home-axis-year.home-axis-intermediate { display: none; }
   .home-redesign .home-trend-chart .home-chart-endpoint text { font-size: 28px; }
   .home-redesign .home-power-line { stroke-width: 3; }
-  .home-redesign .home-recent-table, .home-redesign .home-recent-table :is(tbody, tr, td) { display: block; width: 100%; }
-  .home-redesign .home-recent-table thead { display: none; }
-  .home-redesign .home-recent-table tr { padding: 8px 0; }
-  .home-redesign .home-recent-table tr:not([hidden]) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 8px; }
-  .home-redesign .home-recent-table td { padding: 2px 0; border: 0; font-size: 12px; }
-  .home-redesign .home-recent-table td:first-child, .home-redesign .home-recent-table td:nth-child(2) { grid-column: 1 / -1; grid-row: auto; }
-  .home-redesign .home-recent-table td:nth-child(n+3) { grid-column: auto; grid-row: auto; }
-  .home-redesign .home-recent-table td:nth-child(2) { font-size: 13px; }
-  .home-redesign .home-recent-table tr:not([hidden]) td:not(:nth-child(2))::before { content: attr(data-label) ': '; color: var(--muted); }
   .home-redesign .home-goal-progress > strong { font-size: 25px; }
   .home-redesign .home-diagnostics dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+
+@media (max-width: 740px) {
+  .home-redesign .home-recent-table, .home-redesign .home-recent-table :is(tbody, tr, td) { display: block; width: 100%; }
+  .home-redesign .home-recent-table thead { display: none; }
+  .home-redesign .home-recent-table tr { padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .home-redesign .home-recent-table tr:not([hidden]) { display: grid; grid-template-columns: 36px repeat(3, minmax(0, 1fr)); gap: 2px 6px; }
+  .home-redesign .home-recent-table td { padding: 0; border: 0; font-size: 12px; line-height: 1.3; }
+  .home-redesign .home-recent-table td:first-child { grid-column: 1 / -1; grid-row: auto; }
+  .home-redesign .home-recent-table td:nth-child(2) { grid-column: 1; grid-row: auto; }
+  .home-redesign .home-recent-table td:nth-child(3) { grid-column: 2 / -1; grid-row: auto; }
+  .home-redesign .home-recent-table td:nth-child(4) { grid-column: 1 / 3; grid-row: auto; }
+  .home-redesign .home-recent-table td:nth-child(n+5) { grid-column: auto; grid-row: auto; }
+  .home-redesign .home-recent-table tr:not([hidden]) td[data-label]:not([data-label="Ride"])::before { content: attr(data-label) ': '; color: var(--muted); }
 }
 
 /* HOME-UI-01 expanded pass: opt-in page surfaces, with existing chart geometry. */
@@ -816,12 +822,14 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activities-redesign .activity-list { border: 0; padding: 0; box-shadow: none; border-radius: 0; }
 .activities-redesign .activity-columns, .activities-redesign .activity-row { padding-left: 0; padding-right: 0; }
 .activities-redesign .activity-columns { font-size: 12px; }
-.activities-redesign .activity-row { padding-top: 16px; padding-bottom: 16px; }
-.activities-redesign .activity-row h2 { font-size: 15px; letter-spacing: 0; }
+.activities-redesign .activity-columns > :nth-child(n+3) { display: block; }
+.activities-redesign .activity-row { padding-top: 8px; padding-bottom: 8px; font-size: 12px; align-items: start; }
+.activities-redesign .activity-row h2 { font-size: 12px; letter-spacing: 0; }
 .activities-redesign .row-identity h2 { color: var(--blue); }
-.activities-redesign .row-type { font-size: 12px; }
-.activities-redesign .activity-row, .activities-redesign .activity-columns { grid-template-columns: minmax(0,1fr) 175px 100px 128px 180px; gap: 14px; }
-.activities-redesign .row-effort { min-width: 0; }
+.activities-redesign .activity-row, .activities-redesign .activity-columns { grid-template-columns: minmax(0,20fr) 40px minmax(0,42fr) minmax(0,12fr) minmax(0,13fr) minmax(0,13fr); gap: 8px; max-width: 920px; }
+.activities-redesign .activity-row > * { min-width: 0; overflow-wrap: anywhere; }
+.activities-redesign .row-date time { white-space: normal; }
+.activities-redesign :is(.title-origin, .row-type) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* Relative Effort: understated dots, real category-level bars and compact review layout. */
 .effort-very-light { --effort-color: #77bea7; }
 .effort-light { --effort-color: #4fa77a; }
@@ -911,17 +919,6 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 
 @media (max-width: 1100px) {
   .rw-page :is(.panel, .training-help) { padding: 20px; }
-  .activities-redesign .activity-list { padding: 0; }
-  .activities-redesign .activity-columns { display: none; }
-  .activities-redesign .activity-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
-  .activities-redesign .row-identity { grid-column: 1 / -1; }
-  .activities-redesign .row-type { grid-column: auto; }
-  .activities-redesign .row-date::before { content: 'Date: '; color: var(--muted); }
-  .activities-redesign .row-type::before { content: 'Type: '; color: var(--muted); }
-  .activities-redesign .row-effort::before { content: 'Relative effort: '; color: var(--muted); font-size: 12px; }
-  .activities-redesign .list-metrics { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 12px; gap: 8px; font-size: 12px; }
-  .activities-redesign .list-metrics span:first-child::before { content: 'Distance: '; color: var(--muted); }
-  .activities-redesign .list-metrics span:nth-child(2)::before { content: 'Duration: '; color: var(--muted); }
   .performance-redesign .performance-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .performance-redesign .performance-card:nth-child(2) { border-right: 0; }
   .performance-redesign .performance-card:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
@@ -929,19 +926,22 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 @media (max-width: 850px) {
   .settings-redesign .settings-panels { grid-template-columns: minmax(0, 1fr); }
 }
+@media (max-width: 740px) {
+  .activities-redesign .activity-list { padding: 0; }
+  .activities-redesign .activity-columns { display: none; }
+  .activities-redesign .activity-row { grid-template-columns: 36px repeat(3, minmax(0, 1fr)); gap: 2px 6px; padding-top: 3px; padding-bottom: 3px; line-height: 1.3; }
+  .activities-redesign .row-date { grid-column: 1 / -1; }
+  .activities-redesign .row-effort { grid-column: 1; }
+  .activities-redesign .row-identity { grid-column: 2 / -1; }
+  .activities-redesign .row-distance { grid-column: 1 / 3; }
+  .activities-redesign .row-date::before { content: 'Date: '; color: var(--muted); }
+  .activities-redesign .row-distance::before { content: 'Distance: '; color: var(--muted); }
+  .activities-redesign .row-duration::before { content: 'Duration: '; color: var(--muted); }
+  .activities-redesign .row-power::before { content: 'Avg Pwr: '; color: var(--muted); }
+}
 @media (max-width: 620px) {
   .rw-page h1 { font-size: 25px; }
   .rw-page :is(.panel, .training-help) { padding: 18px; }
-  .activities-redesign .activity-list { padding: 0; }
-  .activities-redesign .activity-columns { display: none; }
-  .activities-redesign .activity-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .activities-redesign .row-identity { grid-column: auto; }
-  .activities-redesign .row-type { grid-column: auto; }
-  .activities-redesign .row-date::before { content: 'Date: '; color: var(--muted); }
-  .activities-redesign .row-type::before { content: 'Type: '; color: var(--muted); }
-  .activities-redesign .list-metrics { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 12px; gap: 8px; font-size: 12px; }
-  .activities-redesign .list-metrics span:first-child::before { content: 'Distance: '; color: var(--muted); }
-  .activities-redesign .list-metrics span:nth-child(2)::before { content: 'Duration: '; color: var(--muted); }
   .performance-redesign .performance-card { padding: 12px 10px; }
   .performance-redesign .performance-card strong { font-size: 23px; }
   .training-redesign .training-values { gap: 8px; }

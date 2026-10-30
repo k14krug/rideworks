@@ -6,14 +6,14 @@
   if (recentList) {
     const rows = [...recentList.querySelectorAll('.home-recent-row')];
     const fitRows = () => {
-      for (const row of rows) row.hidden = false;
-      const bottom = recentList.getBoundingClientRect().bottom;
-      let full = false;
+      for (const row of rows) row.hidden = true;
       for (const [index, row] of rows.entries()) {
+        row.hidden = false;
+        const bottom = recentList.getBoundingClientRect().bottom;
         // An exceptionally tall first row stays available through scrolling.
-        if (full || (index > 0 && row.getBoundingClientRect().bottom > bottom + 0.5)) {
-          full = true;
+        if (index > 0 && row.getBoundingClientRect().bottom > bottom + 0.5) {
           row.hidden = true;
+          break;
         }
       }
     };

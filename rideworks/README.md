@@ -727,12 +727,21 @@ Missing/invalid boundaries stop without a historical fallback. Normal sync uses 
 failures leave observations and checkpoint unchanged. Tokens may legitimately
 rotate before a failed sync. Reports contain aggregate counts and rate headers.
 
-To acquire Strava Relative Effort scores for already-associated recent rides, use
-`refresh-strava-effort` with the same `--data-dir`. It requests at most 30 cycling
+Existing stores need an explicit one-time refresh to acquire Strava Relative Effort
+scores for already-associated recent rides. Restarting the app does not populate
+them, and ordinary forward sync does not fill older stored rides. Use the same
+data directory as the running app:
+
+```bash
+.venv/bin/python -m rideworks --data-dir '<same-data-dir>' refresh-strava-effort
+```
+
+The refresh requests at most 30 cycling
 summaries from the last 60 days, skips responses with non-score changes, reports
 aggregate counts, and does not advance the forward-sync checkpoint. It converges
 Performance and Power Curve caches after updating summaries. This is separate
-from modeled training stress; unavailable scores remain unavailable.
+from modeled training stress; unavailable scores remain unavailable. Future rides
+continue to receive scores through the existing manually initiated `sync-strava`.
 
 API observations retain only the documented allowlist, retrieval timestamp,
 mapping version and source association. Identical observations reuse the Source;

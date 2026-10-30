@@ -15,11 +15,13 @@ async page => {
   for (const width of widths) {
     await page.setViewportSize({width, height: 900});
     await open('/');
-    const home = await page.locator('.home-recent-row:not([hidden]) .home-recent-ride').evaluateAll(ns => ns.map(n => {
-      const s = n.querySelector('.effort-score');
-      return {href:n.getAttribute('href'), label:s.getAttribute('aria-label'), color:getComputedStyle(s).color};
+    const home = await page.locator('.home-recent-row:not([hidden])').evaluateAll(ns => ns.map(n => {
+      const s = n.querySelector('.effort-score'), link = n.querySelector('.home-recent-ride');
+      return {href:link.getAttribute('href'), label:s.getAttribute('aria-label'), color:getComputedStyle(s).color,
+        titleLeft:link.getBoundingClientRect().left, effortLeft:s.getBoundingClientRect().left};
     }));
     check(home.length >= 6, 'at least six recent activities');
+    check(home.every(x => Math.abs(x.titleLeft - home[0].titleLeft) < 1 && Math.abs(x.effortLeft - home[0].effortLeft) < 1), 'Home title and effort columns align');
     const recent = await page.locator('.home-recent').evaluate(card => {
       const list = card.querySelector('.home-recent-list');
       const rows = [...card.querySelectorAll('.home-recent-row')];
@@ -35,7 +37,7 @@ async page => {
       return {height:cardBounds.height, visible:visible.length,
         allComplete:visible.every(row => row.getBoundingClientRect().bottom <= listBounds.bottom + 1),
         ordered:rows.every((row, i) => i < visible.length ? !row.hidden : row.hidden), nextExceeds,
-        typeLine:rows.some(row => row.querySelector('td:nth-child(2) > span')),
+        typeLine:rows.some(row => row.querySelector('td[data-label="Ride"] > span')),
         companion:document.querySelector('.home-companions').getBoundingClientRect().height};
     });
     check(recent.allComplete && recent.ordered && !recent.typeLine && recent.nextExceeds, 'complete and maximally fitted rows');
@@ -52,8 +54,10 @@ async page => {
     const list = await page.locator('.activity-row').evaluateAll(ns => ns.map(n => {
       const s = n.querySelector('.effort-score');
       return {href:n.getAttribute('href'), label:s.getAttribute('aria-label'), color:getComputedStyle(s).color,
-        titleWidth:n.querySelector('h2').getBoundingClientRect().width};
+        titleWidth:n.querySelector('h2').getBoundingClientRect().width,
+        titleLeft:n.querySelector('h2').getBoundingClientRect().left, effortLeft:s.getBoundingClientRect().left};
     }));
+    check(list.every(x => Math.abs(x.titleLeft - list[0].titleLeft) < 1 && Math.abs(x.effortLeft - list[0].effortLeft) < 1), 'Activities title and effort columns align');
     for (const h of home) {
       const entry = list.find(x => x.href === h.href);
       check(!!entry && entry.label === h.label && entry.color === h.color, 'Home and Activities agree');

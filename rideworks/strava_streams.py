@@ -5,6 +5,12 @@ from .strava_api import SyncError
 MAPPING = 'strava-stream-observation-v1'
 
 
+def score_only_equal(left, right):
+    """Compare complete normalized summaries, ignoring only vendor effort."""
+    return ({k: v for k, v in left.items() if k != 'suffer_score'} ==
+            {k: v for k, v in right.items() if k != 'suffer_score'})
+
+
 def parse_streams(payload):
     if not isinstance(payload, dict):
         raise SyncError('Invalid Strava stream set')
@@ -164,17 +170,18 @@ def attempt(store,external_id,outcome,reason,*,timestamp=None):
 def evidence(store,activity_id):
     import json
     results=[]
-    for row in store.connection.execute('''SELECT s.*, c.source_id=s.source_id AS is_current, j.evidence_json AS summary_json, latest.evidence_json AS current_summary_json
+    for row in store.connection.execute('''SELECT s.*, c.source_id=s.source_id AS is_current, j.evidence_json AS summary_json, latest.evidence_json AS current_summary_json, a.current_source_id AS current_summary_source_id
         FROM strava_stream_sources s JOIN strava_stream_current c ON c.external_id=s.external_id
-        JOIN strava_api_sources j ON j.source_id=s.summary_source_id
-        JOIN strava_api_activities a ON a.external_id=s.external_id
-        JOIN strava_api_sources latest ON latest.source_id=a.current_source_id WHERE s.activity_id=? ORDER BY s.retrieved_at,s.source_id''',(activity_id,)):
+        JOIN strava_api_sources j ON j.source_id=s.summary_source_id AND j.external_id=s.external_id AND j.activity_id=s.activity_id
+        JOIN strava_api_activities a ON a.external_id=s.external_id AND a.activity_id=s.activity_id
+        JOIN strava_api_sources latest ON latest.source_id=a.current_source_id AND latest.external_id=a.external_id AND latest.activity_id=a.activity_id WHERE s.activity_id=? ORDER BY s.retrieved_at,s.source_id''',(activity_id,)):
         value=dict(row);streams=json.loads(value.pop('evidence_json'));summary=json.loads(value.pop('summary_json'))
         from .strava_api import absolute
         current_summary=json.loads(value.pop('current_summary_json'))
         reason=chart_reason(streams)
         if absolute(summary['start_date'])!=absolute(current_summary['start_date']):reason='start_context_changed'
-        value.update(requested=json.loads(value.pop('requested_json')),streams=streams,start_date=summary['start_date'],
+        value.update(summary_compatible=score_only_equal(summary, current_summary),
+                     requested=json.loads(value.pop('requested_json')),streams=streams,start_date=summary['start_date'],
                      metadata={key:{field:stream[field] for field in ('original_size','resolution','series_type')}|dict(returned_length=len(stream['data'])) for key,stream in streams.items()},
                      chart_unavailable_reason=reason)
         results.append(value)
@@ -217,8 +224,8 @@ def enrich(store,client,access_token,external_ids):
         row=store.connection.execute('SELECT activity_id,current_source_id FROM strava_api_activities WHERE external_id=?',(str(identity),)).fetchone()
         if row is None:
             raise SyncError('Stream enrichment requires an established identity')
-        current=next((s for s in reversed(evidence(store,row[0])) if s['is_current']),None)
-        if current and current['chart_unavailable_reason'] is None and current['summary_source_id']==row['current_source_id']:
+        current=next((s for s in reversed(evidence(store,row[0])) if s['is_current'] and s['external_id']==str(identity)),None)
+        if current and current['chart_unavailable_reason'] is None and current['summary_compatible'] and current['current_summary_source_id']==row['current_source_id']:
             result['stream_reused']+=1;continue
         try:
             payload=client.streams(access_token,identity)

@@ -22,16 +22,15 @@ def miles(value):
 
 
 def recent_ride_link(row, rating):
-    """Ride title with the same Relative Effort category used on Activities."""
-    label = rating['category'] if rating and rating.get('status') == 'available' else 'Not rated'
-    slug = rating['slug'] if rating and rating.get('status') == 'available' else 'unavailable'
+    """Ride title and current Strava Relative Effort score."""
+    from .strava_effort import chip, description
     title = escape(row['title'])
     identity = escape(row['activity_id'], quote=True)
-    description = escape(f'Relative effort: {label}', quote=True)
-    accessible = escape(f'{row["title"]} · Relative effort: {label}', quote=True)
+    summary = escape(description(rating), quote=True)
+    accessible = escape(f'{row["title"]} · {description(rating)}', quote=True)
     return (f'<a class="home-recent-ride" href="/activities/{identity}" '
-            f'title="{description}" aria-label="{accessible}">'
-            f'<span class="home-effort-dot effort-{slug}" aria-hidden="true"></span>'
+            f'title="{summary}" aria-label="{accessible}">'
+            f'{chip(rating)} '
             f'{title}</a>')
 
 
@@ -296,8 +295,8 @@ def _home_page(store, query='', *, cache_writes):
     from .planning import plan
     from .planning_page import today_card
     advisor = today_card(plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of']),cache_writes=cache_writes),compact=True)
-    from .relative_effort import for_store as relative_effort_ratings
-    ratings = relative_effort_ratings(store, cache_writes=cache_writes[0]) if data['recent'] else {}
+    from .strava_effort import for_store as relative_effort_ratings
+    ratings = relative_effort_ratings(store) if data['recent'] else {}
     rows = []
     for row in data['recent']:
         rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td data-label="Ride">{recent_ride_link(row, ratings.get(row['activity_id']))}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')

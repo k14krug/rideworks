@@ -111,20 +111,15 @@ def browser_time(row, *, compact=False):
 
 
 def relative_effort_ratings(store):
-    """Read historical ratings without making Activity views mutate the caches."""
-    from .relative_effort import for_store
-    store.connection.execute('SAVEPOINT review_effort')
-    try:
-        return for_store(store)
-    finally:
-        store.connection.execute('ROLLBACK TO review_effort')
-        store.connection.execute('RELEASE review_effort')
+    """Read current Strava scores without touching model caches."""
+    from .strava_effort import for_store
+    return for_store(store)
 
 
 def activities_page(store, query_string=''):
     result = browse(store, query_string)
     rows, query = result['rows'], result['query']
-    from .relative_effort import chip as effort_chip
+    from .strava_effort import chip as effort_chip
     ratings = relative_effort_ratings(store) if rows else {}
     def options(choices, current):
         return ''.join(f'<option value="{escape(value, quote=True)}"{" selected" if value == current else ""}>{escape(text)}</option>'
@@ -695,7 +690,7 @@ class Application:
         from .power_curve_page import panel as curve_panel
         context, next_ride = activity_panels(store,activity_id,self.settings.nonce,query)
         curve = curve_panel(store,self.settings.nonce,activity_id=activity_id,query=query)
-        from .relative_effort import card as effort_card
+        from .strava_effort import card as effort_card
         rating = relative_effort_ratings(store).get(activity_id)
         slots = {'<!-- review-relative-effort -->': effort_card(rating),
                  '<!-- review-workout-context -->': context,

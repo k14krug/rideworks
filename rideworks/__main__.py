@@ -26,6 +26,7 @@ def main(argv=None):
     connect = commands.add_parser('strava-connect', help='Authorize private manual Strava synchronization')
     connect.add_argument('--callback-port', type=int, default=8772, help='Temporary loopback OAuth callback port (default: 8772)')
     commands.add_parser('sync-strava', help='Manually sync recent/new Strava activity metadata')
+    commands.add_parser('refresh-strava-effort', help='Refresh at most 30 established cycling summaries from the last 60 days')
     repair=commands.add_parser('repair-strava-summaries', help='Explicit bounded established-ID summary repair (at most eight GPX rides)')
     repair.add_argument('--targets',required=True,help='Private JSON mapping of Strava IDs to established RideWorks Activity IDs')
     commands.add_parser('strava-disconnect', help='Revoke/remove local Strava authorization; retain history')
@@ -38,7 +39,7 @@ def main(argv=None):
             from .web import serve as serve_web
             serve_web(config.data_dir, config.port, debug=config.debug, public_origin=config.public_origin)
             return 0
-        if args.command in ('strava-connect','sync-strava','strava-disconnect','repair-strava-summaries'):
+        if args.command in ('strava-connect','sync-strava','strava-disconnect','repair-strava-summaries','refresh-strava-effort'):
             from .config import ConfigurationError, strava_credentials
             from .strava import ApiClient, connect, disconnect, sync
             from .strava_api import SyncError
@@ -56,6 +57,9 @@ def main(argv=None):
                         try:targets=json.loads(Path(args.targets).read_text())
                         except (OSError,ValueError):raise SyncError('Cannot read the private summary repair target manifest') from None
                         result=enrich_summaries(store,client,targets)
+                    elif args.command=='refresh-strava-effort':
+                        from .strava_effort_refresh import refresh_recent
+                        result=refresh_recent(store,client)
                     else:
                         operation={'strava-connect':connect,'sync-strava':sync,'strava-disconnect':disconnect}[args.command]
                         result=operation(store,client,**({'port':args.callback_port} if args.command=='strava-connect' else {}))

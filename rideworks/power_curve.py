@@ -163,7 +163,7 @@ def api_profile(store, snapshot):
     summary, observed = summaries[0], observations[0]
     def unavailable(reason):
         return dict(points=[], reason=reason)
-    if observed['summary_source_id'] != summary['source']['source_id']:
+    if not observed['summary_compatible'] or observed['current_summary_source_id'] != summary['source']['source_id']:
         return unavailable('api_stream_summary_not_current')
     if summary['summary']['values'].get('device_watts') is not True:
         return unavailable('api_device_watts_not_confirmed')
@@ -192,6 +192,7 @@ def api_profile(store, snapshot):
                for i,(t,p) in enumerate(zip(offsets, watts['data']))]
     profile = mmp(records)
     ref = dict(source_id=observed['source_id'], summary_source_id=observed['summary_source_id'],
+               current_summary_source_id=summary['source']['source_id'],
                observation_sha256=observed['observation_sha256'], mapping_version=observed['mapping_version'],
                content_format='Strava API stream', origin='calculated observed power',
                timeline='validated_API_offsets', timer_quality='not_available', timer_discrepancy=False)

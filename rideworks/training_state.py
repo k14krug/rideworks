@@ -559,7 +559,7 @@ def evaluate_power_sources(store, snapshot, ftp):
                 observation_sha256=observation['observation_sha256'],mapping_version=observation['mapping_version'],
                 device_watts=values.get('device_watts'),start_date=observation['start_date'],metadata=observation['metadata'])
             time,watts=streams.get('time'),streams.get('watts')
-            if observation['summary_source_id']!=api['source']['source_id']: reason='api_stream_summary_not_current'
+            if not observation['summary_compatible'] or observation['current_summary_source_id']!=api['source']['source_id']: reason='api_stream_summary_not_current'
             elif values.get('device_watts') is not True: reason='api_device_watts_not_confirmed'
             elif time is None or watts is None: pass
             elif any(s['resolution']!='high' for s in (time,watts)): reason='api_stream_not_high_resolution'
@@ -617,13 +617,14 @@ def calculate_ride(store, snapshot, row, ftp, settings):
         values=api['summary']['values']
         ref=dict(source_id=api['source']['source_id'],format='Strava API summary',
                  artifact_sha256=api['source'].get('sha256'))
-        observations=[s for s in store.strava_stream_evidence(row['activity_id']) if s['is_current'] and s['summary_source_id']==ref['source_id']]
+        observations=[s for s in store.strava_stream_evidence(row['activity_id']) if s['is_current'] and s['summary_compatible'] and s['current_summary_source_id']==ref['source_id']]
         source_streams=[]
         for observation in observations:
             streams=observation['streams']
             if 'heartrate' not in streams:
                 continue
             stream_ref=ref|dict(format='Strava API stream',stream_source_id=observation['source_id'],
+                                related_summary_source_id=observation['summary_source_id'],
                                 observation_sha256=observation['observation_sha256'])
             if 'time' in streams and all(s['resolution']=='high' and s['original_size']==len(s['data']) for s in (streams['time'],streams['heartrate'])):
                 candidate=hr_stream(streams['time']['data'],streams['heartrate']['data'],settings=settings,

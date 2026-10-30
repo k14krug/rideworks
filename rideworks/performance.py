@@ -95,7 +95,7 @@ def api_candidate(store, snapshot, result):
         observation_sha256=observed['observation_sha256'],mapping_version=observed['mapping_version'],
         device_watts=summary['summary']['values'].get('device_watts'),start_date=observed['start_date'],
         metadata=observed['metadata'])
-    if observed['summary_source_id']!=summary['source']['source_id']:
+    if not observed['summary_compatible'] or observed['current_summary_source_id'] != summary['source']['source_id']:
         result['reason']='api_stream_summary_not_current';return result
     if 'watts' not in streams or 'time' not in streams:return result
     time,watts=streams['time'],streams['watts']

@@ -1,27 +1,19 @@
 from unittest import TestCase
 
 from rideworks.home import recent_ride_link
+from rideworks.strava_effort import score
 
 
 class HomeEffortTests(TestCase):
-    def test_recent_effort_indicator_keeps_title_and_is_usable_from_link(self):
+    def test_numeric_score_preserves_title_and_accessibility(self):
         row = dict(activity_id='ride-42', title='Race & Recovery <Zwift>')
-        rated = recent_ride_link(row, {'status':'available', 'category':'Very High',
-                                      'slug':'very-high'})
-        self.assertIn('class="home-effort-dot effort-very-high"', rated)
-        self.assertIn('title="Relative effort: Very High"', rated)
-        self.assertIn('aria-label="Race &amp; Recovery &lt;Zwift&gt; · Relative effort: Very High"', rated)
-        self.assertIn('href="/activities/ride-42"', rated)
-        self.assertIn('Race &amp; Recovery &lt;Zwift&gt;</a>', rated)
-        self.assertIn('aria-hidden="true"', rated)
-        self.assertNotIn('151 W', rated)
+        html = recent_ride_link(row, score(110))
+        self.assertIn('effort-score effort-very-high', html)
+        self.assertIn('Strava Relative Effort: 110, Very High', html)
+        self.assertIn('Race &amp; Recovery &lt;Zwift&gt;', html)
+        self.assertIn('href="/activities/ride-42"', html)
 
-    def test_unrated_indicator_is_neutral_and_accessible(self):
+    def test_unavailable_and_zero_are_distinct(self):
         row = dict(activity_id='ride-43', title='Easy Ride')
-        for rating in (None, {'status':'unavailable', 'reason':'insufficient_history'}):
-            with self.subTest(rating=rating):
-                html = recent_ride_link(row, rating)
-                self.assertIn('class="home-effort-dot effort-unavailable"', html)
-                self.assertIn('title="Relative effort: Not rated"', html)
-                self.assertIn('Easy Ride · Relative effort: Not rated', html)
-                self.assertEqual(html.count('home-effort-dot'), 1)
+        self.assertIn('Strava Relative Effort unavailable', recent_ride_link(row, None))
+        self.assertIn('Strava Relative Effort: 0, Very Light', recent_ride_link(row, score(0)))

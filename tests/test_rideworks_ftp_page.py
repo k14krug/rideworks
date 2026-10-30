@@ -350,7 +350,7 @@ class FTPPageTests(TestCase):
                 add_entry(store,'2001-01-01',200,expected_revision=before['revision'])
         app=Application(self.target);entered,release=Event(),Event();calls=[];result=[];failures=[]
         from rideworks.planning import classify_activity as classify
-        from rideworks.relative_effort import for_store as rate_effort
+        from rideworks.strava_effort import for_store as rate_effort
         render_page=app.page
         def pause():
             entered.set()
@@ -377,7 +377,7 @@ class FTPPageTests(TestCase):
             except Exception as exc:failures.append(exc)
         started=__import__('time').perf_counter()
         with patch('rideworks.planning.classify_activity',side_effect=pause_second_classification), \
-             patch('rideworks.relative_effort.for_store',side_effect=pause_relative_effort), \
+             patch('rideworks.strava_effort.for_store',side_effect=pause_relative_effort), \
              patch.object(app,'page',side_effect=pause_response), \
              patch('rideworks.training_state.calculate_ride',wraps=calculate_ride) as score:
             thread=Thread(target=load);thread.start()

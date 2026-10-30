@@ -679,11 +679,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-recent-table time { white-space: normal; }
 .home-redesign .home-recent-table :is(th, td) { padding: 8px 6px; }
 .home-redesign .home-recent-table td:nth-child(2) a { font-weight: 600; }
-.home-redesign .home-recent-ride .home-effort-dot {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--effort-color, #96a1b0); margin-right: 7px;
-  vertical-align: 1px; flex: none;
-}
+.home-redesign .home-recent-ride .effort-score { margin-right: 7px; }
 
 .home-redesign .home-trend { display: flex; flex-direction: column; }
 .home-redesign .home-trend .home-panel-heading { margin-bottom: 8px; }
@@ -833,6 +829,12 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .effort-high { --effort-color: #dba34a; }
 .effort-very-high { --effort-color: #d56d64; }
 .effort-unavailable { --effort-color: #96a1b0; }
+.effort-score { color: var(--effort-text, #596579); font-weight: 700; white-space: nowrap; }
+.effort-score.effort-very-light { --effort-text: #166c56; }
+.effort-score.effort-light { --effort-text: #227444; }
+.effort-score.effort-moderate { --effort-text: #275ea8; }
+.effort-score.effort-high { --effort-text: #895b10; }
+.effort-score.effort-very-high { --effort-text: #a93c35; }
 .effort-pill { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; white-space: nowrap; padding: 0; background: none; color: var(--navy); font-size: 12px; font-weight: 650; }
 .effort-pill::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; background: var(--effort-color, #96a1b0); }
 .activity-review-redesign .panel.relative-effort-card { min-width: 0; padding: 14px 18px; }
@@ -840,6 +842,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activity-review-redesign .relative-effort-heading h2 { font-size: 16px; }
 .activity-review-redesign .relative-effort-heading > span { color: var(--rw-muted); font-size: 11px; }
 .activity-review-redesign .relative-effort-overall { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
+.activity-review-redesign .relative-effort-overall .effort-score { font-size: 21px; line-height: 1.1; }
 .activity-review-redesign .relative-effort-accent { flex: 0 0 4px; width: 4px; height: 34px; border-radius: 4px; background: var(--effort-color, #96a1b0); }
 .activity-review-redesign .relative-effort-overall strong { display: block; font-size: 21px; line-height: 1.05; color: var(--rw-ink); }
 .activity-review-redesign .relative-effort-overall small { display: block; color: var(--rw-muted); font-size: 11px; line-height: 1.2; margin-top: 1px; }

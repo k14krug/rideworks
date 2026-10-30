@@ -322,6 +322,7 @@ class StorePlanningTests(TestCase):
             planner_clock.fromtimestamp.side_effect=datetime.fromtimestamp
             before=app.get('/?home_tz=UTC')[2].decode()
             self.assertIn('data-next-day="2026-10-10"',before)
+            self.assertNotIn('Completed today',before)
             item=normalize(dict(id=1000,name='Synthetic recovery',type='Ride',sport_type='VirtualRide',
                 start_date='2026-10-10T17:00:00Z',moving_time=2400,elapsed_time=2400,average_watts=94))
             apply_observations(self.store,[item],42,int(NOW.timestamp()))
@@ -331,7 +332,9 @@ class StorePlanningTests(TestCase):
             page=app.get('/plan?plan_tz=UTC')[2].decode()
             review=app.get('/activities/'+identity+'?plan_tz=UTC')[2].decode()
             for html in (home,page,review):self.assertIn('data-next-day="2026-10-11"',html)
-            self.assertIn('Completed today',home);self.assertIn('Today’s completed activity',page)
+            self.assertNotIn('Completed today',home);self.assertNotIn('Review completed ride',home)
+            self.assertIn('Today’s completed activity',page)
+            self.assertIn('/activities/'+identity,page)
             self.assertIn('No recorded intent',review)
             self.assertIn('activity-plan-context',review)
             self.assertIn('Detailed RideWorks review unavailable',review)

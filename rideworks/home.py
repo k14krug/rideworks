@@ -311,7 +311,7 @@ def _home_page(store, query='', *, cache_writes):
     from .planning import plan
     from .planning_page import today_card
     plan_data = plan(store,zone.key,as_of=datetime.fromisoformat(data['as_of']),cache_writes=cache_writes)
-    advisor = today_card(plan_data,compact=True,home_visual=True)
+    advisor = today_card(plan_data,compact=True,include_completed=False,home_visual=True)
     from .strava_effort import chip, for_store as relative_effort_ratings
     ratings = relative_effort_ratings(store) if data['recent'] else {}
     rows = []

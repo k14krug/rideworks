@@ -56,13 +56,14 @@ async page => {
     check(lines === 1, `${selector}: long value wraps at 320px`);
   }
   await page.goto('http://127.0.0.1:18892/');
-  const completedBefore = await page.locator('.next-recommended').textContent();
-  const completedLinks = await page.locator('.plan-completed article a').evaluateAll(nodes => nodes.map(n => n.getAttribute('href')));
-  check(completedLinks.length > 0, 'Completed-ride fixture is missing');
+  const completedBefore = await page.locator('.next-recommended').evaluate(n => {
+    n = n.cloneNode(true); n.querySelector('.plan-completed')?.remove(); return n.textContent;
+  });
+  check(await page.locator('.plan-completed article a').count() > 0, 'Completed-ride fixture is missing');
   await page.goto('http://127.0.0.1:18891/');
   const compact = text => text.replace(/\s+/g, ' ').trim();
   check(compact(await page.locator('.next-recommended').textContent()) === compact(completedBefore), 'Completed recommendation content changed');
-  check(JSON.stringify(await page.locator('.plan-completed article a').evaluateAll(nodes => nodes.map(n => n.getAttribute('href')))) === JSON.stringify(completedLinks), 'Completed ride links changed');
+  check(await page.locator('.next-recommended .plan-completed').count() === 0, 'Home must omit completed rides');
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({width, height:900});
     await page.reload();
@@ -73,10 +74,10 @@ async page => {
         summary:{height:summary.height, bottom:summary.bottom}, recommendation:{height:recommendation.height, top:recommendation.top}};
     });
     check(layout.pageScroll <= layout.pageWidth + 1, `${width}: completed ride overflows`);
-    check(width > 1100 ? layout.summary.height < layout.recommendation.height : layout.recommendation.top >= layout.summary.bottom - 1,
-          `${width}: completed ride stretches or overlaps the overview`);
-    check(await page.locator('.home-recommendation-icon svg').count() === 1 && await page.locator('.plan-completed article a').count() === completedLinks.length,
-          `${width}: recommendation icon or completed ride link missing`);
+    check(width > 1100 ? Math.abs(layout.summary.height - layout.recommendation.height) <= 64 : layout.recommendation.top >= layout.summary.bottom - 1,
+          `${width}: top cards differ excessively in height or overlap`);
+    check(await page.locator('.home-recommendation-icon svg').count() === 1 && await page.locator('.next-recommended .plan-completed').count() === 0,
+          `${width}: recommendation icon missing or completed ride shown`);
   }
   check(errors.length === 0, `Browser errors: ${errors.join('; ')}`);
   return `${checks} synthetic HOME-UI-04 browser checks passed`;

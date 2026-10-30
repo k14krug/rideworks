@@ -29,6 +29,20 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
+### HOME-UI-04 — Home top-row Training Overview
+
+**Status:** pending — Owner approved the selected private mockup direction on 2026-10-30; [Analyst JIT](docs/tasks/HOME-UI-04.md) committed.
+
+**Purpose:** Replace the old four-fact Home top summary with one compact **Training Overview** showing (1) current 42-day Fitness and real 7-day Fitness-point change, (2) current effective dated FTP with history link and appropriately labeled previous-entry comparison if supported, and (3) last-seven-day cycling mileage with real prior-seven-day comparison. Remove both 20-minute power values from the top summary, not from the accepted dedicated Performance card.
+
+**Scope:** Top-row layout and presentation only; retain the dynamic Next Recommended Ride, lower Training State/Performance charts, Recent Activities, mileage cards, evidence semantics, source honesty and accepted RideWorks styling. The Owner supplies the private mockup directly to Dex; do not commit it or copy illustrative numbers.
+
+**Execution:** `/TASK or /AUTOTASK`, after RE-03/any existing in-progress work is cleared according to `AGENTS.md`; task branch and draft PR. Stop at HARD — Analyst technical review and HARD — Owner running-UI visual acceptance. No production deployment authorized.
+
+**Acceptance:** See [HOME-UI-04 JIT](docs/tasks/HOME-UI-04.md) for actual data-source contracts, no-fabricated-data behavior, source/edge-case testing, responsive visual checks, preserving lower cards and review boundaries.
+
+---
+
 ### RE-02 — Relative Effort UI verification and integration
 
 **Status:** done — Analyst technical acceptance and Owner visual/closeout acceptance on 2026-10-29. [PR #53](https://github.com/k14krug/rideworks/pull/53) merged to `main` as `178e8065ffc780118b44f3e04b73a481e472ed65`. Relative Effort `relative-effort-v1` is unchanged; no additional calibration research required. The Owner-requested Home Recent Activities compacting removes ride-type sublines and fits more complete rows while preserving colored dots.

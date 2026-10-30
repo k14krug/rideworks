@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RE-03 — Fixed-color Strava Relative Effort numbers
 
-**Status:** done — Analyst technical acceptance and Owner UI and fixed-threshold approval on 2026-10-30. [PR #54](https://github.com/k14krug/rideworks/pull/54). [Analyst JIT](docs/tasks/RE-03.md).
+**Status:** done — Analyst technical acceptance and Owner UI and fixed-threshold approval on 2026-10-30. [PR #54](https://github.com/k14krug/rideworks/pull/54) merged to `main` as `9f2ad2ec78bcf729920c9be403b6422d20f744f8`. [Analyst JIT](docs/tasks/RE-03.md).
 
 **Purpose:** Replace RE-02's rolling-history effort dots/labels on Home, Activities and Activity Review with Strava API `suffer_score` numbers, colored by Owner-approved fixed numeric score bands. Historical completeness is not a requirement.
 

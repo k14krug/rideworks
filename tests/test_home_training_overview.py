@@ -7,9 +7,13 @@ from unittest.mock import patch
 from ftp_fixture import seed_ftp
 from rideworks.dashboard import dashboard, mileage
 from rideworks.ftp_history import add_entry, snapshot
-from rideworks.home import home_page, training_overview
+from rideworks.home import home_page, training_overview as render_overview
 from rideworks.store import Store
 from rideworks.training_state import daily_series
+
+
+def training_overview(data, training, current_ftp):
+    return render_overview(data, training, current_ftp, dict(points={}, pending=0))
 
 
 def periods(last=10, previous=4, today='2026-01-03'):
@@ -43,7 +47,7 @@ class OverviewTests(TestCase):
         self.assertNotIn('<strong>99.0</strong>', html)
         html = training_overview(periods(), dict(days=[]), dict(value=None))
         self.assertIn('7-day change unavailable', html)
-        self.assertEqual(html.count('class="metric-unavailable"'), 2)
+        self.assertEqual(html.count('class="metric-unavailable"'), 6)
 
     def test_mileage_year_boundary_missing_and_zero_prior(self):
         rows = [dict(activity_id='a', start_time='2026-01-02T12:00:00+00:00', absolute_time=True,
@@ -80,3 +84,12 @@ class OverviewTests(TestCase):
             self.assertIn('<strong>211 W</strong>', render(boundary))
             self.assertIn('<strong>230 W</strong>', render(datetime(2026, 2, 1, 8, tzinfo=timezone.utc)))
             self.assertIn('/performance/ftp', render(boundary))
+
+    def test_home_passes_its_as_of_instant_to_power_bests(self):
+        with TemporaryDirectory() as directory, Store(directory) as store:
+            instant = datetime(2026, 11, 1, 8, 30, tzinfo=timezone.utc)
+            data = dashboard(store, 'America/Los_Angeles', as_of=instant)
+            with patch('rideworks.home.dashboard', return_value=data), \
+                 patch('rideworks.power_curve.recent_bests', return_value=dict(points={}, pending=0)) as bests:
+                home_page(store, 'home_tz=America%2FLos_Angeles')
+            self.assertEqual(bests.call_args.args[1], instant)

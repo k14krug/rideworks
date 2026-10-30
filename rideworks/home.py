@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from .dashboard import dashboard
 from .goals import query_zone
 from .performance_view import months_before
-from .web import browser_time, detail_rows, duration, icon, local_time, shell
+from .web import browser_time, detail_rows, duration, local_time, shell
 
 
 def safe_json(value):
@@ -21,8 +21,8 @@ def miles(value):
     return 'Unavailable' if value is None else f'{value:,.1f} mi'
 
 
-def training_overview(data, training, current_ftp):
-    """Present existing model, dated FTP and mileage values without deriving them."""
+def training_overview(data, training, current_ftp, bests):
+    """Present existing model, dated FTP, mileage and cached observed power."""
     days = [d for d in training['days'] if d['day'] <= data['today']
             and d.get('fitness') is not None and isfinite(d['fitness'])]
     latest = days[-1] if days else None
@@ -48,15 +48,19 @@ def training_overview(data, training, current_ftp):
                         else '0.0 mi vs. previous 7 days')
     if data['last7'].get('distance_unavailable') or data['prior7'].get('distance_unavailable'):
         mileage_note += ' · Some distances unavailable'
-    def metric(name, title, symbol, value, note, subtitle=''):
+    def metric(name, title, value, note):
         unavailable = ' class="metric-unavailable"' if value == 'Unavailable' else ''
-        return f'<div class="home-overview-metric" id="home-{name}">{icon(symbol)}<div><h3>{title}</h3>{subtitle}<strong{unavailable}>{value}</strong>{note}</div></div>'
-    fitness_html = metric('fitness', 'Training State', 'heart', fitness,
-                          f'<p>{fitness_note}</p><a href="/training-state">View Training State</a>',
-                          '<p class="home-overview-subtitle">Fitness (42-day)</p>')
-    ftp_html = metric('ftp', 'FTP', 'power', ftp_text, '<a href="/performance/ftp">View FTP History</a>')
-    mileage_html = metric('last7', 'Last 7 Days', 'distance', miles(last), f'<p>{mileage_note}</p>')
-    return f'<section class="panel home-summary" aria-labelledby="home-overview-title"><h2 id="home-overview-title">Training Overview</h2><div class="home-overview-grid">{fitness_html}{ftp_html}{mileage_html}</div></section>'
+        return f'<div class="home-status-row" id="home-{name}"><span>{title}</span><strong{unavailable}>{value}</strong><span class="home-status-context">{note}</span></div>'
+    fitness_html = metric('fitness', '<a href="/training-state">Fitness (42-day)</a>', fitness, fitness_note)
+    ftp_html = metric('ftp', 'FTP', ftp_text, '<a href="/performance/ftp">View FTP History</a>')
+    mileage_html = metric('last7', 'Last 7 days', miles(last), mileage_note)
+    labels = ((5,'5 seconds'), (60,'1 minute'), (300,'5 minutes'), (1200,'20 minutes'))
+    power_rows = ''.join(f'<div class="home-power-best"><span>{label}</span><strong>{bests["points"][seconds]["rounded_watts"]:,} W</strong></div>'
+                         if seconds in bests['points'] else
+                         f'<div class="home-power-best"><span>{label}</span><strong class="metric-unavailable">Unavailable</strong></div>'
+                         for seconds,label in labels)
+    warning = '<span class="home-power-pending" title="Some recent power profiles need an update; bests may be incomplete."> · Update needed</span>' if bests['pending'] else ''
+    return f'<section class="panel home-summary" aria-labelledby="home-overview-title"><h2 id="home-overview-title">Training Overview</h2><div class="home-overview-grid"><section class="home-current-status" aria-labelledby="home-current-title"><h3 id="home-current-title">Current status</h3>{fitness_html}{ftp_html}{mileage_html}</section><section class="home-power-bests" aria-labelledby="home-power-bests-title"><h3 id="home-power-bests-title" title="Qualifying observed Virtual Ride power">90-day Power Bests{warning}</h3>{power_rows}</section></div></section>'
 
 
 def recent_ride_link(row):
@@ -341,7 +345,9 @@ def _home_page(store, query='', *, cache_writes):
     from .training_state_page import training_home
     training_data = training_state(store, zone.key, as_of=datetime.fromisoformat(data['as_of']), cache_writes=cache_writes[0])
     training = training_home(store, zone.key, data=training_data)
-    overview = training_overview(data, training_data, plan_data['current_ftp'])
+    from .power_curve import recent_bests
+    bests = recent_bests(store, datetime.fromisoformat(data['as_of']))
+    overview = training_overview(data, training_data, plan_data['current_ftp'], bests)
     compact = {k:v for k,v in data.items() if k!='recent'}
     compact['recent'] = [{k:r[k] for k in ('activity_id','title','activity_type','start_time','absolute_time','date_text','distance','duration','distance_source','duration_source','average_power','average_power_source')} for r in data['recent']]
     return shell('Home',f'''<div class="home-redesign"><header class="home-heading"><div><h1>Home</h1><p>{data['year']} cycling mileage · Virtual Ride + outdoor Ride</p></div>{sync}</header>

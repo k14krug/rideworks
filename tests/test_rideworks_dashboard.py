@@ -368,7 +368,7 @@ class DashboardTests(TestCase):
         self.assertIn('<h1>Home</h1>',self.app.get('/')[2].decode())
         self.assertEqual(self.app.get('/?home_tz=bad')[0],400)
         html=self.app.get('/?home_tz=UTC')[2].decode()
-        for heading in ('Training Overview','Fitness (42-day)','FTP','Last 7 Days','Mileage Progress','20-minute Performance'):
+        for heading in ('Training Overview','Fitness (42-day)','FTP','Last 7 days','90-day Power Bests','Mileage Progress','20-minute Performance'):
             self.assertIn(heading,html)
         self.assertIn('href="/activities"',html);self.assertIn('href="/" class="active"',html)
         self.assertIn('No cycling Activities yet.',html);self.assertIn('Unavailable',html)
@@ -455,9 +455,11 @@ class DashboardTests(TestCase):
         self.post(target_miles='2200')
         html=self.app.get('/?home_tz=America%2FLos_Angeles')[2].decode()
         self.assertNotIn('home-ytd',html);self.assertNotIn('YTD mileage goal',html)
-        summary=re.search(r'class="panel home-summary"[^>]*>(.*?)</section>',html,re.S)[1]
+        summary=html.split('class="panel home-summary"',1)[1].split('class="panel next-recommended"',1)[0]
         self.assertNotIn('2200',summary);self.assertNotIn('2,200',summary)
-        self.assertEqual(summary.count('class="home-overview-metric"'),3)
+        self.assertEqual(summary.count('class="home-status-row"'),3)
+        self.assertEqual(summary.count('class="home-power-best"'),4)
+        self.assertNotIn('home-overview-metric',summary)
         self.assertIn('Training Overview</h2>',summary)
         self.assertNotIn('Current 42-day best',summary)
         self.assertNotIn('Latest eligible 20-minute ride',summary)
@@ -480,13 +482,13 @@ class DashboardTests(TestCase):
         value=dashboard(self.store,'UTC',as_of=datetime(2026,10,7,18,tzinfo=timezone.utc))
         with patch('rideworks.home.dashboard',return_value=value):
             html=self.app.get('/?home_tz=UTC')[2].decode()
-        summary=re.search(r'class="panel home-summary"[^>]*>(.*?)</section>',html,re.S)[1]
-        last7=re.search(r'<div class="home-overview-metric" id="home-last7">(.*?)</div>',summary,re.S).group(1)
+        summary=html.split('class="panel home-summary"',1)[1].split('class="panel next-recommended"',1)[0]
+        last7=re.search(r'<div class="home-status-row" id="home-last7">(.*?)</div>',summary,re.S).group(1)
         self.assertIn('<strong>7.0 mi</strong>',last7)
         self.assertIn('+4.0 mi vs. previous 7 days',last7)
-        self.assertEqual(summary.count('class="home-overview-metric"'),3)
+        self.assertEqual(summary.count('class="home-status-row"'),3)
         self.assertNotIn('This Week',summary)
-        self.assertIn('Last 7 Days</h3>',summary)
+        self.assertIn('Last 7 days</span>',summary)
 
     def test_independent_oracle_rejects_wrong_required_point_and_api_average(self):
         from copy import deepcopy

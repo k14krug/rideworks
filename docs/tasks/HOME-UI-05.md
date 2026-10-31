@@ -1,6 +1,6 @@
 # HOME-UI-05 — Compact Training Overview and 90-day Power Bests
 
-**Status:** pending — Analyst JIT, 2026-10-30.
+**Status:** done — Owner visual approval and retrospective Analyst technical/performance acceptance recorded 2026-10-31 on [merged PR #56](https://github.com/k14krug/rideworks/pull/56#issuecomment-6545435133). The implementation was merged before Analyst review, contrary to the planned gate sequence; acceptance does not imply pre-merge review or production deployment.
 **Visual reference:** Owner-approved private mockup supplied to Dex at invocation; never commit screenshot or rider values.
 **Purpose:** Replace the three oversized Training Overview metric columns with one compact two-column information display. Add four exact 90-day Power Bests from the existing cached Power Curve. Keep the desktop card no taller than current HOME-UI-04.
 

@@ -71,7 +71,10 @@ p { color: var(--muted); }
 nav a { display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 5px; font-size: 13px; font-weight: 550; }
 nav .active { background: #e7f0ff; color: var(--blue); }
 nav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; }
-.nav-power-heading { display: flex; align-items: center; gap: 11px; padding: 9px 12px; font-size: 13px; font-weight: 550; }
+.nav-power-heading { display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 5px; font-size: 13px; font-weight: 550; cursor: pointer; list-style: none; }
+.nav-power-heading::-webkit-details-marker { display: none; }
+.nav-power-heading .nav-power-chevron { width: 12px; height: 12px; margin-left: auto; }
+.nav-power[open] .nav-power-chevron { transform: rotate(90deg); }
 .nav-power.is-current .nav-power-heading { color: var(--blue); }
 .nav-power a { padding: 6px 6px 6px 30px; font-size: 12px; line-height: 1.35; }
 main { margin: 56px 0 0 156px; padding: 18px 22px 40px; max-width: 1600px; }

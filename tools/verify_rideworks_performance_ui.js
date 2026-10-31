@@ -3,6 +3,7 @@ async (page) => {
   const base = BASE_URL, expected = EXPECTED_COUNT;
   const check=(condition,message)=>{if(!condition)throw new Error(message);};
   await page.goto(base+'/activities');
+  if (!await page.locator('#power-nav').evaluate(node => node.open)) await page.locator('#power-nav summary').click();
   await page.getByRole('navigation',{name:'Main',exact:true}).getByRole('link',{name:'20-Minute History',exact:true}).click();
   await page.waitForSelector('.performance-trend');
   const points=await page.locator('#performance-points').evaluate(node=>JSON.parse(node.textContent));

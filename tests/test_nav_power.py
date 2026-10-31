@@ -15,6 +15,7 @@ class Page(HTMLParser):
         self.in_main_nav = False
         self.links = []
         self.ids = {}
+        self.tags = {}
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
@@ -25,6 +26,7 @@ class Page(HTMLParser):
             self.links.append(attrs)
         if 'id' in attrs:
             self.ids[attrs['id']] = attrs
+            self.tags[attrs['id']] = tag
 
     def handle_endtag(self, tag):
         if tag == 'nav' and self.in_main_nav:
@@ -59,6 +61,9 @@ class PowerNavigationTests(unittest.TestCase):
                 self.assertNotIn('aria-current', links['/performance'])
                 self.assertNotIn('aria-current', links['/performance?curve=1'])
                 self.assertEqual(page.ids['power-nav-label']['class'], 'nav-power-heading')
+                self.assertEqual(page.tags['power-nav'], 'details')
+                self.assertEqual(page.tags['power-nav-label'], 'summary')
+                self.assertNotIn('open', page.ids['power-nav'])
 
     def test_direct_urls_select_the_matching_view_and_current_link(self):
         cases = [('/performance', False), ('/performance?curve=0', False),
@@ -72,6 +77,8 @@ class PowerNavigationTests(unittest.TestCase):
                 other = '/performance' if curve else '/performance?curve=1'
                 self.assertEqual(links[selected].get('aria-current'), 'page')
                 self.assertNotIn('aria-current', links[other])
+                self.assertNotIn('open', page.ids['power-nav'])
+                self.assertIn('is-current', page.ids['power-nav']['class'])
                 self.assertEqual('hidden' in page.ids['performance-history-mode'], curve)
                 self.assertEqual('hidden' in page.ids['power-curve-panel'], not curve)
                 self.assertIn('performance-points', page.ids)

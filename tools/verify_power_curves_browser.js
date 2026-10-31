@@ -35,6 +35,7 @@ async (page) => {
   check(await page.locator('#power-curve-panel').isHidden(),'curve initially hidden');
   const history=JSON.parse(await page.locator('#performance-points').textContent());
   check(history.length>0,'accepted 20-minute series present');
+  if (!await page.locator('#power-nav').evaluate(node => node.open)) await page.locator('#power-nav summary').click();
   await page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'Power Curve',exact:true}).click();
   check(await page.locator('#power-curve-chart').isVisible(),'curve displayed');
   check(await page.locator('.curve-line').count()===2,'distinguishable lines');

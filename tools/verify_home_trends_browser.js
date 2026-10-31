@@ -104,6 +104,7 @@ async page => {
         await page.locator('#training-chart').focus();await page.keyboard.press('Home');await page.keyboard.press('End');
         check(await page.locator('#training-chart-readout').textContent().then(Boolean), 'Training State keyboard readout');
       } else {
+        if (!await page.locator('#power-nav').evaluate(node => node.open)) await page.locator('#power-nav summary').click();
         await page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'Power Curve',exact:true}).click();
         check(await page.locator('#power-curve-chart').isVisible(), 'full Performance Power Curve mode');
         await page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'20-Minute History',exact:true}).click();

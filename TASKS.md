@@ -59,7 +59,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### NAV-01 — Power sidebar navigation with two views
 
-**Status:** pending — Analyst-authored [JIT](docs/tasks/NAV-01.md) committed 2026-10-31. HOME-UI-05 is now accepted/closed and no task is `in_progress`; NAV-01 may start only on explicit Owner `/TASK NAV-01` invocation after normal repository refresh.
+**Status:** in_progress — implementing the Analyst-authored [JIT](docs/tasks/NAV-01.md) on `task/nav-01-power-navigation`.
 
 **Purpose:** Rename the sidebar **Performance** entry to **Power**, with two separately navigable choices: **20-Minute History** and **Power Curve**. These must display the respective existing Performance-page modes.
 

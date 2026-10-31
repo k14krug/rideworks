@@ -539,7 +539,8 @@ class DashboardTests(TestCase):
         html=self.app.get('/?home_tz=UTC')[2].decode()
         self.assertIn('Performance update incomplete',html)
         self.assertIn('Retry Performance update',html)
+        home_content = html.split('<main>', 1)[1]
         for text in ('Fitness Score','Training Load','Next Workout','Power Curve','AI Insights','Current FTP'):
-            self.assertNotIn(text,html)
+            self.assertNotIn(text,home_content)
         rebuild_performance(self.store)
         self.assertNotIn('class="performance-update"',self.app.get('/?home_tz=UTC')[2].decode())

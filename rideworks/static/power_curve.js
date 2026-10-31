@@ -8,7 +8,6 @@
   const names = data.mode === 'activity'
     ? {ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',all:'All earlier history'}
     : {six:'Last 6 weeks',previous:'Previous 6 weeks',ytd:'Year to date',last_year:'Previous calendar year',all:'All time'};
-  const url = new URL(location.href);
   const $ = id => document.getElementById('curve-'+id);
   const fmt = d => d < 60 ? d+' s' : d < 3600 ? (d/60).toFixed(d%60 ? 1 : 0)+' min' : (d/3600).toFixed(d%3600 ? 2 : 0)+' h';
   const date = value => value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:data.calendar_timezone || document.documentElement.dataset.displayTimezone || 'America/Los_Angeles'}) : 'All earlier supported history';
@@ -147,17 +146,34 @@
     }
   });
   $('a')?.addEventListener('change',render);$('b').addEventListener('change',render);
-  const caption=document.querySelector('.performance-count'), historyCaption=caption?.textContent;
-  for (const button of document.querySelectorAll('[data-curve-mode]')) {
-    button.addEventListener('click',()=> {
-      panel.hidden=button.dataset.curveMode!=='curve';
-      document.getElementById('performance-history-mode').hidden=!panel.hidden;
-      if(caption)caption.textContent=panel.hidden?historyCaption:'Power-duration best efforts · Trusted Virtual Ride power evidence';
-      document.querySelectorAll('[data-curve-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+  if (data.mode === 'performance') {
+    const historyPanel = document.getElementById('performance-history-mode');
+    const caption = document.querySelector('.performance-count');
+    const links = document.querySelectorAll('.nav-power [data-power-view]');
+    const showView = () => {
+      const curve = new URL(location.href).searchParams.get('curve') === '1';
+      panel.hidden = !curve;
+      historyPanel.hidden = curve;
+      caption.textContent = curve ? 'Power-duration best efforts · Trusted Virtual Ride power evidence' : caption.dataset.historyCaption;
+      links.forEach(link => {
+        const selected = (link.dataset.powerView === 'curve') === curve;
+        link.classList.toggle('active', selected);
+        if (selected) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
       render();
-    });
+    };
+    links.forEach(link => link.addEventListener('click', event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      const url = new URL(location.href);
+      if (link.dataset.powerView === 'curve') url.searchParams.set('curve', '1');
+      else url.searchParams.delete('curve');
+      if (url.href !== location.href) history.pushState(null, '', url);
+      showView();
+    }));
+    window.addEventListener('popstate', showView);
   }
-  if (url.searchParams.get('curve')==='1') document.querySelector('[data-curve-mode="curve"]')?.click();
   new ResizeObserver(render).observe(svg);
   render();
 })();

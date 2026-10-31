@@ -26,7 +26,7 @@ This **new navigation decision supersedes** the older PC-01 presentation decisio
 
 **Allowed Invocation: `/TASK only`.**
 
-**Dependency / sequencing:** HOME-UI-05 is currently `in_progress` and at `ready_for_review` on draft PR #56. Do not abandon, preempt, mark done, merge, or otherwise change its lifecycle as part of NAV-01. Start NAV-01 only when the existing task is accepted/cleared under `AGENTS.md` and the Owner invokes the authorized task workflow.
+**Dependency / sequencing:** HOME-UI-05 has now been accepted and closed (PR #56 merged; Owner visual approval and retrospective Analyst technical acceptance recorded 2026-10-31). The predecessor gate is cleared. Start NAV-01 only after explicit Owner `/TASK NAV-01` invocation and the normal refreshed-`main`/clean-worktree checks in `AGENTS.md`. Do not modify HOME-UI-05 or conflate NAV-01 with a production deployment.
 
 One bounded implementation unit. Start from a clean, freshly fetched `main` and create a NAV-01 task branch/draft PR. After implementation and verification, stop at **HARD — Analyst** source/regression/accessibility review; then **HARD — Owner** running-UI navigation/visual approval. No automatic merge, no production deployment.
 

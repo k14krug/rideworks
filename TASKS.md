@@ -59,7 +59,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### NAV-01 — Power sidebar navigation with two views
 
-**Status:** in_progress — implementing the Analyst-authored [JIT](docs/tasks/NAV-01.md) on `task/nav-01-power-navigation`.
+**Status:** in_progress — implementation and verification complete; [draft PR #57](https://github.com/k14krug/rideworks/pull/57) is ready for Analyst review. [Analyst JIT](docs/tasks/NAV-01.md).
 
 **Purpose:** Rename the sidebar **Performance** entry to **Power**, with two separately navigable choices: **20-Minute History** and **Power Curve**. These must display the respective existing Performance-page modes.
 

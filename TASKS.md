@@ -57,6 +57,20 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
+### NAV-01 — Power sidebar navigation with two views
+
+**Status:** pending — Analyst-authored [JIT](docs/tasks/NAV-01.md) committed 2026-10-31. Wait for current HOME-UI-05 `ready_for_review` work and its review gates to finish; do not interrupt the existing `in_progress` task.
+
+**Purpose:** Rename the sidebar **Performance** entry to **Power**, with two separately navigable choices: **20-Minute History** and **Power Curve**. These must display the respective existing Performance-page modes.
+
+**Scope:** Sidebar grouping and view navigation only. Preserve accepted PC-01 20-minute history and power-curve data, filters, comparison controls and interactions, plus existing deep links and the separate Activity Review curve. No analytical changes, schema work or production deployment.
+
+**Execution:** `/TASK only`. Task branch/draft PR after current task clears; HARD — Analyst source/regression review, then HARD — Owner running-UI acceptance. See [NAV-01 JIT](docs/tasks/NAV-01.md).
+
+**Acceptance:** Both child choices appear under Power, each opens/reloads its respective existing view with correct active-state indications, and prior behavior/regression tests remain intact.
+
+---
+
 ### RE-02 — Relative Effort UI verification and integration
 
 **Status:** done — Analyst technical acceptance and Owner visual/closeout acceptance on 2026-10-29. [PR #53](https://github.com/k14krug/rideworks/pull/53) merged to `main` as `178e8065ffc780118b44f3e04b73a481e472ed65`. Relative Effort `relative-effort-v1` is unchanged; no additional calibration research required. The Owner-requested Home Recent Activities compacting removes ride-type sublines and fits more complete rows while preserving colored dots.

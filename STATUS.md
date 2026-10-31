@@ -1,12 +1,9 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** HOME-UI-05 — Compact Training Overview and 90-day Power Bests.
-**State:** `ready_for_review` — compact overview and bounded cached Power Curve read implemented; [verification report](reports/HOME-UI-05/implementation.md). [Analyst JIT](docs/tasks/HOME-UI-05.md).
-**Branch:** `task/home-ui-05-compact-overview`.
-**PR:** [#56](https://github.com/k14krug/rideworks/pull/56) (draft).
-**Baseline:** HOME-UI-04 [PR #55](https://github.com/k14krug/rideworks/pull/55) merged to `main` on 2026-10-30. The Owner accepted the page as complete before selecting this further visual change.
-**Goal:** Compact CURRENT STATUS rows and 90-DAY POWER BESTS (5s, 1m, 5m, 20m), calculated only from valid existing cached Virtual Ride power profiles. Avoid full-history signature validation, new data architecture or taller desktop cards.
-**Verification:** 558 Python tests passed; synthetic responsive, missing-profile, desktop-height and before/after HTTP timing checks completed.
-**Next action:** HARD — Analyst technical/performance review, then HARD — Owner visual approval of the running UI.
-**Deployment:** Not authorized; no production Store or live service change.
+**Most recently completed task:** HOME-UI-05 — Compact Training Overview and 90-day Power Bests.
+**State:** `done` — [PR #56](https://github.com/k14krug/rideworks/pull/56) merged as `847277e1495ca69f1731927084630db36313e9a5`; [Owner visual approval](https://github.com/k14krug/rideworks/pull/56#issuecomment-6545192305) and [Analyst technical acceptance](https://github.com/k14krug/rideworks/pull/56#issuecomment-6545435133) recorded 2026-10-31. Analyst review was retrospective after the merge.
+**Verification:** Dex reported 558 Python tests, synthetic responsive/missing-profile/height checks and fixed-clock HTTP timing. Analyst inspected committed source, test cases and evidence; tests were not independently rerun.
+**Next pending task:** NAV-01 — Power sidebar with 20-Minute History and Power Curve. [Analyst JIT](docs/tasks/NAV-01.md). `/TASK only`.
+**Next action:** Owner may explicitly invoke `/TASK NAV-01`. Dex must fetch/synchronize `main` and follow the JIT. Do **not** begin NAV-01 automatically.
+**Deployment:** HOME-UI-05 was not deployed as part of review/closeout. Owner requested production in the [PR handoff](https://github.com/k14krug/rideworks/pull/56#issuecomment-6545192305); any rollout remains a separate controlled operation.

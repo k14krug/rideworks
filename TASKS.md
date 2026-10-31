@@ -45,7 +45,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-05 — Compact Training Overview and 90-day Power Bests
 
-**Status:** in_progress — implementation and local verification complete; [draft PR #56](https://github.com/k14krug/rideworks/pull/56) is ready for Analyst review. [Analyst-authored JIT](docs/tasks/HOME-UI-05.md).
+**Status:** done — merged [PR #56](https://github.com/k14krug/rideworks/pull/56) as `847277e1495ca69f1731927084630db36313e9a5`; Owner UI approval recorded [on the PR](https://github.com/k14krug/rideworks/pull/56#issuecomment-6545192305); [Analyst technical/performance acceptance](https://github.com/k14krug/rideworks/pull/56#issuecomment-6545435133) recorded 2026-10-31 after the merge. [Analyst-authored JIT](docs/tasks/HOME-UI-05.md). No deployment performed or authorized by this task closeout.
 
 **Purpose:** Completely replace Home Training Overview's three giant metric tiles with a compact CURRENT STATUS (Fitness, FTP, Last 7 Days) and 90-DAY POWER BESTS (5s, 1m, 5m, 20m), using trusted existing cached Virtual Ride Power Curve data over the exact preceding 90 days. No extra desktop card height and no slowdown from full historical Power Curve validation on each Home request.
 

@@ -71,6 +71,18 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
+### RACE-01 — Zwift Racing Profile screenshot import and linked Race Results
+
+**Status:** pending — Owner-approved feature direction 2026-11-05; Analyst-authored [JIT](docs/tasks/RACE-01.md) and [synthetic UI reference](docs/mockups/race-results-ui-concept.html) are on `main`. Does **not** change NAV-01's existing next-task position. Start only upon explicit Owner `/TASK RACE-01` or `/AUTOTASK RACE-01` invocation, subject to `AGENTS.md` current-task and remote-refresh rules.
+
+**Purpose:** Upload Zwift Racing Profile race-results screenshots; use a server-side, low-cost OpenAI vision model to extract date/time, event, group, finish, avg watts, Racing Score and score change; review/correct records; link confirmed results to **existing** RideWorks activities only.
+
+**Scope:** Screenshot extraction, type validation, explicit confirmation, safe activity matching, idempotent reimports, local image/provenance retention, Race Results history page, Activity Review links, and focused test/browser verification. No Zwift auth/scraping, no new activity creation, no automated Zwift sync or deployment.
+
+**Execution:** `/TASK or /AUTOTASK`; branch/draft PR by Dex, HARD — Analyst verification followed by HARD — Owner running-app acceptance. See [RACE-01 JIT](docs/tasks/RACE-01.md).
+
+---
+
 ### RE-02 — Relative Effort UI verification and integration
 
 **Status:** done — Analyst technical acceptance and Owner visual/closeout acceptance on 2026-10-29. [PR #53](https://github.com/k14krug/rideworks/pull/53) merged to `main` as `178e8065ffc780118b44f3e04b73a481e472ed65`. Relative Effort `relative-effort-v1` is unchanged; no additional calibration research required. The Owner-requested Home Recent Activities compacting removes ride-type sublines and fits more complete rows while preserving colored dots.

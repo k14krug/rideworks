@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RideWorks — Race Results (synthetic visual reference)</title>
+<style>
+:root{font-family:Inter,Arial,sans-serif;color:#09254a;background:#f6f9ff;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}.top{height:54px;background:#fff;border-bottom:1px solid #e4e9f3;display:flex;align-items:center;padding:0 25px;font-weight:800;font-size:21px}.mark{display:inline-grid;place-items:center;background:#2164f5;color:#fff;border-radius:7px;width:30px;height:30px;margin-right:9px;font-size:18px}
+nav{width:160px;background:#f5f8fe;border-right:1px solid #e5eaf2;min-height:calc(100vh - 54px);position:fixed;padding:18px 8px}.navitem{padding:11px 11px;border-radius:5px;color:#1259f1;font-size:13px;display:block;text-decoration:none;margin-bottom:2px;font-weight:600}.navitem.active{background:#e4edff}
+main{margin-left:160px;padding:22px 24px 40px;max-width:1650px}.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px}h1{font-size:25px;margin:0 0 4px}h2{font-size:16px;margin:0 0 14px}p,.small{color:#667b99;font-size:12px}.small{line-height:1.5}.btn{background:#1a5cf2;border:1px solid #1a5cf2;color:#fff;padding:11px 16px;font-weight:650;border-radius:8px;cursor:pointer}.btn.secondary{color:#1658e9;background:#fff}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}.card{background:#fff;border:1px solid #e1e8f5;border-left:3px solid #2463fc;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(15,44,87,.025)}.stat-value{font-size:28px;font-weight:800;color:#0d294f;margin-top:8px}.content{display:grid;grid-template-columns:minmax(590px,1.7fr) minmax(320px,.9fr);gap:14px}.right{display:grid;align-content:start;gap:14px}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:12px}th{text-align:left;color:#556680;padding:13px 8px;border-bottom:1px solid #dfe7f2;white-space:nowrap}td{padding:13px 8px;border-bottom:1px solid #e8edf5;color:#19395b;vertical-align:middle}td a{color:#1464f7;text-decoration:none;font-weight:650}th.num,td.num{text-align:right}.chip{display:inline-block;background:#e8edf5;border-radius:14px;padding:3px 9px;font-size:11px;color:#496078;white-space:nowrap}.pos{color:#07984d;font-weight:700}.neg{color:#cc414a;font-weight:700}.muted{color:#8799ac}.tabs{display:flex;gap:10px;margin:18px 0}.tabs .btn{padding:9px 16px}.tabs .off{background:transparent;color:#2155a1;border-color:transparent}.drop{border:2px dashed #b0c9ff;background:#f8fbff;border-radius:10px;text-align:center;padding:30px 14px;margin:16px 0}.drop b{color:#205bdb}.note{background:#f0f5ff;color:#416087;font-size:12px;line-height:1.6;border-radius:8px;padding:12px}.label{display:block;font-size:12px;font-weight:700;margin:15px 0 6px}textarea,input,select{font:inherit;padding:8px;border:1px solid #d8e2f3;border-radius:6px;color:#1d3e6a;background:#fff}input{max-width:200px}select{max-width:200px}.review-grid{grid-template-columns:1fr}.status{font-size:11px;border-radius:5px;padding:4px 7px;background:#ecf7ed;color:#16723a;font-weight:700}.status.warn{background:#fff3de;color:#986310}.status.duplicate{background:#eef1f5;color:#6f8095}.review-table{font-size:12px}.review-table input{width:160px}.review-table input.short{width:74px}.review-table input.time{width:104px}.review-table select{width:180px}.foot{margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}.foot .btn{margin-left:8px}.hidden{display:none!important}svg{width:100%;height:auto}.legend{font-size:11px;color:#7284a2}
+@media(max-width:900px){nav{width:130px}main{margin-left:130px;padding:18px 12px}.stats{grid-template-columns:1fr 1fr}.content{grid-template-columns:1fr}.head{flex-wrap:wrap}}
+@media(max-width:580px){nav{position:static;width:auto;min-height:0;display:flex;overflow:auto;white-space:nowrap;padding:6px}.navitem{padding:8px}main{margin-left:0}.stats{grid-template-columns:1fr}.head h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header class="top"><span class="mark">R</span>RideWorks</header>
+<nav aria-label="Example navigation">
+<a class="navitem" href="#">⌂ &nbsp;Home</a><a class="navitem" href="#">⌁ &nbsp;Activities</a><a class="navitem active" href="#">♜ &nbsp;Race Results</a><a class="navitem" href="#">⌁ &nbsp;Performance</a><a class="navitem" href="#">⌁ &nbsp;Training State</a><a class="navitem" href="#">▦ &nbsp;Plan</a><a class="navitem" href="#">⚙ &nbsp;Settings</a>
+</nav>
+<main>
+<div class="head"><div><h1>Race Results</h1><div class="small">Zwift race history · Connected to your RideWorks rides</div></div><button class="btn" onclick="show('import')">⇧ &nbsp;Import Screenshot</button></div>
+<div class="stats">
+<section class="card"><h2>Races</h2><div class="stat-value">12</div><div class="small">Illustrative records</div></section>
+<section class="card"><h2>Latest Racing Score</h2><div class="stat-value">184</div><div class="small">Example value, not rider data</div></section>
+<section class="card"><h2>Podium Finishes</h2><div class="stat-value">2</div><div class="small">Calculated from stored results</div></section>
+</div>
+<div class="tabs" role="tablist"><button id="results-tab" class="btn" onclick="show('results')">Results</button><button id="import-tab" class="btn off" onclick="show('import')">Import &amp; review</button></div>
+<section id="results-view" class="content">
+<div class="card"><h2>Race History</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Event</th><th>Group</th><th class="num">Finish</th><th class="num">Avg Watts</th><th class="num">Score</th><th class="num">Change</th><th>Ride</th></tr></thead><tbody>
+<tr><td>Nov 1, 2026</td><td><a href="#">Demo Series – Stage 4</a></td><td><span class="chip">0–210</span></td><td class="num">9</td><td class="num">161 W</td><td class="num">184</td><td class="num pos">+1</td><td><a href="#">View ride</a></td></tr>
+<tr><td>Oct 18, 2026</td><td><a href="#">Demo Series – Stage 3</a></td><td><span class="chip">160–270</span></td><td class="num">4</td><td class="num">178 W</td><td class="num">183</td><td class="num pos">+5</td><td><a href="#">View ride</a></td></tr>
+<tr><td>Oct 7, 2026</td><td><a href="#">Demo Series – Stage 2</a></td><td><span class="chip">0–210</span></td><td class="num">18</td><td class="num">170 W</td><td class="num">178</td><td class="num neg">−3</td><td><a href="#">View ride</a></td></tr>
+<tr><td>Sep 29, 2026</td><td><a href="#">Demo Series – Stage 1</a></td><td><span class="chip">0–210</span></td><td class="num">5</td><td class="num">164 W</td><td class="num">181</td><td class="num pos">+2</td><td><a href="#">View ride</a></td></tr>
+<tr><td>Sep 14, 2026</td><td><a href="#">Practice Race</a></td><td><span class="chip">0–275</span></td><td class="num">2</td><td class="num">186 W</td><td class="num muted">—</td><td class="num muted">—</td><td><a href="#">View ride</a></td></tr>
+</tbody></table></div><p>Table values and event names are synthetic. Use actual confirmed imports in production; never fake charts or summary metrics.</p></div>
+<div class="right">
+<section class="card"><h2>Racing Score</h2><svg viewBox="0 0 400 180" role="img" aria-label="Illustrative Racing Score trend line"><path d="M36 25V151H378" fill="none" stroke="#d9e1ed"/><path d="M36 56H378M36 96H378" fill="none" stroke="#ebf0f5"/><path d="M37 126 L83 119 L120 104 L160 112 L207 97 L252 82 L289 89 L335 55 L375 61" fill="none" stroke="#2665f5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="375" cy="61" r="5" fill="#2665f5"/><text x="343" y="40" font-size="17" fill="#2665f5" font-weight="bold">184</text><text x="38" y="169" font-size="11" fill="#61758e">May</text><text x="190" y="169" font-size="11" fill="#61758e">Aug</text><text x="346" y="169" font-size="11" fill="#61758e">Nov</text></svg><div class="legend">Illustrative chart — not real historical data</div></section>
+<section class="card"><h2>Last import</h2><p>5 existing results · 2 added · 1 needed manual matching</p><div class="note">The next screenshot can include old races. RideWorks should recognize duplicates and only add or update reviewed records.</div></section>
+</div>
+</section>
+<section id="import-view" class="hidden">
+<div class="content">
+<div class="card"><h2>Import Zwift Race Results</h2><p>Upload a screenshot of your Zwift Racing Profile. RideWorks extracts the table, then lets you review the results and match them to your existing rides.</p><div class="drop"><b>⇧ &nbsp;Drop screenshot here</b><br><span class="small">or select PNG, JPG or WebP</span><p>Demo interface only — upload processing is not implemented in this reference.</p></div><div class="note">No race results are saved during extraction. You review every row, and ambiguous rides require your selection.</div><div class="foot"><span class="small">Estimated API usage shown after extraction.</span><button class="btn secondary" disabled>Extract results</button></div></div>
+<div class="card"><h2>Import steps</h2><p><b>1.</b> Upload your Zwift Racing Profile screenshot.</p><p><b>2.</b> Check extracted dates, groups, watts and scores.</p><p><b>3.</b> Confirm that each result matches an existing RideWorks ride.</p><p><b>4.</b> Save only approved linked results.</p><div class="note">Unmatched results stay pending or are skipped. Importing a screenshot never creates a new activity.</div></div>
+</div>
+<div class="card" style="margin-top:14px"><h2>Extracted results — review before saving</h2><div class="tablewrap"><table class="review-table"><thead><tr><th>Status</th><th>Date / time</th><th>Event</th><th>Group</th><th>Finish</th><th>Avg W</th><th>Score</th><th>Change</th><th>Ride match</th></tr></thead><tbody>
+<tr><td><span class="status">New</span></td><td><input class="time" value="2026-11-01 11:10"></td><td><input value="Demo Series – Stage 4"></td><td><input class="short" value="0-210"></td><td><input class="short" value="9"></td><td><input class="short" value="161"></td><td><input class="short" value="184"></td><td><input class="short" value="+1"></td><td><select><option>✔ Nov 1 Zwift ride</option><option>Choose another ride...</option></select></td></tr>
+<tr><td><span class="status warn">Needs match</span></td><td><input class="time" value="2026-10-18 09:10"></td><td><input value="Demo Series – Stage 3"></td><td><input class="short" value="160-270"></td><td><input class="short" value="4"></td><td><input class="short" value="178"></td><td><input class="short" value="183"></td><td><input class="short" value="+5"></td><td><select><option>Select a ride…</option><option>Oct 18 9:03 Zwift</option><option>Oct 18 14:20 Zwift</option></select></td></tr>
+<tr><td><span class="status duplicate">Already imported</span></td><td><input class="time" value="2026-10-07 11:10"></td><td><input value="Demo Series – Stage 2"></td><td><input class="short" value="0-210"></td><td><input class="short" value="18"></td><td><input class="short" value="170"></td><td><input class="short" value="178"></td><td><input class="short" value="-3"></td><td><select><option>✔ Existing linked ride</option></select></td></tr>
+</tbody></table></div><div class="foot"><span class="small">1 new · 1 needs matching · 1 already imported</span><span><button class="btn secondary" onclick="show('results')">Cancel</button><button class="btn" disabled>Confirm import</button></span></div><p>All rows, statuses, controls and chart are illustrative; this HTML is a UI spec, not a functioning RideWorks importer.</p></div>
+</section>
+</main>
+<script>
+function show(mode) {
+const isImport=mode==='import';
+document.getElementById('import-view').classList.toggle('hidden', !isImport);
+document.getElementById('results-view').classList.toggle('hidden', isImport);
+document.getElementById('results-tab').classList.toggle('off', isImport);
+document.getElementById('import-tab').classList.toggle('off', !isImport);
+}
+</script>
+</body></html>

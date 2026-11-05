@@ -59,7 +59,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### NAV-01 — Power sidebar navigation with two views
 
-**Status:** in_progress — Owner requested a collapsible Power menu after the initial Analyst acceptance; [draft PR #57](https://github.com/k14krug/rideworks/pull/57) awaits review of that refinement. [Analyst JIT](docs/tasks/NAV-01.md).
+**Status:** done — Analyst accepted the collapsible navigation refinement at `83cc514` and the Owner accepted NAV-01 on 2026-11-05. [PR #57](https://github.com/k14krug/rideworks/pull/57). [Analyst JIT](docs/tasks/NAV-01.md).
 
 **Purpose:** Rename the sidebar **Performance** entry to **Power**, with two separately navigable choices: **20-Minute History** and **Power Curve**. These must display the respective existing Performance-page modes.
 
@@ -68,6 +68,18 @@ Only one implementation/research task should normally be `in_progress`.
 **Execution:** `/TASK only`. Task branch/draft PR after current task clears; HARD — Analyst source/regression review, then HARD — Owner running-UI acceptance. See [NAV-01 JIT](docs/tasks/NAV-01.md).
 
 **Acceptance:** Both child choices appear under Power, each opens/reloads its respective existing view with correct active-state indications, and prior behavior/regression tests remain intact.
+
+---
+
+### RACE-01 — Zwift Racing Profile screenshot import and linked Race Results
+
+**Status:** pending — next Owner-chosen task; Owner-approved feature direction 2026-11-05; Analyst-authored [JIT](docs/tasks/RACE-01.md) and [synthetic UI reference](docs/mockups/race-results-ui-concept.html) are on `main`. Start only upon explicit Owner `/TASK RACE-01` or `/AUTOTASK RACE-01` invocation, subject to `AGENTS.md` current-task and remote-refresh rules.
+
+**Purpose:** Upload Zwift Racing Profile race-results screenshots; use a server-side, low-cost OpenAI vision model to extract date/time, event, group, finish, avg watts, Racing Score and score change; review/correct records; link confirmed results to **existing** RideWorks activities only.
+
+**Scope:** Screenshot extraction, type validation, explicit confirmation, safe activity matching, idempotent reimports, local image/provenance retention, Race Results history page, Activity Review links, and focused test/browser verification. No Zwift auth/scraping, no new activity creation, no automated Zwift sync or deployment.
+
+**Execution:** `/TASK or /AUTOTASK`; branch/draft PR by Dex, HARD — Analyst verification followed by HARD — Owner running-app acceptance. See [RACE-01 JIT](docs/tasks/RACE-01.md).
 
 ---
 

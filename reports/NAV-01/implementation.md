@@ -26,4 +26,8 @@ python tools/preview_power_curves.py --data-dir "$TASK_DATA"
 python -m rideworks --data-dir "$TASK_DATA" serve --port 18891
 ```
 
-The synthetic browser script was run through the integrated Playwright browser against that server; it can also be passed to the repository's Playwright CLI `run-code` workflow. No personal activity details are included in this report. Analyst review of the refinement and Owner running-UI acceptance remain open.
+The synthetic browser script was run through the integrated Playwright browser against that server; it can also be passed to the repository's Playwright CLI `run-code` workflow. No personal activity details are included in this report.
+
+## Accepted closeout
+
+The Analyst accepted the refinement at `83cc514`, and the Owner accepted NAV-01 on 2026-11-05 in PR #57. The branch was reconciled with current `main` without changing the reviewed application code or the RACE-01 brief and mockup. The full Python regression suite was rerun with the command above: 560 tests passed. `node --check` passed for `rideworks/static/nav.js`, `rideworks/static/power_curve.js` and `tools/verify_nav_power_browser.js`; `git diff --check` passed. No production deployment was performed.

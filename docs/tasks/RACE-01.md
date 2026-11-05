@@ -59,11 +59,11 @@ Example (illustrative format; do not commit rider's raw screenshot):
   "races": [{
     "date": "2026-11-01",
     "start_time": "11:10",
-    "event": "Stage 4 - Race - Tour of Watopia 2026",
+    "event": "Demo Series - Stage 4",
     "race_group": "0-210",
     "finish": 9,
     "avg_watts": 161,
-    "race_score": 198,
+    "race_score": 184,
     "race_score_change": 1
   }]
 }

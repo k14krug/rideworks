@@ -22,7 +22,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
 
 
 def duration(seconds):
@@ -96,9 +96,9 @@ def shell(title, content, *, active='activities', page_class=''):
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{escape(title)} · RideWorks</title><link rel="icon" href="/static/mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/static/style.css"><script src="/static/review.js" defer></script><script src="/static/settings.js" defer></script></head>
+<link rel="stylesheet" href="/static/style.css"><script src="/static/review.js" defer></script><script src="/static/settings.js" defer></script><script src="/static/nav.js" defer></script></head>
 <body><div class="app-header"><a class="brand" href="/" aria-label="RideWorks Home"><img src="/static/mark.svg" alt="" width="44" height="28"><span>RideWorks</span></a></div>
-<aside class="sidebar"><nav aria-label="Main"><a href="/"{nav_state('home')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg>Home</a><a href="/activities"{nav_state('activities')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 15l5-6 4 3 5-6"/></svg>Activities</a><a href="/performance"{nav_state('performance')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 16l4-5 4 2 6-9"/></svg>Performance</a><a href="/training-state"{nav_state('training')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 14l4-3 4 5 4-10 4 4"/></svg>Training State</a><a href="/plan"{nav_state('plan')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v16H4ZM8 3v4m8-4v4M4 10h16M8 14h3m2 3h3"/></svg>Plan</a><a href="/settings"{nav_state('settings')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16M2 8h6m1 8h6m1-7h6"/></svg>Settings</a></nav></aside>
+<aside class="sidebar"><nav aria-label="Main"><a href="/"{nav_state('home')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg>Home</a><a href="/activities"{nav_state('activities')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 15l5-6 4 3 5-6"/></svg>Activities</a><details id="power-nav" class="nav-power{' is-current' if active.startswith('performance') else ''}" role="group" aria-labelledby="power-nav-label"><summary class="nav-power-heading" id="power-nav-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 16l4-5 4 2 6-9"/></svg>Power<svg class="nav-power-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></summary><a href="/performance"{nav_state('performance-history')} data-power-view="history">20-Minute History</a><a href="/performance?curve=1"{nav_state('performance-curve')} data-power-view="curve">Power Curve</a></details><a href="/training-state"{nav_state('training')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 14l4-3 4 5 4-10 4 4"/></svg>Training State</a><a href="/plan"{nav_state('plan')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v16H4ZM8 3v4m8-4v4M4 10h16M8 14h3m2 3h3"/></svg>Plan</a><a href="/settings"{nav_state('settings')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16M2 8h6m1 8h6m1-7h6"/></svg>Settings</a></nav></aside>
 <main>{content}</main></body></html>'''
 
 
@@ -540,6 +540,7 @@ def performance_page(store, nonce='', query=''):
     from .performance import performance_history
     from .performance_view import performance_view
     from .power_curve_page import panel as curve_panel
+    curve_mode = parse_qs(query, keep_blank_values=True).get('curve', [''])[0] == '1'
     history = performance_history(store)
     points = history['points']
     view = performance_view(points)
@@ -587,8 +588,10 @@ def performance_page(store, nonce='', query=''):
         notices.append(f"{history['missing_dates']:,} eligible results lack a supported Activity date and are not plotted.")
     if view['unknown_timezones']:
         notices.append(f"{view['unknown_timezones']:,} results have source dates with unknown timezones: available in period views, unavailable for exact timed-window summaries.")
-    return shell('Performance', f'''<header><h1>Performance</h1><p class="performance-count">20-minute power · {len(points):,} eligible ride results · Virtual Ride power evidence</p></header>
-<p><a href="/performance/ftp">FTP History &amp; comparison</a></p><div class="performance-modes" role="group" aria-label="Performance mode"><button type="button" data-curve-mode="history" aria-pressed="true">20-Minute History</button><button type="button" data-curve-mode="curve" aria-pressed="false">Power Curve</button></div><div id="performance-history-mode">{chart}
+    history_caption = f'20-minute power · {len(points):,} eligible ride results · Virtual Ride power evidence'
+    caption = 'Power-duration best efforts · Trusted Virtual Ride power evidence' if curve_mode else history_caption
+    return shell('Performance', f'''<header><h1>Performance</h1><p class="performance-count" data-history-caption="{escape(history_caption, quote=True)}">{caption}</p></header>
+<p><a href="/performance/ftp">FTP History &amp; comparison</a></p><div id="performance-history-mode"{' hidden' if curve_mode else ''}>{chart}
 <p class="performance-notice">{escape(' '.join(notices))}</p>
 <details class="panel performance-policy"><summary>Eligibility &amp; method</summary>
 <p>Virtual Ride file-backed power has precedence. When no file-backed power evidence exists, current Strava API time/watts streams may qualify if device watts are confirmed, both streams are high resolution and full length, and valid timing/power supports a complete window. Power presence alone does not establish measured origin. Outdoor Ride power remains excluded.</p>
@@ -596,8 +599,8 @@ def performance_page(store, nonce='', query=''):
 <p>The trend retains the strongest qualifying result in the trailing 42 days, changing when a ride enters or leaves the window. A result expires exactly 42 days after its Activity start. Gaps mean there is no qualifying result; the line is demonstrated evidence rather than an estimated daily performance series. Time ranges end at the page's current time; monthly and yearly bests use displayed calendar periods and only rides within the selected range. Period-best lines connect consecutive calendar periods at the contributing ride dates, with point markers. Missing periods have no mark and break the line. Raw values choose the best; exact ties retain the earliest Activity.</p>
 <p>Method: best-average-power-v1 · Policy: {POLICY}. One eligible file Source controls each file-backed Activity result; multiple eligible file Sources are ambiguous and excluded. API evidence cannot bypass ineligible file-backed power. API results retain stream/summary provenance and returned-offset window bounds. CSV and summary averages never substitute for sample power. Ineligible or missing results are not plotted as zero.</p>
 </details>
-<details class="panel performance-future"><summary>Future Performance candidates</summary><p>Possible future direction includes FTP and historical athlete context and explainable performance or training-state signals. These are candidates, not implemented features or delivery commitments.</p></details></div>{curve_panel(store,nonce,query=query)}
-<script id="performance-points" type="application/json">{safe_json(points)}</script><script id="performance-view" type="application/json">{safe_json(view)}</script><script src="/static/performance.js" defer></script>''', active='performance', page_class='performance-redesign')
+<details class="panel performance-future"><summary>Future Performance candidates</summary><p>Possible future direction includes FTP and historical athlete context and explainable performance or training-state signals. These are candidates, not implemented features or delivery commitments.</p></details></div>{curve_panel(store,nonce,query=query,visible=curve_mode)}
+<script id="performance-points" type="application/json">{safe_json(points)}</script><script id="performance-view" type="application/json">{safe_json(view)}</script><script src="/static/performance.js" defer></script>''', active='performance-curve' if curve_mode else 'performance-history', page_class='performance-redesign')
 
 
 class Application:

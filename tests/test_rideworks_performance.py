@@ -217,7 +217,7 @@ class PerformanceTests(unittest.TestCase):
         self.assertIn('Yearly best',html)
         self.assertIn('Future Performance candidates',html)
         self.assertNotIn('data-mode=',html)
-        self.assertIn('performance-modes',html)
+        self.assertNotIn('performance-modes',html)
         self.assertIn('20-Minute History',html)
         self.assertIn('Power Curve',html)
         self.assertIn('data-range="1yr" aria-pressed="true"',html)

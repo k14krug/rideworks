@@ -3,12 +3,13 @@ async (page) => {
   const base = BASE_URL, expected = EXPECTED_COUNT;
   const check=(condition,message)=>{if(!condition)throw new Error(message);};
   await page.goto(base+'/activities');
-  await page.getByRole('navigation',{name:'Main',exact:true}).getByRole('link',{name:'Performance',exact:true}).click();
+  if (!await page.locator('#power-nav').evaluate(node => node.open)) await page.locator('#power-nav summary').click();
+  await page.getByRole('navigation',{name:'Main',exact:true}).getByRole('link',{name:'20-Minute History',exact:true}).click();
   await page.waitForSelector('.performance-trend');
   const points=await page.locator('#performance-points').evaluate(node=>JSON.parse(node.textContent));
   const view=await page.locator('#performance-view').evaluate(node=>JSON.parse(node.textContent));
   check(points.length===expected,'Payload omits eligible history');
-  check(await page.locator('nav a[aria-current="page"]').textContent()==='Performance','Active navigation is wrong');
+  check(await page.locator('nav a[aria-current="page"]').textContent()==='20-Minute History','Active navigation is wrong');
   check(points.every(p=>p.classification.activity_type==='Virtual Ride'),'Excluded activity in chart');
   check(await page.locator('#native-records').count()===0,'Native streams in Performance');
   const html=await page.content();
@@ -23,7 +24,7 @@ async (page) => {
   const chart=page.locator('#performance-chart');
   check(await chart.getAttribute('data-view')==='rolling'&&await chart.getAttribute('data-range')==='1yr','Wrong default view');
   check(await page.locator('[data-mode]').count()===0,'Obsolete history tabs remain');
-  check(await page.locator('.performance-modes').count()===1,'Accepted PC-01 mode navigation remains');
+  check(await page.locator('.nav-power a').count()===2,'Power views are available in the sidebar');
   const future=page.locator('.performance-future');
   check(await future.getAttribute('open')===null,'Future candidates should be subordinate/collapsed');
   check((await future.textContent()).includes('not implemented features or delivery commitments'),'Future direction implies implemented features');

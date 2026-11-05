@@ -59,7 +59,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### NAV-01 — Power sidebar navigation with two views
 
-**Status:** pending — Analyst-authored [JIT](docs/tasks/NAV-01.md) committed 2026-10-31. HOME-UI-05 is now accepted/closed and no task is `in_progress`; NAV-01 may start only on explicit Owner `/TASK NAV-01` invocation after normal repository refresh.
+**Status:** done — Analyst accepted the collapsible navigation refinement at `83cc514` and the Owner accepted NAV-01 on 2026-11-05. [PR #57](https://github.com/k14krug/rideworks/pull/57). [Analyst JIT](docs/tasks/NAV-01.md).
 
 **Purpose:** Rename the sidebar **Performance** entry to **Power**, with two separately navigable choices: **20-Minute History** and **Power Curve**. These must display the respective existing Performance-page modes.
 
@@ -73,7 +73,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RACE-01 — Zwift Racing Profile screenshot import and linked Race Results
 
-**Status:** pending — Owner-approved feature direction 2026-11-05; Analyst-authored [JIT](docs/tasks/RACE-01.md) and [synthetic UI reference](docs/mockups/race-results-ui-concept.html) are on `main`. Does **not** change NAV-01's existing next-task position. Start only upon explicit Owner `/TASK RACE-01` or `/AUTOTASK RACE-01` invocation, subject to `AGENTS.md` current-task and remote-refresh rules.
+**Status:** pending — next Owner-chosen task; Owner-approved feature direction 2026-11-05; Analyst-authored [JIT](docs/tasks/RACE-01.md) and [synthetic UI reference](docs/mockups/race-results-ui-concept.html) are on `main`. Start only upon explicit Owner `/TASK RACE-01` or `/AUTOTASK RACE-01` invocation, subject to `AGENTS.md` current-task and remote-refresh rules.
 
 **Purpose:** Upload Zwift Racing Profile race-results screenshots; use a server-side, low-cost OpenAI vision model to extract date/time, event, group, finish, avg watts, Racing Score and score change; review/correct records; link confirmed results to **existing** RideWorks activities only.
 

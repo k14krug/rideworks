@@ -6,7 +6,7 @@ from .goals import query_zone
 from .power_curve import comparison
 
 
-def panel(store, nonce, *, activity_id=None, query=''):
+def panel(store, nonce, *, activity_id=None, query='', visible=False):
     zone = query_zone(query,'curve_tz')
     if zone is None:
         return '<section class="panel"><h2>Power curve</h2><p>Invalid timezone. Supply one valid curve_tz timezone or omit it to use America/Los_Angeles.</p></section>'
@@ -27,7 +27,7 @@ def panel(store, nonce, *, activity_id=None, query=''):
     if data['pending']:
         pending = f'''<div class="curve-pending" role="status"><p>{data['pending']:,} new or changed activities await Power Curve update. Outdated profiles are unavailable.</p>
 <form method="post" data-settings-action action="/settings/power-curves/rebuild"><input type="hidden" name="nonce" value="{escape(nonce,quote=True)}"><button type="submit">Update power curves</button></form></div>'''
-    return f'''<section class="panel power-curve-panel" id="power-curve-panel" aria-labelledby="power-curve-heading" data-curve-activity="{'true' if activity else 'false'}"{' hidden' if not activity else ''}>
+    return f'''<section class="panel power-curve-panel" id="power-curve-panel" aria-labelledby="power-curve-heading" data-curve-activity="{'true' if activity else 'false'}"{' hidden' if not activity and not visible else ''}>
 <div class="curve-heading"><div><h2 id="power-curve-heading">{heading}</h2><p>{caption}</p></div><span>Watts</span></div>
 {pending}<div class="curve-series-controls">
 <div class="curve-series"><div><i class="curve-swatch curve-a-swatch" aria-hidden="true"></i>{left}</div><p id="curve-a-bounds"></p></div>

@@ -60,8 +60,36 @@ workflow. Stop the preview after the check.
 
 ## Review boundary and limitations
 
-**HARD — Analyst:** review source/provenance, matching, deduplication,
-privacy/API boundary, errors and costs. The implementation PR remains draft.
-Real recognition accuracy, API availability and actual billed cost are
-**unverified** and belong to the Owner-operated live UI test at HARD — Owner.
-No production deployment is authorized by this task.
+The Analyst accepted Gate 1. The subsequent Owner-initiated live test exposed
+incorrect average-watt values and date/time formats. The Analyst then
+authorized a bounded correction.
+
+## Owner-test correction
+
+The revised versioned prompt explicitly specifies visible-row boundaries,
+truncated titles, date/time conversion, the WATTS column, and score/change
+semantics. The upload defaults to `America/Los_Angeles`, which the user may
+change or clear. Review normalizes supported display dates and times without
+changing the retained model response, warns about earlier extractions, and uses
+a more compact layout. Old extracted watts are not silently corrected.
+
+Local-only comparison of the Owner's prior response against the retained
+screenshot found that, after format normalization, the first visible row
+matched seven of eight fields; its average watts remained incorrect. All 11
+rows' date/time format errors were resolved, and 10 of 11 had at least one
+same-day activity candidate; one of those had multiple candidates. No race
+result was confirmed during this comparison. These observations concern the
+old prompt and do not establish the revised prompt's accuracy.
+
+- `.venv/bin/python -m unittest discover -s tests -p test_race_results.py`:
+  **18 tests passed**.
+- `.venv/bin/python -m unittest discover -s tests`: **578 tests passed**.
+- Synthetic browser checks verified the timezone default, editing, manual ID,
+  candidate selection, explicit confirmation and mobile overflow. Three
+  complete review rows fit at 1440 by 900 pixels without scrolling.
+- `compileall`, `node --check tools/verify_race_results_browser.js`, and
+  `git diff --check` passed.
+
+The revised prompt's real recognition accuracy and any additional API cost
+remain unverified. Only the Owner may initiate another live extraction. The PR
+remains draft, and no production deployment is authorized.

@@ -800,7 +800,7 @@ class Application:
                 return 400, {'Content-Type': 'text/html'}, self.page(store, upload_page(self.settings.nonce, message=str(exc)))
 
     def race_review_post(self, identity, body, origin):
-        from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, validate_timezone
+        from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, normalize_row, validate_timezone
         from .race_page import review_page as race_review_page
         try:
             values = parse_qs(body.decode('utf-8'), max_num_fields=1600, keep_blank_values=True, strict_parsing=True)
@@ -838,7 +838,7 @@ class Application:
                         expected.add(replacement)
                     if len(values[prefix + 'activity']) > 36 or len(values[prefix + 'manual']) > 36:
                         raise RaceError('Invalid activity ID.')
-                    draft.append({'values': row, 'activity_id': values[prefix + 'manual'].strip() or values[prefix + 'activity'],
+                    draft.append({'values': normalize_row(row), 'activity_id': values[prefix + 'manual'].strip() or values[prefix + 'activity'],
                                   'action': values[prefix + 'action'], 'replace': values.get(replacement) == 'yes',
                                   'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
                 if set(values) != expected:

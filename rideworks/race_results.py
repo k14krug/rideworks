@@ -23,18 +23,36 @@ from .store import artifact_integrity, _sync_directory
 
 FIELDS = ('date', 'start_time', 'event', 'race_group', 'finish', 'avg_watts', 'race_score', 'race_score_change')
 INTEGER_FIELDS = frozenset(('finish', 'avg_watts', 'race_score', 'race_score_change'))
-PROMPT_VERSION = 'zrp-races-v1'
+PROMPT_VERSION = 'zrp-races-v2'
 SCHEMA_VERSION = 'zrp-races-v1'
 SOURCE_TYPE = 'zwift_racing_profile_screenshot'
-PROMPT = (
-    'Read the Zwift Racing Profile screenshot. Extract every fully visible race-result table row, '
-    'in screen order, into the supplied JSON schema. Extract date and clock time, full event title '
-    '(join wrapped lines, exclude the route subtitle), race-group badge, finishing position, top '
-    'integer watts from WATTS/W/kg, score and signed score change. Ignore route, distance, time/gap, '
-    'watts/kg, and 20m/5m/1m/15s columns. Up arrow is positive, down arrow negative, explicit zero '
-    'is zero, dash is null. Missing or unreadable values are null; do not guess, duplicate, merge '
-    'or manufacture rows. Do not read the promo/series cards above the table as races.'
-)
+PROMPT = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
+
+Row identification:
+- Extract each visible race-result row in top-to-bottom order, only from the RACE RESULTS table.
+- The number in the RACE RESULTS heading represents total profile results, not necessarily the number visible.
+- Include a row when enough information is readable to identify the race, even if its border is partially cropped.
+- Never invent additional rows.
+
+Field extraction, exactly eight fields per row:
+- date: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
+- start_time: Convert the displayed 12-hour AM/PM time to 24-hour HH:MM. Do not infer a timezone.
+- event: Extract the blue event title, joining wrapped lines with spaces. Exclude the smaller route name below.
+  If truncated with an ellipsis (...), preserve the visible text and ellipsis exactly; never invent missing text.
+- race_group: Extract the gray race-group badge, preserving the displayed range as a string.
+- finish: Extract the integer finishing position from the FINISH column.
+- avg_watts: Extract the upper integer from the WATTS/W/kg column, immediately before 20M. Ignore lower W/kg.
+- race_score: Extract the main integer from the SCORE/Change column, above the change indicator.
+- race_score_change: Extract the numeric change below the score. Green up is positive, red down is negative;
+  an explicit zero is 0 regardless of arrow direction.
+
+Accuracy rules:
+- Use null for missing, dashed (--) or unreadable values.
+- Do not confuse average watts with 20M, 5M, 1M or 15S power.
+- Ignore route, race duration, gap, distance, elevation and W/kg.
+- Keep values associated with their original row, even when titles wrap across multiple lines.
+- Never guess, infer missing information, duplicate rows or combine results from different rows.
+- Return only the JSON object required by the supplied schema, without explanations, Markdown or extra fields."""
 SCHEMA = {
     'type': 'object', 'additionalProperties': False, 'required': ['races'],
     'properties': {'races': {
@@ -111,6 +129,29 @@ def validate_shape(data):
             if value is not None and (type(value) is not int if key in INTEGER_FIELDS else not isinstance(value, str)):
                 raise RaceError('The extraction response contains an invalid field type.')
     return data['races']
+
+
+def normalize_row(row):
+    normalized = dict(row)
+    date_value = row.get('date')
+    if isinstance(date_value, str):
+        match = re.fullmatch(r'([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})', date_value.strip())
+        if match:
+            month, day, year = map(int, match.groups())
+            try:
+                normalized['date'] = date(year, month, day).isoformat()
+            except ValueError:
+                pass
+    time_value = row.get('start_time')
+    if isinstance(time_value, str):
+        match = re.fullmatch(r'([0-9]{1,2}):([0-9]{2})\s*([AaPp][Mm])', time_value.strip())
+        if match:
+            hour, minute, period = match.groups()
+            hour, minute = int(hour), int(minute)
+            if 1 <= hour <= 12 and minute < 60:
+                hour = hour % 12 + (12 if period.upper() == 'PM' else 0)
+                normalized['start_time'] = f'{hour:02d}:{minute:02d}'
+    return normalized
 
 
 def row_errors(row):

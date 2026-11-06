@@ -1000,11 +1000,24 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .race-table{width:100%;border-collapse:collapse;min-width:48rem}
 .race-table th,.race-table td{text-align:left;padding:.65rem;border-bottom:1px solid #e1e9f2}
 .race-table small{display:block;color:#546a81}
-.race-review-row{margin:1rem 0;padding:1rem;border:1px solid #d5e0ec;border-radius:.5rem}
+.rw-page .race-review-panel{padding:.75rem}
+.race-review-panel>p,.race-review-panel form>p{margin:.35rem 0}
+.race-review-panel form>label{margin:.35rem 0}
+.race-review-row{margin:.4rem 0;padding:.4rem .6rem .5rem;border:1px solid #d5e0ec;border-radius:.5rem;min-width:0}
 .race-review-row legend{font-weight:700}
-.race-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.75rem}
+.race-fields{display:grid;grid-template-columns:minmax(7rem,1fr) minmax(5.5rem,.75fr) minmax(13rem,2fr) minmax(5.5rem,.75fr) repeat(4,minmax(4.5rem,.65fr));gap:.4rem}
 .race-fields label{min-width:0}
+.rw-page .race-panel.race-review-panel .race-fields input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls select{padding:.3rem;max-width:none;min-width:0;min-height:30px}
+.race-row-controls{display:flex;align-items:end;gap:.6rem;flex-wrap:wrap;margin-top:.35rem}
+.race-candidate{flex:1 1 17rem;min-width:0}
+.race-manual{flex:0 1 12rem}
+.race-manual summary{cursor:pointer}
+.race-row-decisions{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.race-row-decisions label{display:inline-flex;align-items:center;gap:.2rem;white-space:nowrap}
+.rw-page .race-row-decisions input[type=radio],.rw-page .race-row-decisions input[type=checkbox]{min-height:0;margin:0}
+.race-review-row .race-error{margin:.3rem 0}
 .race-image{display:block;max-width:100%;height:auto;margin:1rem 0}
 .race-error{color:#a32222}
 .race-actions{display:flex;flex-wrap:wrap;gap:.75rem}
-@media(max-width:600px){.race-header{align-items:flex-start;flex-direction:column}.race-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1100px){.race-fields{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.race-header{align-items:flex-start;flex-direction:column}.race-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.rw-page .race-panel.race-review-panel .race-fields input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls select{min-height:38px}}

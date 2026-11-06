@@ -5,7 +5,7 @@ import json
 from urllib.parse import parse_qs
 
 from .history import presentation
-from .race_results import FIELDS, candidates, matching_activities, revision, row_errors, suggested_match
+from .race_results import FIELDS, PROMPT_VERSION, candidates, matching_activities, normalize_row, revision, row_errors, suggested_match
 from .web import shell
 
 
@@ -77,7 +77,7 @@ No race results are saved until you review and confirm them.</p>
 <input type="hidden" name="nonce" value="{esc(nonce)}">
 <label>Screenshot <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required></label>
 <label>Screenshot display timezone (IANA, optional)
-<input name="timezone" maxlength="100" placeholder="e.g. America/Los_Angeles"></label>
+<input name="timezone" maxlength="100" value="America/Los_Angeles"></label>
 <p>Leave timezone blank if unknown. Unknown timezone prevents automatic matching.</p>
 <button type="submit">Extract screenshot</button></form></section>''',
                  active='races', page_class='race-page')
@@ -86,7 +86,7 @@ No race results are saved until you review and confirm them.</p>
 def review_page(store, source, nonce, *, draft=None, timezone_name=None, message=''):
     extracted = json.loads(source['rows_json'])
     if draft is None:
-        draft = [{'values': row, 'activity_id': '', 'action': 'skip', 'replace': False} for row in extracted]
+        draft = [{'values': normalize_row(row), 'activity_id': '', 'action': 'skip', 'replace': False} for row in extracted]
         initial = True
     else:
         initial = False
@@ -140,25 +140,31 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <div class="race-fields">{''.join(inputs)}</div>{f'<ul class="race-error">{errors}</ul>' if errors else ''}
 {prior}<input type="hidden" name="{index}.shown_activity" value="{esc(selected)}">
 <input type="hidden" name="{index}.shown_revision" value="{esc(shown_revision)}">
-<label>Candidate activity<select name="{index}.activity">{options}</select></label>
-<label>Or enter an existing activity ID<input name="{index}.manual" maxlength="36" placeholder="Activity ID"></label>
-<p>Candidate evidence: displayed date and time, ride type, title, and available source average watts.
-Different watt sources may disagree. <a href="/activities" target="_blank" rel="noopener">Find an activity ID</a>.</p>
+<div class="race-row-controls"><label class="race-candidate">Candidate activity<select name="{index}.activity">{options}</select></label>
+<details class="race-manual"><summary>Enter activity ID</summary>
+<label>Existing activity ID<input name="{index}.manual" maxlength="36" placeholder="Activity ID"></label></details>
+<div class="race-row-decisions">
 <label><input type="radio" name="{index}.action" value="skip"{checked_skip}> Skip</label>
 <label><input type="radio" name="{index}.action" value="confirm"{checked_confirm}> Confirm linked result</label>
 <label><input type="checkbox" name="{index}.replace" value="yes"{checked_replace}> Approve replacement if changed</label>
+</div></div>
 </fieldset>''')
     notice = f'<p class="race-error" role="alert">{esc(message)}</p>' if message else ''
     usage = json.loads(source['usage_json']) if source['usage_json'] else None
     usage_text = f'<p>Reported usage: {esc(json.dumps(usage))}</p>' if usage else '<p>API usage was not reported.</p>'
+    older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect watt values. '
+                    'Check every row against the screenshot or extract it again.</p>'
+                    if source['prompt_version'] != PROMPT_VERSION else '')
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
 <p><a href="/race-results">Back to Race Results</a></p></div></header>
-<section class="panel race-panel">{notice}<p>Model output can be wrong. Check every field and ride against the original before confirming.</p>
+<section class="panel race-panel race-review-panel">{notice}{older_prompt}<p>Model output can be wrong. Check every field, especially average watts, and ride against the original before confirming.</p>
 {usage_text}<details><summary>View original screenshot</summary><img class="race-image" src="/race-results/image/{esc(source['import_id'])}" alt="Uploaded race screenshot"></details>
 <form action="/race-results/review/{esc(source['import_id'])}" method="post">
 <input type="hidden" name="nonce" value="{esc(nonce)}">
 <label>Screenshot display timezone (IANA, optional)<input name="timezone" maxlength="100" value="{esc(timezone_name)}"></label>
-<p>Update candidates and duplicate status after editing or changing timezone.</p>
+<p>Dates and times are normalized for review; the original model response is retained. Update candidates and duplicate status after editing or changing timezone.
+Candidates show local time, ride type, title and available source average watts; different watt sources may disagree.
+<a href="/activities" target="_blank" rel="noopener">Find an activity ID</a>.</p>
 {''.join(cards) if cards else '<p>No fully visible race rows were returned. Try another screenshot.</p>'}
 <div class="race-actions"><button type="submit" name="operation" value="preview">Review changes</button>
 <button type="submit" name="operation" value="confirm">Confirm Import</button></div>

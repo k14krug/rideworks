@@ -23,6 +23,9 @@ async page => {
   await page.locator('input[name=timezone]').fill('UTC');
   await page.getByRole('button', {name: 'Extract screenshot'}).click();
   check(await page.locator('fieldset').count() === 3, 'three mocked rows reviewed');
+  const bounds = await page.locator('.race-review-row').evaluateAll(rows => rows.map(row => row.getBoundingClientRect().toJSON()));
+  check(bounds.every(row => row.height < 180), 'compact desktop review rows');
+  check(bounds.every(row => row.top >= 0 && row.bottom <= 900), 'three review rows visible without scrolling');
   check(await page.locator('input[name="1.race_score"]').inputValue() === '', 'unknown score remains blank');
   check(await page.locator('input[name="2.race_score_change"]').inputValue() === '-5', 'signed change');
   await page.getByText('View original screenshot').click();

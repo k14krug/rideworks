@@ -110,9 +110,59 @@ class RaceTests(unittest.TestCase):
         self.assertFalse(request['store'])
         self.assertTrue(request['text']['format']['strict'])
         self.assertEqual(request['text']['format']['schema'], race.SCHEMA)
-        self.assertIn('20m/5m/1m/15s', race.PROMPT)
-        self.assertIn('route subtitle', race.PROMPT)
+        for instruction in ('M/D/YYYY', 'YYYY-MM-DD', 'HH:MM', 'ellipsis', '15S',
+                            'total profile results', 'explicit zero', 'WATTS/W/kg'):
+            self.assertIn(instruction, race.PROMPT)
         self.assertIn('data:image/png;base64,', request['input'][0]['content'][1]['image_url'])
+
+    def test_normalize_review_dates_and_times_without_changing_evidence(self):
+        source = result(date='3/2/2024', start_time='1:07 PM')
+        normalized = race.normalize_row(source)
+        self.assertEqual((normalized['date'], normalized['start_time']), ('2024-03-02', '13:07'))
+        self.assertEqual((source['date'], source['start_time']), ('3/2/2024', '1:07 PM'))
+        self.assertEqual(race.normalize_row(result(start_time='12:05 AM'))['start_time'], '00:05')
+        self.assertEqual(race.normalize_row(result(start_time='12:05 PM'))['start_time'], '12:05')
+        invalid = race.normalize_row(result(date='2/30/2024', start_time='13:45 PM'))
+        self.assertEqual((invalid['date'], invalid['start_time']), ('2/30/2024', '13:45 PM'))
+        self.assertEqual(len(race.row_errors(invalid)), 2)
+
+    def test_existing_import_is_normalized_for_review_and_matching_only(self):
+        raw = result(date='11/8/2024', start_time='11:33 AM')
+        identity = self.stage([raw])
+        status, _, page = self.app.get('/race-results/review/' + identity)
+        self.assertEqual(status, 200)
+        self.assertIn(b'value="2024-11-08"', page)
+        self.assertIn(b'value="11:33"', page)
+        self.assertIn(self.activity_id.encode(), page)
+        with Store(self.app.data_dir) as store:
+            self.assertEqual(json.loads(race.load_import(store, identity)['rows_json']), [raw])
+
+    def test_review_normalizes_edits_without_overwriting_raw_import(self):
+        raw = result()
+        identity = self.stage([raw])
+        fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
+                  '0.activity': '', '0.manual': '', '0.action': 'skip',
+                  '0.shown_activity': '', '0.shown_revision': 'new'}
+        fields.update({f'0.{key}': '' if value is None else str(value) for key, value in raw.items()})
+        fields['0.date'] = '11/8/2024'
+        fields['0.start_time'] = '11:33 AM'
+        status, _, page = self.app.post('/race-results/review/' + identity, urlencode(fields).encode(), 'http://localhost:8766')
+        self.assertEqual(status, 200)
+        self.assertIn(b'value="2024-11-08"', page)
+        self.assertIn(b'value="11:33"', page)
+        self.assertIn(self.activity_id.encode(), page)
+        with Store(self.app.data_dir) as store:
+            self.assertEqual(json.loads(race.load_import(store, identity)['rows_json']), [raw])
+
+    def test_old_extraction_warns_and_unknown_timezone_remains_unknown(self):
+        identity = self.stage([result()], zone='')
+        with Store(self.app.data_dir) as store:
+            store.connection.execute('UPDATE race_imports SET prompt_version=? WHERE import_id=?',
+                                     ('zrp-races-v1', identity))
+        status, _, page = self.app.get('/race-results/review/' + identity)
+        self.assertEqual(status, 200)
+        self.assertIn(b'This earlier extraction may contain incorrect watt values', page)
+        self.assertIn(b'name="timezone" maxlength="100" value=""', page)
 
     def test_extract_errors_and_shape_are_recoverable(self):
         with self.assertRaisesRegex(race.RaceError, 'OPENAI_API_KEY'):
@@ -309,6 +359,7 @@ class RaceTests(unittest.TestCase):
         status, _, body = self.app.get('/race-results/import')
         self.assertEqual(status, 200)
         self.assertIn('sends the screenshot to OpenAI and incurs API charges', body.decode())
+        self.assertIn(b'value="America/Los_Angeles"', body)
         response = self.app.race_extract_post(b'', 'multipart/form-data; boundary=a', 'https://untrusted.invalid')
         self.assertEqual(response[0], 403)
 

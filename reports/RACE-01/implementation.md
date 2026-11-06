@@ -144,7 +144,7 @@ deployment is not authorized.
 The Owner subsequently initiated a live extraction with prompt v3 and confirmed
 11 results. Local comparison against the Owner-supplied reference found 10/11
 confirmed average-watt values, 1/11 scores and 1/11 score changes matched.
-The same counts apply to the model's returned rows. The Owner requested merge,
-but JIT section 12 requires a stop for this high live error rate. No confirmed
-records were changed by the agent. Accuracy and the disposition of the saved
-results need Owner/Analyst review before merge or worktree removal.
+The same counts apply to the model's returned rows. The Owner requested merge, and JIT section 12 required a stop for this high
+live error rate. After the mismatch was explained, the Owner, acting as
+Analyst, explicitly accepted the known errors and authorized merging as-is.
+No confirmed records were changed by the agent; the saved inaccuracies remain.

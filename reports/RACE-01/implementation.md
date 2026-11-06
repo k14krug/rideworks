@@ -90,6 +90,18 @@ old prompt and do not establish the revised prompt's accuracy.
 - `compileall`, `node --check tools/verify_race_results_browser.js`, and
   `git diff --check` passed.
 
-The revised prompt's real recognition accuracy and any additional API cost
-remain unverified. Only the Owner may initiate another live extraction. The PR
-remains draft, and no production deployment is authorized.
+At this point the revised prompt's real recognition accuracy and any
+additional API cost were unverified. Only the Owner may initiate another live
+extraction. The PR remains draft, and no production deployment is authorized.
+
+## Second Owner-run extraction
+
+The Owner subsequently initiated a second live extraction using the revised
+prompt and supplied a separate reference transcription. Local comparison of
+the 11 rows found 11/11 exact date, start-time and finish matches, 8/11 exact
+group matches, 0/11 average-watt matches, 1/11 score matches, and 7/11 score
+change matches. Event titles were not included in this count. These figures
+describe the saved response compared with the supplied reference, not a
+general model benchmark. The Owner also reported that candidate labels omit
+dates and that near-time matches are not preselected. JIT section 12 requires
+another stop because the real error rate remains high.

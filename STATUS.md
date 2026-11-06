@@ -2,9 +2,9 @@
 
 **Product:** RideWorks.
 **Current task:** RACE-01 — Zwift Racing Profile screenshot import and linked Race Results.
-**State:** `ready_for_review` — Analyst-authorized correction of the Owner Gate 2 findings is ready for live Owner verification. See the [report](reports/RACE-01/implementation.md), [Analyst JIT](docs/tasks/RACE-01.md), and [issue #58](https://github.com/k14krug/rideworks/issues/58).
+**State:** `blocked` — the second Owner-run extraction still has a high field error rate; matching behavior and extraction approach need Analyst/Owner direction. See the [report](reports/RACE-01/implementation.md), [Analyst JIT](docs/tasks/RACE-01.md), and [issue #58](https://github.com/k14krug/rideworks/issues/58).
 **Branch:** `task/race-01-screenshot-import`, based on refreshed `main`.
 **PR:** [#59](https://github.com/k14krug/rideworks/pull/59) (draft).
-**Verification:** 578 Python tests, including 18 focused race tests, passed; synthetic browser checks passed. Local review of the prior real response now resolves all 11 date/time format errors and finds candidates for 10 rows; the old watt values remain incorrect. The revised prompt has not been live-tested.
-**Next action:** Owner initiates a fresh extraction and checks all fields, candidate matches, review density, and actual API usage/cost. Do not confirm the earlier incorrect extraction as-is.
+**Verification:** 578 Python tests and synthetic browser checks passed. The Owner's second live test produced 11 rows with correct dates and times, but matched the supplied reference for average watts in 0/11 rows, race score in 1/11, and score change in 7/11. Comparison was local.
+**Next action:** Obtain direction on safe candidate preselection and the next extraction approach. Do not confirm either incorrect extraction as-is.
 **Deployment:** Not authorized.

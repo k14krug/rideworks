@@ -83,6 +83,18 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
+### RACE-02 — Race screenshot accuracy, whole-batch matching and safe correction
+
+**Status:** pending — Owner-directed follow-up to merged RACE-01. [Analyst-authored JIT](docs/tasks/RACE-02.md) committed 2026-11-06; [Issue #60](https://github.com/k14krug/rideworks/issues/60). No implementation or production-data edits have been authorized by task creation.
+
+**Purpose:** Address screenshot transcription errors (including wrong dates, stage numbers and scores), use `gpt-6-luna`, test overlapping image sections, show estimated aggregated API cost, and ensure all distinct extracted races match existing activities automatically **or the entire batch fails without any confirmed-result writes**. Support explicit result removal/correction and race-specific columns on Activities.
+
+**Scope:** Versioned extraction and evidence, conservative overlap de-duplication, strict automatic re-matching after edits, stage-number conflict veto, transactional batch validation, preserved history on replacement/unlink, Activities-page Race Score / Race avg watts. No silent repair of production history, paid extraction by Dex, new activity creation, unrelated analysis changes or deployment.
+
+**Execution:** `/TASK or /AUTOTASK` only upon explicit Owner invocation from refreshed clean repo. HARD — Analyst technical review and HARD — Owner live running-UI/extraction acceptance; work in a focused task branch/draft PR. See [RACE-02 JIT](docs/tasks/RACE-02.md).
+
+---
+
 ### RE-02 — Relative Effort UI verification and integration
 
 **Status:** done — Analyst technical acceptance and Owner visual/closeout acceptance on 2026-10-29. [PR #53](https://github.com/k14krug/rideworks/pull/53) merged to `main` as `178e8065ffc780118b44f3e04b73a481e472ed65`. Relative Effort `relative-effort-v1` is unchanged; no additional calibration research required. The Owner-requested Home Recent Activities compacting removes ride-type sublines and fits more complete rows while preserving colored dots.

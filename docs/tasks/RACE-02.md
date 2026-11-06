@@ -1,0 +1,119 @@
+# RACE-02 — Improve race screenshot accuracy and require automatic whole-batch matching
+
+**Status:** Pending implementation (Analyst-authored, 2026-11-06).
+**Issue:** [#60](https://github.com/k14krug/rideworks/issues/60).
+**Predecessor:** RACE-01 was accepted and merged in [PR #59](https://github.com/k14krug/rideworks/pull/59). This is a follow-up, not a rewrite of accepted activity/FIT analysis.
+**Priority:** Owner-requested next task; start only on explicit authorized invocation.
+
+## 1. Purpose and evidence
+
+Improve actual Zwift Racing Profile screenshot extraction, avoid silent incorrect activity associations, and make race-result correction/removal practical in RideWorks.
+
+The Owner reports a screenshot race on **2026-09-27** extracted as **2026-09-29**, causing an automatic-match failure until the date was edited; a **Stage 4** event extracted as **Stage 1**; and poor score/change recognition. The production screenshot was reported as **768 × 939 pixels with 17 visible rows**. These are **Owner observations**, not a screenshot verified or committed in the repo. The earlier RACE-01 [implementation report](../../reports/RACE-01/implementation.md) documents the 11-row test with only 1/11 score and 1/11 change exact matches, and retained incorrect confirmed data. An existing result may need correction.
+
+**Current code inspected as of JIT authoring:** `rideworks/race_results.py` defaults to `gpt-4o-mini`, extracts one image in one request, and `suggested_match` deliberately discards stage tokens and digit-only tokens during title comparison. `rideworks/race_page.py` currently permits manual activity IDs and per-row skip/confirm. The new Owner decisions below supersede those parts **for new screenshot imports**. They do not redefine the FIT/native power model.
+
+## 2. Requirements used / authority
+
+- Owner's explicit 2026-11-06 Race Results follow-up handoff: model, overlapping sections, cost estimate, whole-batch automatic matching, conflicting field checks, correction/removal, and Activities-page fields.
+- [RACE-01 JIT](RACE-01.md), [RACE-01 report](../../reports/RACE-01/implementation.md), [issue #58](https://github.com/k14krug/rideworks/issues/58), current Race Results routes, `Store` migrations, Activity Review and Activities page.
+- [Product requirements](../PRODUCT_REQUIREMENTS.md): PR-001–006 (personal usefulness, data/provenance), PR-009 (distinct sources), PR-010 (explainable outputs), PR-012 (missing data honesty), PR-013 (UI consistency).
+- [AGENTS.md](../../AGENTS.md), [TASKS.md](../../TASKS.md), [STATUS.md](../../STATUS.md).
+- Current authoritative <https://developers.openai.com/api/docs/models/gpt-6-luna> and <https://developers.openai.com/api/docs/pricing>, checked 2026-11-06; verify availability/contract and actual rates again when implementing and when estimating costs.
+
+The bullets below marked **Owner decision** are settled; details marked **implementation guidance** are Analyst-defined policies to satisfy those decisions, not evidence that extraction will necessarily improve.
+
+## 3. Execution control
+
+**Allowed Invocation: `/TASK or /AUTOTASK`.** Do not infer permission to start from issue/JIT creation. At invocation, Dex must refresh remote, ensure no other task is in progress, read this JIT and the repository's current implementation, and use a clean task branch/worktree. Do not alter unrelated untracked editor settings.
+
+- **Gate 1 — HARD — Analyst:** Implement and verify with synthetic screenshot fixtures, controlled mocked API responses, migration/integration tests and browser checks. Stop for technical review of extraction, dedup, privacy/cost, matching, correctness, deletion and regressions. Draft PR, no merge.
+- **Gate 2 — HARD — Owner:** Owner runs the local **real** RideWorks dev instance, explicitly chooses the real screenshot and initiates live API extraction using their own configured key. Compare screenshot fields and app results, assess cost and UI and any existing incorrect data. Do not merge/deploy until Owner acceptance. All live source material and evaluation files stay local/private.
+- **Deployment:** separate Owner authorization after acceptance, never implied by code merge or task completion.
+- Live API calls with personal screenshots are **not authorized for Dex** during implementation. Owner-run test is the explicit authorization boundary.
+
+## 4. User-visible scope
+
+### A. Extraction model, sectioning and quality
+
+1. **Owner decision:** use exact model ID `gpt-6-luna` as the default screenshot extraction model via the existing server-side Responses API; preserve the ability to configure the model explicitly for diagnostics but do not silently fall back to the previous default. Verify that image input, strict structured JSON output and chosen reasoning/image detail settings actually work with this model. No requirement for a new API client/framework.
+2. **Owner decision:** split tall screenshots into **overlapping horizontal sections** for extraction, then combine distinct rows top-to-bottom. Keep the original image intact; section metadata records original image ID/hash, section number, pixel bounds and overlap. Reproducible crops are preferable to preserving redundant crop files. Avoid arbitrary upscaling presented as recovered source detail.
+3. **Implementation guidance:** use a bounded, simple section size/overlap appropriate to visible row height; don't cut a row at every boundary. Test 768×939/17-row and a taller synthetic image. Compare unsplit and split accuracy on **the same Owner-verified example** (at the Owner gate). Splitting cannot recreate missing detail; no arbitrary minimum-dimension gate unless measured evidence establishes one. Preserve upload maximum limits for decoder/resource safety.
+4. **Section failures:** if any required section fails, response malformed, or credible row-coverage/merge ambiguity remains, show an extraction failure/review diagnostic. Do not treat the successful subset as a complete batch or write confirmed records.
+5. **Overlaps:** repeated recognition of the **same physical screenshot row** in neighboring crop overlaps should collapse to one result. Use source section boundaries/order and conservative agreement on row identity; do **not** merge unrelated races solely because date/time/event text agrees. Conflicting duplicate transcriptions (e.g. score or date differs) must be shown/flagged for correction or block batch confirmation until resolved. Keep a traceable association from merged rows back to all contributing section outputs. Never silently pick a 'better' guess based on model confidence.
+
+### B. Whole-batch **automatic** activity matching
+
+**Owner decision:** every distinct extracted race must automatically match **one and only one** existing RideWorks Activity. If even one extracted row is unresolved, **the entire batch is blocked**. No race-result inserts, updates, deletions or replacements from that batch occur; no partial success. Manual picking an Activity ID or skipping a row must not bypass this requirement.
+
+The intended review loop:
+1. Show all extracted/normalized fields, their original screenshot context and independently computed match status/evidence.
+2. On **every** change to date/time/event/group or other relevant field (or screenshot display timezone), recompute the **entire** candidate set and automatic matches. A client-side preview is optional, but the **server recomputes** on review and again inside the final commit transaction; never trust a submitted hidden match/OK flag. Do not retain a stale match from before an edit.
+3. Only if **all** distinct extracted rows have one unambiguous qualifying automatic match and no unresolved source/overlap conflicts may the explicit **Confirm Batch** action enable/commit. The Owner still reviews fields and approves replacements; a match is not proof that every OCR value is correct.
+4. If blocked, display exact row numbers and reasons (no match, multiple candidates, missing/invalid date/time/timezone, title/stage conflict, collision with another row's Activity, overlapping-section ambiguity or existing-result conflict). Offer nearby activities/dates/times **as diagnostics only**, not a way to manually force acceptance. The Owner can correct the extracted fields and run matching again, or abandon/retry with a better screenshot. Do not auto-change source values or a date to make a match pass.
+5. Explicitly parse and compare stage-number evidence. When **both** the screenshot event and Activity title have a stated stage number and those disagree (e.g., Stage 1 vs Stage 4), matching is vetoed, even with same-day/time/title overlap. If either lacks a stage number, it is not automatically a conflict, but the remaining title/time evidence must still be sufficiently distinctive. Generic series words alone ('race', 'zwift', 'stage', 'z racing', sponsor names) are not adequate proof. Preserve legitimate truncated titles without inventing their omitted text.
+6. A sufficiently close start-time window may help identify a candidate, but a ten-minute window does not justify overriding a title/stage/date conflict. Handle date-effective screenshot timezone and DST ambiguity. Nearby wrong-date or near-time candidates may be displayed to diagnose OCR errors, **never auto-linked across a date conflict**.
+7. Reimported unchanged results linked to the correct Activity count as already matched and do not require duplicate writes. Changed records require explicit replacement approval. If a result is already attached to the **wrong** Activity, don't leave two active records for the same race or silently transfer links: surface the conflict and require explicit correction/removal of the old attachment, retaining provenance, before a final whole-batch import.
+8. A physically duplicated row caused by overlapping sections is **not** a separate extracted race for the all-or-nothing gate once established as the same source row. Uncertain duplicates must remain blocked rather than silently dropped.
+
+**Conflict with RACE-01:** the previously accepted manual-ID, partial skip/confirm, or 'confirmed selected candidate' pathways may remain useful as internal diagnostics/history but must **not** provide a save path around the new all-or-nothing automatic validation for new screenshot batches. This is an explicit Owner supersession.
+
+### C. Cost disclosure and provenance
+
+1. **Owner decision:** after extraction and before final confirmation, display an **estimated API cost** derived from recorded token usage and applicable `gpt-6-luna` model pricing. Label it explicitly 'Estimated API cost', not 'Amount billed'.
+2. Record each attempted section request's model, prompt/schema version, input crop bounds, token usage fields (including cache fields if returned), status, and any available API request identifier; summarize the completed and attempted requests for the import. Retain only privacy-appropriate metadata and original/source evidence locally.
+3. Use a documented, versioned pricing snapshot (model, processing tier, effective/access date, input/output/cached rates) and compute `sum(section_input_billable * rate_input + section_output_billable * rate_output) / 1e6` adjusted for actual reported cached/noncached inputs. Reasoning tokens may be part of output usage; do not double-bill them. Retries count when usage is returned; failed attempts with unknown usage produce a **possibly incomplete** estimate, not a false zero. If fields/rates are missing, label cost estimate unavailable/partial. Avoid rounding a small positive estimate to '$0.00'; use adequate fractional-cent display or '< $0.01'.
+4. Keep credentials server-side, use the existing prompt privacy/opt-in statement, don't include image bytes or tokens in logs, and do not submit screenshots to any service without Owner-triggered extraction.
+5. Check current official OpenAI API model support/pricing rather than assuming past quoted prices. At JIT creation, official published Standard rates for `gpt-6-luna` are **$0.10 / 1M input** and **$0.50 / 1M output**, with **$0.01 / 1M cached input**; these are reference values, not immutable constants or proof of billed costs.
+
+### D. Correct and remove race results
+
+1. Preserve re-import and explicit replacement of incorrect stored values, without erasing prior values/import/source evidence.
+2. Add a **Remove race result** control for each saved row in the Race Results table, with a specific confirmation naming the race and linked ride; require normal origin/nonce checks. The removal unlinks/deactivates **only** the Race Results association. It must not delete the Activity, FIT, existing activity metrics, preserved screenshot, imports or revision history.
+3. Store the removal/tombstone action and timestamp with sufficient provenance to explain what was removed and from which Activity; prefer a minimal additive migration consistent with the existing SQLite schema. After removal, both Race Results and Activity Review must stop showing an active link; source/revision history remains recoverable/inspectable. Reimport after removal must be explicit and idempotent, not a silent resurrection.
+4. Removal is a separate Owner-confirmed correction action; it is not a per-row shortcut for an unresolved **new** screenshot batch. Failed all-or-nothing batches must have zero mutations to confirmed race data.
+
+### E. Activities browser
+
+On **Activities** page, show **Racing Score** and **Race avg watts** for a linked, active race result. Keep the existing activity average-power metric and evidence source unchanged; use distinct column/label names (e.g. 'Activity avg power' vs 'Race avg W') and clearly distinguish missing race values from zero. Keep pagination/filtering/sorting and responsive behavior; make a bounded query for visible rows rather than N+1 expensive full-history scans. Do not change Home, Performance or training-state calculations.
+
+## 5. Inputs and local data
+
+- Dex's automated tests: entirely synthetic screenshots, synthetic activities/mock API responses and source-neutral reports. Include cases simulating **17** visible rows at 768×939, and a larger screenshot with overlap, duplicate/conflicting rows and malformed sections.
+- Owner's screenshot/reference transcription and production store are local-only/private. They are **not** repository fixtures. During Owner Gate 2, Owner may run one or more live extractions through the local app with their own API key; report field-level counts and costs without committing private data.
+- The Owner handoff mentions an API key attached through an editor selection. **Do not read, print, attach, or log it.** Owner should clear that selection and rotate/revoke the key if actually exposed. Use existing ignored .env/environment config, not a pasted key in prompts, issues or PRs.
+- GitHub `main` indicates RACE-01 was merged, but repository `STATUS.md` doesn't attest to the production deployment the Owner reports. Inspect actual development/production revision before making deployment or migration assertions. Do not access or alter production data for this task without a separate Owner authorization.
+
+## 6. Suggested implementation work (engineering discretion)
+
+1. Inspect current `race_results`, `race_page`, `web`, `store`, Activities browser, migrations/tests. Document the *actual* production/store data safety and backup strategy before any migration; do not run it on the production store to test.
+2. Add section planning, crop extraction, bounded API calls, traceable merge/conflict handling and usage/cost aggregation. Prefer incremental additions to existing boundaries, not a pipeline framework.
+3. Replace permissive matching/commit behavior with automatic whole-batch validation, stage conflict checks and correction-driven recomputation; transactionally revalidate at commit. Explicitly remove manual bypass paths.
+4. Add audited removal/unlink and retained history, then Activities page race columns.
+5. Add focused synthetic and browser tests, performance checks if matching current full history could be slow, and regression checks for FIT power and nonrace pages.
+6. Present sanitized Gate 1 report and draft PR. Only after Analyst acceptance, support Owner-operating live dev tests and field-by-field comparison. Avoid silently mass-correcting older production results.
+
+## 7. Verification and acceptance checklist
+
+- [ ] `gpt-6-luna` request shape supports image input + strict JSON output in current Responses API; offline mocks assert exact model and schema, and Owner Gate 2 establishes real behavior.
+- [ ] Deterministic sectional crops with overlap cover 768×939/17-row and tall-image fixtures; duplicate physical rows become one, legitimate distinct rows remain distinct. Conflicting section output cannot silently disappear. A failed section doesn't permit subset import.
+- [ ] Same image tested with baseline single extraction and sectioned extraction at Owner Gate 2; report **per-field correct/total counts** for date, time, event/stage, group, finish, avg watts, score and signed change, plus number of missed/extra rows. Do not assume splitting is better; report if it isn't. Verify no artificial minimum-size gate unsupported by evidence.
+- [ ] Review field edits and timezone change refresh match candidates; server-side final commit revalidates every row and has no stale manual-ID or skip bypass.
+- [ ] Wrong date 2026-09-29 vs source 2026-09-27 blocks (with nearby diagnostic candidates); editing it to 2026-09-27 causes fresh automatic rematch without manually selecting an Activity.
+- [ ] Stage 1 vs Stage 4 blocks despite shared title words and close time; correct stage revalidates; event titles without recognizable stage are handled conservatively.
+- [ ] Two competing candidate activities, missing timezone, DST ambiguity, an overlap conflict, or duplicate Activity mapping **blocks all batch writes**; unchanged correctly linked rows remain permitted without reinsert; any changed value requires explicit replacement consent.
+- [ ] A 17-row batch with one unresolved row leaves **zero new or updated confirmed results** (and no removals); after correction all 17 either qualify for one atomic commit or remain blocked. Staging/raw source may persist for retry; no confirmed association changes.
+- [ ] Cost estimate aggregates per-section token usage, cached/uncached treatment, known retries; missing usage warns of partial/unavailable estimate, prices have provenance and timestamp. Show a fractional cent or '< $0.01' correctly; estimate is not described as a bill.
+- [ ] Removal requires a separate confirmation, unlinks only the active race record, retains original screenshot and revisions, and doesn't modify/delete Activity or FIT. Reimport/restore requires explicit approval.
+- [ ] Activities page displays Race Score and Race avg W only for active links, separate from existing Activity avg power; absent values are not zero. Search/page filters and mobile layouts still work.
+- [ ] Existing accepted Race Results/UI, Activity Review, Power, training state, and analytics data/provenance remain unchanged. Tests and source-neutral report name actual commands and counts; no false claim of accuracy from mock model output.
+- [ ] Test current/older race import records with additive migration; recoverable rollback demonstrated on a disposable store; production data untouched.
+- [ ] After Gate 1, stop for Analyst review; after Gate 2, stop for Owner approval, no automatic merge or deployment.
+
+## 8. Explicit non-goals
+
+No Zwift auth, scraping, rate-limit workarounds, full historical API import, new activity creation, automatic source power replacement, training score algorithm changes, expensive ranking or AI confidence infrastructure, multi-user services, new web framework, silent correction of existing production records, automatic paid API model sweeps, or production rollout.
+
+## 9. Stop-and-report conditions
+
+Stop rather than invent policy if: official model/API requirements cannot be met; screenshot sections systematically omit rows; duplicate overlap cannot be distinguished safely; current Activity evidence does not permit reliable all-row matching for legitimate cases; stage conflicts cannot be checked without unreasonable false negatives; record removal could damage source/provenance; saved incorrect records cannot be safely corrected; estimated usage is materially unknowable; the Owner's actual data needs migration or repair not explicitly authorized; live tests show unexpected accuracy/cost; or a requirement conflicts with current accepted RideWorks policies. Propose the smallest remedy and request Analyst/Owner direction rather than bypassing the whole-batch rule.

@@ -1,0 +1,48 @@
+/* Playwright run-code check against preview_race_results.py's mock-only server. */
+async page => {
+  const base = page.url().split('/').slice(0, 3).join('/');
+  let checks = 0;
+  const check = (condition, message) => { checks++; if (!condition) throw Error(message); };
+  await page.setViewportSize({width: 1440, height: 900});
+  await page.goto(base + '/race-results');
+  check(await page.getByText('No confirmed race results yet.').count() === 1, 'empty history');
+  await page.getByRole('link', {name: 'Import Screenshot'}).click();
+  check((await page.locator('main').innerText()).includes('sends the screenshot to OpenAI and incurs API charges'), 'external API disclosure');
+  await page.evaluate(async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000; canvas.height = 1800;
+    const context = canvas.getContext('2d');
+    context.fillStyle = 'white'; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = 'black'; context.font = '20px sans-serif';
+    for (let i = 0; i < 33; i++) context.fillText(`Synthetic race ${i + 1}  123 W  score 200  +1`, 10, 30 + i * 50);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const files = new DataTransfer();
+    files.items.add(new File([blob], 'synthetic.png', {type: 'image/png'}));
+    document.querySelector('input[name=image]').files = files.files;
+  });
+  await page.locator('input[name=timezone]').fill('UTC');
+  await page.getByRole('button', {name: 'Extract screenshot'}).click();
+  check(await page.locator('fieldset').count() === 3, 'three mocked rows reviewed');
+  check(await page.locator('input[name="1.race_score"]').inputValue() === '', 'unknown score remains blank');
+  check(await page.locator('input[name="2.race_score_change"]').inputValue() === '-5', 'signed change');
+  await page.getByText('View original screenshot').click();
+  check(await page.locator('.race-image').isVisible(), 'original image preview');
+  await page.locator('select[name="0.activity"]').selectOption({index: 1});
+  await page.locator('input[name="0.avg_watts"]').fill('167');
+  await page.getByLabel('Confirm linked result').first().check();
+  await page.getByRole('button', {name: 'Review changes'}).click();
+  check((await page.locator('legend').first().innerText()).includes('New'), 'new result state');
+  await page.setViewportSize({width: 390, height: 900});
+  check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no page overflow on mobile');
+  await page.getByRole('button', {name: 'Confirm Import'}).click();
+  check((await page.locator('main').innerText()).includes('Added 1; unchanged 0; replaced 0; skipped 2'), 'explicit confirmation');
+  await page.getByRole('link', {name: 'View Race Results'}).click();
+  check((await page.locator('main').innerText()).includes('167 W'), 'corrected source watts shown');
+  await page.getByRole('link', {name: 'Synthetic Race'}).click();
+  check((await page.locator('main').innerText()).includes('Zwift-reported average: 167 W'), 'activity metadata');
+  await page.getByRole('link', {name: 'View Race Results'}).click();
+  await page.getByLabel('Sort by date').selectOption('oldest');
+  await page.getByRole('button', {name: 'Apply', exact: true}).click();
+  check(page.url().includes('sort=oldest'), 'date sorting');
+  return `${checks} synthetic browser checks passed; no OpenAI request was made.`;
+}

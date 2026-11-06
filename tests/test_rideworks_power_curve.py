@@ -310,13 +310,15 @@ class CurveSourceTests(unittest.TestCase):
             self.assertEqual(converge_curves(self.store),dict(power_curve_update='incomplete'))
 
     def test_additive_migration_rollback_preserves_version_nine(self):
+        for table in ('race_result_history','race_results','race_imports'):
+            self.store.connection.execute('DROP TABLE '+table)
         self.store.connection.execute('DROP TABLE power_curve_profiles')
         self.store.connection.execute('PRAGMA user_version=9')
         import rideworks.store as module
         with patch.object(module,'MIGRATION_10',module.MIGRATION_10.replace('PRAGMA user_version = 10;','INSERT INTO nonexistent VALUES(1);')):
             with self.assertRaises(sqlite3.Error):Store(self.store.data_dir)
         self.assertEqual(self.store.connection.execute('PRAGMA user_version').fetchone()[0],9)
-        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],11)
+        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],12)
 
     def test_curve_migration_waits_for_completed_planning_migration(self):
         import rideworks.store as module
@@ -325,7 +327,7 @@ class CurveSourceTests(unittest.TestCase):
                 self.assertEqual(paused.connection.execute('PRAGMA user_version').fetchone()[0],8)
                 self.assertIsNone(paused.connection.execute("SELECT name FROM sqlite_master WHERE name='power_curve_profiles'").fetchone())
         with Store(self.root/'paused') as recovered:
-            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],11)
+            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],12)
 
     def test_changed_input_during_build_is_not_published(self):
         identity=self.api(1,[100]*20)

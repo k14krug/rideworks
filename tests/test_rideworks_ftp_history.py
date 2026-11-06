@@ -33,7 +33,7 @@ class HistoryTests(TestCase):
         for _ in range(2):
             with Store(self.target) as store:self.assertEqual(snapshot(store)['rows'],[])
         with Store(self.target) as store:
-            store.connection.executescript('DROP TABLE ftp_history; DROP TABLE ftp_history_state; PRAGMA user_version=10;')
+            store.connection.executescript('DROP TABLE race_result_history; DROP TABLE race_results; DROP TABLE race_imports; DROP TABLE ftp_history; DROP TABLE ftp_history_state; PRAGMA user_version=10;')
         for _ in range(2):
             with Store(self.target) as store:
                 with self.assertRaisesRegex(IntegrityError,'migration needed'):snapshot(store)

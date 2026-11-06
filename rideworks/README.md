@@ -47,6 +47,25 @@ explicit argument, `RIDEWORKS_DATA_DIR`, then project-root `data/`. Relative exp
 paths resolve at invocation; the default is independent of the working directory.
 Originals and the SQLite database are private runtime data; keep them out of Git.
 
+## Race Results screenshots
+
+Race Results can review a PNG, JPEG or WebP Zwift Racing Profile screenshot and
+attach confirmed race metadata to existing activities. The Extract action sends
+the image to OpenAI and incurs API charges; the screen asks for that action
+explicitly. Configure `OPENAI_API_KEY` in the server environment or ignored
+repository `.env`. `RIDEWORKS_RACE_MODEL` optionally selects an image-capable
+structured-output model (default `gpt-4o-mini`), and
+`RIDEWORKS_RACE_MAX_BYTES` sets the upload limit (default 10 MiB, maximum
+12 MiB). Keys stay server-side; never commit them.
+
+An optional IANA display timezone applies to the screenshot's clock, not the
+activity's recording timezone. Unknown timezone prevents automatic matching.
+Review all extracted fields, update candidate matches, explicitly approve any
+replacement and confirm; unselected rows remain skipped. Zwift-reported watts
+are separate from FIT power. Source images and race history are private data
+under the normal store (`originals/race-screenshots/` and SQLite); include
+them in the existing backup. Model accuracy and costs require Owner validation.
+
 A successful import returns independently generated Activity and Source UUIDs
 and the current extraction UUID. Reimporting identical received bytes verifies
 the established original and returns those same identities. Different bytes,

@@ -1,9 +1,9 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Most recently completed task:** NAV-01 — Power sidebar navigation with two views.
-**State:** `done` — Analyst accepted the refinement at `83cc514`; the Owner accepted NAV-01 on 2026-11-05. [PR #57](https://github.com/k14krug/rideworks/pull/57); [verification report](reports/NAV-01/implementation.md).
-**Verification:** 560 Python tests passed again after reconciling current `main`; the reviewed code was unchanged. Earlier verification included 127 synthetic browser checks and the local Dev UI.
-**Next pending task:** RACE-01 — Zwift Racing Profile screenshot import and linked Race Results. [Analyst JIT](docs/tasks/RACE-01.md).
-**Next action:** Start RACE-01 only on an explicit permitted Owner invocation, following repository refresh and clean-worktree checks. Do not start it automatically.
-**Deployment:** NAV-01 was not deployed to production.
+**Current task:** RACE-01 — Zwift Racing Profile screenshot import and linked Race Results.
+**State:** `ready_for_review` — implementation and synthetic-only verification complete; [report](reports/RACE-01/implementation.md), [Analyst JIT](docs/tasks/RACE-01.md), [issue #58](https://github.com/k14krug/rideworks/issues/58).
+**Branch:** `task/race-01-screenshot-import`, based on refreshed `main`.
+**Verification:** 574 Python tests, including 14 focused race tests, and 12 synthetic browser checks passed. No personal screenshot or live OpenAI request was sent.
+**Next action:** HARD — Analyst technical/source review; then HARD — Owner running-UI and real extraction acceptance. Real model accuracy and billed cost remain unverified.
+**Deployment:** Not authorized.

@@ -73,7 +73,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RACE-01 — Zwift Racing Profile screenshot import and linked Race Results
 
-**Status:** pending — next Owner-chosen task; Owner-approved feature direction 2026-11-05; Analyst-authored [JIT](docs/tasks/RACE-01.md) and [synthetic UI reference](docs/mockups/race-results-ui-concept.html) are on `main`. Start only upon explicit Owner `/TASK RACE-01` or `/AUTOTASK RACE-01` invocation, subject to `AGENTS.md` current-task and remote-refresh rules.
+**Status:** in_progress — implementation and synthetic verification complete; awaiting HARD — Analyst review. [Report](reports/RACE-01/implementation.md); [Analyst JIT](docs/tasks/RACE-01.md); [synthetic UI reference](docs/mockups/race-results-ui-concept.html).
 
 **Purpose:** Upload Zwift Racing Profile race-results screenshots; use a server-side, low-cost OpenAI vision model to extract date/time, event, group, finish, avg watts, Racing Score and score change; review/correct records; link confirmed results to **existing** RideWorks activities only.
 

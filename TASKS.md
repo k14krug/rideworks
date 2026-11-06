@@ -91,7 +91,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 **Scope:** Versioned extraction and evidence, conservative overlap de-duplication, strict automatic re-matching after edits, stage-number conflict veto, transactional batch validation, preserved history on replacement/unlink, Activities-page Race Score / Race avg watts. No silent repair of production history, paid extraction by Dex, new activity creation, unrelated analysis changes or deployment.
 
-**Execution:** `/TASK or /AUTOTASK` only upon explicit Owner invocation from refreshed clean repo. HARD — Analyst technical review and HARD — Owner live running-UI/extraction acceptance; work in a focused task branch/draft PR. See [RACE-02 JIT](docs/tasks/RACE-02.md).
+**Execution:** `/TASK or /AUTOTASK` only upon explicit Owner invocation from refreshed clean repo. HARD — Analyst technical review and HARD — Owner live running-UI/extraction acceptance; **use the existing primary checkout with a normal task branch and draft PR — do not create or use a separate Git worktree/checkout**. If local files block a clean branch switch, stop and ask the Owner; leave `.vscode/settings.json` and other unrelated files untouched. See [RACE-02 JIT](docs/tasks/RACE-02.md).
 
 ---
 

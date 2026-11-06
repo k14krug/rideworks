@@ -128,9 +128,11 @@ Verification:
 - Exact prompt equality, time-window boundaries, ambiguous candidates, generic
   title words, daylight-saving ambiguity, candidate dates, and a selected
   outside-date activity were checked offline.
-- The latest retained real response produced 11 dated, preselected candidate
-  options locally; no confirmed results were written. This verifies matching,
-  not extraction accuracy. Those earlier extracted values remain incorrect.
+- One retained real response produced 11 dated, preselected candidate options
+  locally. After restart, the newest saved response produced 10; its remaining
+  candidate was 13 minutes apart, outside the approved 10-minute window. No
+  confirmed results were written. This verifies matching, not extraction
+  accuracy. Those earlier extracted values remain incorrect.
 - Python compilation, browser-script syntax and `git diff --check` passed.
 
 The verbatim prompt's live accuracy remains unverified. Only the Owner may

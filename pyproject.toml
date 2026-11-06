@@ -7,7 +7,7 @@ name = "rideworks"
 version = "0.1.0"
 description = "Durable personal cycling source evidence"
 requires-python = ">=3.10"
-dependencies = ["fitdecode==0.11.0"]
+dependencies = ["fitdecode==0.11.0", "Pillow>=10.3,<13"]
 
 [project.scripts]
 rideworks = "rideworks.__main__:main"

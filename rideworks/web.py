@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import re
 import secrets
 import sqlite3
 from pathlib import Path
@@ -98,7 +99,7 @@ def shell(title, content, *, active='activities', page_class=''):
 <title>{escape(title)} · RideWorks</title><link rel="icon" href="/static/mark.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css"><script src="/static/review.js" defer></script><script src="/static/settings.js" defer></script><script src="/static/nav.js" defer></script></head>
 <body><div class="app-header"><a class="brand" href="/" aria-label="RideWorks Home"><img src="/static/mark.svg" alt="" width="44" height="28"><span>RideWorks</span></a></div>
-<aside class="sidebar"><nav aria-label="Main"><a href="/"{nav_state('home')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg>Home</a><a href="/activities"{nav_state('activities')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 15l5-6 4 3 5-6"/></svg>Activities</a><details id="power-nav" class="nav-power{' is-current' if active.startswith('performance') else ''}" role="group" aria-labelledby="power-nav-label"><summary class="nav-power-heading" id="power-nav-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 16l4-5 4 2 6-9"/></svg>Power<svg class="nav-power-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></summary><a href="/performance"{nav_state('performance-history')} data-power-view="history">20-Minute History</a><a href="/performance?curve=1"{nav_state('performance-curve')} data-power-view="curve">Power Curve</a></details><a href="/training-state"{nav_state('training')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 14l4-3 4 5 4-10 4 4"/></svg>Training State</a><a href="/plan"{nav_state('plan')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v16H4ZM8 3v4m8-4v4M4 10h16M8 14h3m2 3h3"/></svg>Plan</a><a href="/settings"{nav_state('settings')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16M2 8h6m1 8h6m1-7h6"/></svg>Settings</a></nav></aside>
+<aside class="sidebar"><nav aria-label="Main"><a href="/"{nav_state('home')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg>Home</a><a href="/activities"{nav_state('activities')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 15l5-6 4 3 5-6"/></svg>Activities</a><a href="/race-results"{nav_state('races')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v4c0 5-3 8-7 8S5 12 5 7ZM5 5H2v2c0 3 2 5 5 5m12-7h3v2c0 3-2 5-5 5M12 15v4m-4 2h8"/></svg>Race Results</a><details id="power-nav" class="nav-power{' is-current' if active.startswith('performance') else ''}" role="group" aria-labelledby="power-nav-label"><summary class="nav-power-heading" id="power-nav-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M6 16l4-5 4 2 6-9"/></svg>Power<svg class="nav-power-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></summary><a href="/performance"{nav_state('performance-history')} data-power-view="history">20-Minute History</a><a href="/performance?curve=1"{nav_state('performance-curve')} data-power-view="curve">Power Curve</a></details><a href="/training-state"{nav_state('training')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 14l4-3 4 5 4-10 4 4"/></svg>Training State</a><a href="/plan"{nav_state('plan')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v16H4ZM8 3v4m8-4v4M4 10h16M8 14h3m2 3h3"/></svg>Plan</a><a href="/settings"{nav_state('settings')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16M2 8h6m1 8h6m1-7h6"/></svg>Settings</a></nav></aside>
 <main>{content}</main></body></html>'''
 
 
@@ -641,6 +642,26 @@ class Application:
         # Dynamic GETs need a stable read snapshot, but should not reserve
         # SQLite's single-writer slot before page calculations have completed.
         with Store(self.data_dir) as store, store._transaction():
+            if path == '/race-results':
+                from .race_page import results_page
+                return 200, 'text/html', self.page(store, results_page(store, url.query))
+            if path == '/race-results/import':
+                from .race_page import upload_page
+                return 200, 'text/html', self.page(store, upload_page(self.settings.nonce))
+            if path.startswith('/race-results/review/'):
+                from .race_results import load_import
+                from .race_page import review_page as race_review_page
+                source = load_import(store, path.removeprefix('/race-results/review/'))
+                if source is None:
+                    return self.not_found()
+                return 200, 'text/html', self.page(store, race_review_page(store, source, self.settings.nonce))
+            if path.startswith('/race-results/image/'):
+                from .race_results import RaceError, screenshot
+                try:
+                    image_type, image = screenshot(store, path.removeprefix('/race-results/image/'))
+                    return 200, image_type, image
+                except (RaceError, OSError):
+                    return self.not_found()
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':
@@ -699,7 +720,8 @@ class Application:
         curve = curve_panel(store,self.settings.nonce,activity_id=activity_id,query=query)
         from .strava_effort import card as effort_card
         rating = relative_effort_ratings(store).get(activity_id)
-        slots = {'<!-- review-relative-effort -->': effort_card(rating),
+        from .race_page import activity_panel as race_activity_panel
+        slots = {'<!-- review-relative-effort -->': effort_card(rating) + race_activity_panel(store, activity_id),
                  '<!-- review-workout-context -->': context,
                  '<!-- review-current-next -->': next_ride,
                  '<!-- review-power-curve -->': curve}
@@ -708,6 +730,8 @@ class Application:
         return self.page(store,html,display_zone=query_zone(query,'plan_tz').key)
 
     def post(self,path,body,origin):
+        if path.startswith('/race-results/review/'):
+            return self.race_review_post(path.removeprefix('/race-results/review/'), body, origin)
         if path == '/performance/ftp/add':
             return self.ftp_post(body,origin)
         if not path.startswith('/plan/'):
@@ -739,6 +763,102 @@ class Application:
             return 303,{'Location':'/plan?'+urlencode({'plan_tz':zone})},b''
         except (ValueError,UnicodeError):
             return 400,{},b'Plan inputs changed or are invalid. Reload Plan and try again.'
+
+    def race_extract_post(self, body, content_type, origin):
+        from email import policy
+        from email.parser import BytesParser
+        from .race_results import RaceError, stage_import
+        from .race_page import upload_page
+        try:
+            if not self.settings.access.allows_origin(origin, self.settings.port):
+                return 403, {}, b'Invalid race import origin.'
+            if '\r' in content_type or '\n' in content_type:
+                raise RaceError('Invalid upload form.')
+            message = BytesParser(policy=policy.default).parsebytes(
+                b'Content-Type: ' + content_type.encode('ascii') + b'\r\nMIME-Version: 1.0\r\n\r\n' + body)
+            if not message.is_multipart() or message.get_content_type() != 'multipart/form-data':
+                raise RaceError('Use the screenshot upload form.')
+            fields = {}
+            for part in message.iter_parts():
+                name = part.get_param('name', header='content-disposition')
+                if part.get_content_disposition() != 'form-data' or name not in ('nonce', 'timezone', 'image') or name in fields:
+                    raise RaceError('Invalid upload form.')
+                fields[name] = part.get_payload(decode=True)
+            if set(fields) != {'nonce', 'timezone', 'image'} or any(value is None for value in fields.values()):
+                raise RaceError('Choose a screenshot and reload the upload form.')
+            nonce = fields['nonce'].decode('utf-8')
+            zone = fields['timezone'].decode('utf-8')
+            if not secrets.compare_digest(nonce.encode(), self.settings.nonce.encode()):
+                return 403, {}, b'Invalid race import action.'
+            if len(zone) > 100:
+                raise RaceError('Timezone is too long.')
+            with Store(self.data_dir) as store:
+                identity = stage_import(store, fields['image'], zone)
+            return 303, {'Location': '/race-results/review/' + identity}, b''
+        except (RaceError, UnicodeError) as exc:
+            with Store(self.data_dir) as store:
+                return 400, {'Content-Type': 'text/html'}, self.page(store, upload_page(self.settings.nonce, message=str(exc)))
+
+    def race_review_post(self, identity, body, origin):
+        from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, normalize_row, validate_timezone
+        from .race_page import review_page as race_review_page
+        try:
+            values = parse_qs(body.decode('utf-8'), max_num_fields=1600, keep_blank_values=True, strict_parsing=True)
+            if any(len(value) != 1 for value in values.values()):
+                raise RaceError('Invalid review form. Reload and try again.')
+            values = {key: value[0] for key, value in values.items()}
+            if not self.settings.access.allows_origin(origin, self.settings.port) or not secrets.compare_digest(values.get('nonce', '').encode(), self.settings.nonce.encode()):
+                return 403, {}, b'Invalid race review action.'
+            operation = values.get('operation')
+            if operation not in ('preview', 'confirm'):
+                raise RaceError('Choose review changes or confirm import.')
+            zone = validate_timezone(values.get('timezone', ''))
+            with Store(self.data_dir) as store:
+                source = load_import(store, identity)
+                if source is None:
+                    return 404, {}, b'Race import not found.'
+                extracted = json.loads(source['rows_json'])
+                draft = []
+                expected = {'nonce', 'timezone', 'operation'}
+                for index in range(len(extracted)):
+                    prefix = f'{index}.'
+                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('activity', 'manual', 'action', 'shown_activity', 'shown_revision')}
+                    expected.update(keys)
+                    if not keys <= values.keys():
+                        raise RaceError('The review form is incomplete. Reload and try again.')
+                    row = {}
+                    for field in FIELDS:
+                        raw = values[prefix + field].strip()
+                        if field in INTEGER_FIELDS and raw:
+                            row[field] = int(raw) if re.fullmatch(r'[+-]?[0-9]{1,12}', raw) else raw
+                        else:
+                            row[field] = raw or None
+                    replacement = prefix + 'replace'
+                    if replacement in values:
+                        expected.add(replacement)
+                    if len(values[prefix + 'activity']) > 36 or len(values[prefix + 'manual']) > 36:
+                        raise RaceError('Invalid activity ID.')
+                    draft.append({'values': normalize_row(row), 'activity_id': values[prefix + 'manual'].strip() or values[prefix + 'activity'],
+                                  'action': values[prefix + 'action'], 'replace': values.get(replacement) == 'yes',
+                                  'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
+                if set(values) != expected:
+                    raise RaceError('Unexpected review field. Reload and try again.')
+                if operation == 'preview':
+                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or ''))
+                try:
+                    with store._transaction(write=True):
+                        counts = commit_rows(store, identity, draft, timezone_name=zone)
+                except RaceError as exc:
+                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc)))
+                summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}; skipped {counts['skipped']}."
+                html = shell('Race import complete', f'<h1>Import complete</h1><p>{escape(summary)}</p><p><a href="/race-results">View Race Results</a></p>', active='races')
+                return 200, {'Content-Type': 'text/html'}, self.page(store, html)
+        except RaceError as exc:
+            html = shell('Invalid race review', f'<h1>Invalid race review</h1><p>{escape(str(exc))}</p>'
+                         f'<p><a href="/race-results/review/{escape(identity, quote=True)}">Return to the review</a></p>', active='races')
+            return 400, {'Content-Type': 'text/html'}, html.encode()
+        except (UnicodeError, ValueError):
+            return 400, {}, b'Invalid race review inputs. Reload the review and try again.'
 
     def ftp_post(self, body, origin):
         from .ftp_history import add_entry
@@ -811,14 +931,34 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
                     status, content_type, body = 403, 'text/plain', b'Invalid local host.'
                 elif method == 'POST':
                     size = self.headers.get('Content-Length', '')
-                    if not size.isascii() or not size.isdecimal() or not 0 < int(size) <= 1024:
-                        status, content_type, body = 413, 'text/plain', b'Invalid Settings action size.'
-                    elif self.headers.get_content_type() != 'application/x-www-form-urlencoded':
-                        status, content_type, body = 415, 'text/plain', b'Use the Settings form.'
+                    path = urlsplit(self.path).path
+                    is_extract = path == '/race-results/extract'
+                    is_review = path.startswith('/race-results/review/')
+                    if is_extract:
+                        from .config import ConfigurationError
+                        from .race_results import RaceError, configuration
+                        try:
+                            limit = configuration()[2] + 65536
+                        except (RaceError, ConfigurationError) as exc:
+                            limit = 0
+                            status, content_type, body = 400, 'text/plain', str(exc).encode()
+                    else:
+                        limit = 1_000_000 if is_review else 1024
+                    if not limit:
+                        pass
+                    elif not size.isascii() or not size.isdecimal() or not 0 < int(size) <= limit:
+                        status, content_type, body = 413, 'text/plain', b'Upload or action exceeds the allowed size.'
+                    elif self.headers.get_content_type() != ('multipart/form-data' if is_extract else 'application/x-www-form-urlencoded'):
+                        status, content_type, body = 415, 'text/plain', b'Use the appropriate RideWorks form.'
                     else:
                         origins = self.headers.get_all('Origin', [])
                         origin = origins[0] if len(origins) == 1 else None
-                        status, headers, body = app.post(urlsplit(self.path).path, self.rfile.read(int(size)), origin)
+                        if not app.settings.access.allows_origin(origin, self.server.server_port):
+                            status, headers, body = 403, {}, b'Invalid action origin.'
+                        elif is_extract:
+                            status, headers, body = app.race_extract_post(self.rfile.read(int(size)), self.headers.get('Content-Type', ''), origin)
+                        else:
+                            status, headers, body = app.post(path, self.rfile.read(int(size)), origin)
                         content_type = headers.pop('Content-Type', 'text/plain')
                 elif urlsplit(self.path).path == '/strava/callback':
                     status, headers, body = app.settings.callback(urlsplit(self.path).query)

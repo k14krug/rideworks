@@ -1,9 +1,10 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Most recently completed task:** NAV-01 — Power sidebar navigation with two views.
-**State:** `done` — Analyst accepted the refinement at `83cc514`; the Owner accepted NAV-01 on 2026-11-05. [PR #57](https://github.com/k14krug/rideworks/pull/57); [verification report](reports/NAV-01/implementation.md).
-**Verification:** 560 Python tests passed again after reconciling current `main`; the reviewed code was unchanged. Earlier verification included 127 synthetic browser checks and the local Dev UI.
-**Next pending task:** RACE-01 — Zwift Racing Profile screenshot import and linked Race Results. [Analyst JIT](docs/tasks/RACE-01.md).
-**Next action:** Start RACE-01 only on an explicit permitted Owner invocation, following repository refresh and clean-worktree checks. Do not start it automatically.
-**Deployment:** NAV-01 was not deployed to production.
+**Current task:** RACE-01 — Zwift Racing Profile screenshot import and linked Race Results.
+**State:** `done` — Owner, acting as Analyst, explicitly accepted the known live extraction inaccuracies and authorized merge as-is. See the [report](reports/RACE-01/implementation.md), [Analyst JIT](docs/tasks/RACE-01.md), and [issue #58](https://github.com/k14krug/rideworks/issues/58).
+**Branch:** `task/race-01-screenshot-import`, based on refreshed `main`.
+**PR:** [#59](https://github.com/k14krug/rideworks/pull/59).
+**Verification:** 580 Python tests, including 20 race tests, passed. The Owner's live v3 test produced 11 confirmed results; against the Owner-supplied reference, 10/11 average-watt values, 1/11 scores and 1/11 score changes match. The Owner accepted these known mismatches; records were not changed by the agent.
+**Next action:** No next task has been started. The known inaccuracies in the confirmed results remain.
+**Deployment:** Not authorized.

@@ -337,6 +337,42 @@ PRAGMA user_version = 11;
 COMMIT;
 """
 
+MIGRATION_12 = """
+BEGIN IMMEDIATE;
+CREATE TABLE race_imports (
+    import_id TEXT PRIMARY KEY,
+    source_type TEXT NOT NULL CHECK(source_type='zwift_racing_profile_screenshot'),
+    image_sha256 TEXT NOT NULL,
+    image_size INTEGER NOT NULL,
+    image_type TEXT NOT NULL,
+    image_path TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    display_timezone TEXT,
+    model TEXT NOT NULL,
+    prompt_version TEXT NOT NULL,
+    schema_version TEXT NOT NULL,
+    rows_json TEXT NOT NULL,
+    usage_json TEXT
+);
+CREATE TABLE race_results (
+    activity_id TEXT PRIMARY KEY REFERENCES activities(activity_id),
+    import_id TEXT NOT NULL REFERENCES race_imports(import_id),
+    values_json TEXT NOT NULL,
+    display_timezone TEXT,
+    accepted_at TEXT NOT NULL
+);
+CREATE TABLE race_result_history (
+    revision_id TEXT PRIMARY KEY,
+    activity_id TEXT NOT NULL REFERENCES activities(activity_id),
+    import_id TEXT NOT NULL REFERENCES race_imports(import_id),
+    values_json TEXT NOT NULL,
+    display_timezone TEXT,
+    accepted_at TEXT NOT NULL
+);
+PRAGMA user_version = 12;
+COMMIT;
+"""
+
 
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
@@ -373,7 +409,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
+        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -415,6 +451,9 @@ class Store:
                 version = 10
             if version == 10:
                 self.connection.executescript(MIGRATION_11)
+                version = 11
+            if version == 11:
+                self.connection.executescript(MIGRATION_12)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

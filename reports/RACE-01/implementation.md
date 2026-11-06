@@ -135,6 +135,16 @@ Verification:
   accuracy. Those earlier extracted values remain incorrect.
 - Python compilation, browser-script syntax and `git diff --check` passed.
 
-The verbatim prompt's live accuracy remains unverified. Only the Owner may
-initiate another extraction. The PR remains draft and production deployment is
-not authorized.
+At this point the verbatim prompt's live accuracy was unverified. Only the
+Owner may initiate another extraction. The PR remains draft and production
+deployment is not authorized.
+
+## Owner-run verbatim-prompt test
+
+The Owner subsequently initiated a live extraction with prompt v3 and confirmed
+11 results. Local comparison against the Owner-supplied reference found 10/11
+confirmed average-watt values, 1/11 scores and 1/11 score changes matched.
+The same counts apply to the model's returned rows. The Owner requested merge,
+but JIT section 12 requires a stop for this high live error rate. No confirmed
+records were changed by the agent. Accuracy and the disposition of the saved
+results need Owner/Analyst review before merge or worktree removal.

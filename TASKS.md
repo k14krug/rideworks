@@ -85,7 +85,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RACE-02 — Race screenshot accuracy, whole-batch matching and safe correction
 
-**Status:** pending — Owner-directed follow-up to merged RACE-01. [Analyst-authored JIT](docs/tasks/RACE-02.md) committed 2026-11-06; [Issue #60](https://github.com/k14krug/rideworks/issues/60). No implementation or production-data edits have been authorized by task creation.
+**Status:** in_progress — stopped for Analyst review of unsafe overlap reconciliation; see [investigation](reports/RACE-02/implementation.md). [Analyst-authored JIT](docs/tasks/RACE-02.md); [Issue #60](https://github.com/k14krug/rideworks/issues/60). No production-data edits are authorized.
 
 **Purpose:** Address screenshot transcription errors (including wrong dates, stage numbers and scores), use `gpt-6-luna`, test overlapping image sections, show estimated aggregated API cost, and ensure all distinct extracted races match existing activities automatically **or the entire batch fails without any confirmed-result writes**. Support explicit result removal/correction and race-specific columns on Activities.
 

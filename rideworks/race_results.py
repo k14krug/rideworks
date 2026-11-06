@@ -23,34 +23,36 @@ from .store import artifact_integrity, _sync_directory
 
 FIELDS = ('date', 'start_time', 'event', 'race_group', 'finish', 'avg_watts', 'race_score', 'race_score_change')
 INTEGER_FIELDS = frozenset(('finish', 'avg_watts', 'race_score', 'race_score_change'))
-PROMPT_VERSION = 'zrp-races-v2'
-SCHEMA_VERSION = 'zrp-races-v1'
+PROMPT_VERSION = 'zrp-races-v3'
+SCHEMA_VERSION = 'zrp-races-v2'
 SOURCE_TYPE = 'zwift_racing_profile_screenshot'
 PROMPT = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
 
-Row identification:
-- Extract each visible race-result row in top-to-bottom order, only from the RACE RESULTS table.
-- The number in the RACE RESULTS heading represents total profile results, not necessarily the number visible.
-- Include a row when enough information is readable to identify the race, even if its border is partially cropped.
+**Row identification**
+
+- Extract each visible race-result row in top-to-bottom order.
+- Only extract rows from the RACE RESULTS table.
+- The number in the RACE RESULTS heading represents the total profile results, not necessarily the number visible in the screenshot.
+- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.
 - Never invent additional rows.
+**Field extraction**
 
-Field extraction, exactly eight fields per row:
-- date: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
-- start_time: Convert the displayed 12-hour AM/PM time to 24-hour HH:MM. Do not infer a timezone.
-- event: Extract the blue event title, joining wrapped lines with spaces. Exclude the smaller route name below.
-  If truncated with an ellipsis (...), preserve the visible text and ellipsis exactly; never invent missing text.
-- race_group: Extract the gray race-group badge, preserving the displayed range as a string.
-- finish: Extract the integer finishing position from the FINISH column.
-- avg_watts: Extract the upper integer from the WATTS/W/kg column, immediately before 20M. Ignore lower W/kg.
-- race_score: Extract the main integer from the SCORE/Change column, above the change indicator.
-- race_score_change: Extract the numeric change below the score. Green up is positive, red down is negative;
-  an explicit zero is 0 regardless of arrow direction.
+For each row, extract exactly these eight fields:
 
-Accuracy rules:
+- `date`: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
+- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH. Do not infer a timezone.
+- `event`: Extract the blue event title, joining wrapped lines with spaces. Do not include the smaller route name below it. If the title is truncated with an ellipsis (...), preserve the visible text and ellipsis exactly. Never invent missing title text.
+- `race_group`: Extract the gray race-group badge, preserving the displayed range as a string (for example, "0-210", "160-270", or "0-275").
+- `finish`: Extract the integer finishing position from the FINISH column.
+- `avg_watts`: Extract the upper integer value from the WATTS/W/kg column. Ignore the lower W/kg value.
+- `race_score`: Extract the main integer from the SCORE/Change column, above the change indicator.
+- `race_score_change`: Extract the numeric change below the score. Green upward arrow means positive, red downward arrow means negative. An explicit zero is 0 regardless of arrow direction.
+**Accuracy rules**
+
 - Use null for missing, dashed (--) or unreadable values.
 - Do not confuse average watts with 20M, 5M, 1M or 15S power.
 - Ignore route, race duration, gap, distance, elevation and W/kg.
-- Keep values associated with their original row, even when titles wrap across multiple lines.
+- Keep values associated with their original row, even when event titles wrap across multiple lines.
 - Never guess, infer missing information, duplicate rows or combine results from different rows.
 - Return only the JSON object required by the supplied schema, without explanations, Markdown or extra fields."""
 SCHEMA = {
@@ -58,8 +60,11 @@ SCHEMA = {
     'properties': {'races': {
         'type': 'array', 'items': {
             'type': 'object', 'additionalProperties': False, 'required': list(FIELDS),
-            'properties': {key: {'type': ['integer' if key in INTEGER_FIELDS else 'string', 'null']}
-                           for key in FIELDS},
+            'properties': {key: {
+                'type': ['integer' if key in INTEGER_FIELDS else 'string', 'null'],
+                **({'description': '24-hour local clock time as HH:MM; do not infer a timezone.'}
+                   if key == 'start_time' else {}),
+            } for key in FIELDS},
         },
     }},
 }
@@ -302,34 +307,38 @@ def matching_activities(store):
     return result
 
 
+def activity_candidate(activity, zone):
+    stamp = activity['start_time']
+    if not stamp:
+        return None
+    parsed = datetime.fromisoformat(stamp.replace('Z', '+00:00'))
+    if activity['absolute_time']:
+        if zone is None:
+            return None
+        parsed = parsed.astimezone(zone)
+    kind = ' '.join(filter(None, (activity['activity_type'], activity['subtype']))).casefold()
+    virtual = 'virtual' in kind or 'zwift' in activity['title'].casefold()
+    return {'id': activity['activity_id'], 'title': activity['title'],
+            'date': parsed.date().isoformat(), 'time': parsed.strftime('%H:%M'), 'virtual': virtual,
+            'type': activity['activity_type'], 'absolute': activity['absolute_time'],
+            'watts': activity['match_watts'], 'watts_source': activity['match_watts_source']}
+
+
 def candidates(store, row, timezone_name, *, activities=None):
     if not row.get('date'):
         return []
     zone = ZoneInfo(timezone_name) if timezone_name else None
-    found = []
     activities = activities if activities is not None else matching_activities(store)
+    found = []
     for activity in activities:
-        stamp = activity['start_time']
-        if not stamp:
-            continue
-        parsed = datetime.fromisoformat(stamp.replace('Z', '+00:00'))
-        if activity['absolute_time']:
-            if zone is None:
-                continue
-            parsed = parsed.astimezone(zone)
-        if parsed.date().isoformat() != row['date']:
-            continue
-        kind = ' '.join(filter(None, (activity['activity_type'], activity['subtype']))).casefold()
-        virtual = 'virtual' in kind or 'zwift' in activity['title'].casefold()
-        found.append({'id': activity['activity_id'], 'title': activity['title'],
-                      'time': parsed.strftime('%H:%M'), 'virtual': virtual,
-                      'type': activity['activity_type'], 'absolute': activity['absolute_time'],
-                      'watts': activity['match_watts'], 'watts_source': activity['match_watts_source']})
+        choice = activity_candidate(activity, zone)
+        if choice and choice['date'] == row['date']:
+            found.append(choice)
     return found
 
 
 def suggested_match(row, timezone_name, choices):
-    if not timezone_name or not row.get('start_time') or not row.get('event') or len(choices) != 1:
+    if not timezone_name or not row.get('start_time') or not row.get('event'):
         return None
     try:
         local = datetime.fromisoformat(f"{row['date']}T{row['start_time']}")
@@ -338,12 +347,25 @@ def suggested_match(row, timezone_name, choices):
             return None
     except (ValueError, TypeError, ZoneInfoNotFoundError):
         return None
-    choice = choices[0]
     words = lambda text: {word for word in re.findall(r'[a-z0-9]+', text.casefold())
-                          if len(word) > 3 and word not in {'zwift', 'race', 'ride'}}
-    if choice['absolute'] and choice['virtual'] and choice['time'] == row['start_time'] and words(row['event']) & words(choice['title']):
-        return choice['id']
-    return None
+                          if len(word) > 3 and not word.isdigit()
+                          and word not in {'zwift', 'race', 'ride', 'stage', 'event', 'virtual'}}
+    event_words = words(row['event'])
+    matches = []
+    for choice in choices:
+        if not choice['absolute'] or not choice['virtual'] or choice['date'] != row['date']:
+            continue
+        if not event_words & words(choice['title']):
+            continue
+        try:
+            activity_time = datetime.fromisoformat(f"{choice['date']}T{choice['time']}")
+            if activity_time.replace(tzinfo=zone, fold=0).utcoffset() != activity_time.replace(tzinfo=zone, fold=1).utcoffset():
+                continue
+        except (ValueError, TypeError):
+            continue
+        if abs((activity_time - local).total_seconds()) <= 10 * 60:
+            matches.append(choice['id'])
+    return matches[0] if len(matches) == 1 else None
 
 
 def revision(values_json, timezone_name=None):

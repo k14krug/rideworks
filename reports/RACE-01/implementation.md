@@ -105,3 +105,34 @@ describe the saved response compared with the supplied reference, not a
 general model benchmark. The Owner also reported that candidate labels omit
 dates and that near-time matches are not preselected. JIT section 12 requires
 another stop because the real error rate remains high.
+
+## Second Owner-test correction
+
+The Analyst authorized the Owner's prompt verbatim, a 10-minute matching window
+and marking a unique qualifying match for import, subject to the final Confirm
+Import action. The new prompt and schema versions preserve the submitted text;
+the schema separately describes the required `HH:MM` time format. The model
+remains `gpt-4o-mini`. No new live request was made by the agent.
+
+Candidate labels now show the local activity date and time, including a
+manually selected activity outside the race date when its timestamp is
+available. Automatic preselection requires a unique qualifying same-day,
+absolute-time virtual ride within 10 minutes, a meaningful title-word overlap,
+and unambiguous local times. Other candidates remain available for manual
+review. Older prompt versions display a warning about potentially wrong watts
+and scores.
+
+Verification:
+
+- The full Python suite passed: **580 tests**, including **20 race tests**.
+- Exact prompt equality, time-window boundaries, ambiguous candidates, generic
+  title words, daylight-saving ambiguity, candidate dates, and a selected
+  outside-date activity were checked offline.
+- The latest retained real response produced 11 dated, preselected candidate
+  options locally; no confirmed results were written. This verifies matching,
+  not extraction accuracy. Those earlier extracted values remain incorrect.
+- Python compilation, browser-script syntax and `git diff --check` passed.
+
+The verbatim prompt's live accuracy remains unverified. Only the Owner may
+initiate another extraction. The PR remains draft and production deployment is
+not authorized.

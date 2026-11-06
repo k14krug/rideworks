@@ -20,6 +20,37 @@ from rideworks.store import Store
 from rideworks.web import Application, create_server
 
 
+USER_PROMPT = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
+
+**Row identification**
+
+- Extract each visible race-result row in top-to-bottom order.
+- Only extract rows from the RACE RESULTS table.
+- The number in the RACE RESULTS heading represents the total profile results, not necessarily the number visible in the screenshot.
+- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.
+- Never invent additional rows.
+**Field extraction**
+
+For each row, extract exactly these eight fields:
+
+- `date`: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
+- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH. Do not infer a timezone.
+- `event`: Extract the blue event title, joining wrapped lines with spaces. Do not include the smaller route name below it. If the title is truncated with an ellipsis (...), preserve the visible text and ellipsis exactly. Never invent missing title text.
+- `race_group`: Extract the gray race-group badge, preserving the displayed range as a string (for example, "0-210", "160-270", or "0-275").
+- `finish`: Extract the integer finishing position from the FINISH column.
+- `avg_watts`: Extract the upper integer value from the WATTS/W/kg column. Ignore the lower W/kg value.
+- `race_score`: Extract the main integer from the SCORE/Change column, above the change indicator.
+- `race_score_change`: Extract the numeric change below the score. Green upward arrow means positive, red downward arrow means negative. An explicit zero is 0 regardless of arrow direction.
+**Accuracy rules**
+
+- Use null for missing, dashed (--) or unreadable values.
+- Do not confuse average watts with 20M, 5M, 1M or 15S power.
+- Ignore route, race duration, gap, distance, elevation and W/kg.
+- Keep values associated with their original row, even when event titles wrap across multiple lines.
+- Never guess, infer missing information, duplicate rows or combine results from different rows.
+- Return only the JSON object required by the supplied schema, without explanations, Markdown or extra fields."""
+
+
 def synthetic_image():
     image = Image.new('RGB', (1000, 1800), 'white')
     draw = ImageDraw.Draw(image)
@@ -110,9 +141,8 @@ class RaceTests(unittest.TestCase):
         self.assertFalse(request['store'])
         self.assertTrue(request['text']['format']['strict'])
         self.assertEqual(request['text']['format']['schema'], race.SCHEMA)
-        for instruction in ('M/D/YYYY', 'YYYY-MM-DD', 'HH:MM', 'ellipsis', '15S',
-                            'total profile results', 'explicit zero', 'WATTS/W/kg'):
-            self.assertIn(instruction, race.PROMPT)
+        self.assertEqual(request['input'][0]['content'][0]['text'], USER_PROMPT)
+        self.assertIn('HH:MM', race.SCHEMA['properties']['races']['items']['properties']['start_time']['description'])
         self.assertIn('data:image/png;base64,', request['input'][0]['content'][1]['image_url'])
 
     def test_normalize_review_dates_and_times_without_changing_evidence(self):
@@ -161,7 +191,7 @@ class RaceTests(unittest.TestCase):
                                      ('zrp-races-v1', identity))
         status, _, page = self.app.get('/race-results/review/' + identity)
         self.assertEqual(status, 200)
-        self.assertIn(b'This earlier extraction may contain incorrect watt values', page)
+        self.assertIn(b'This earlier extraction may contain incorrect values, including watts and scores', page)
         self.assertIn(b'name="timezone" maxlength="100" value=""', page)
 
     def test_extract_errors_and_shape_are_recoverable(self):
@@ -335,14 +365,28 @@ class RaceTests(unittest.TestCase):
 
     def test_safe_matching_requires_timezone_unique_virtual_and_title(self):
         row = result()
-        choice = {'id': 'a', 'title': 'Synthetic Stage Four', 'time': '12:00', 'virtual': True, 'absolute': True}
+        choice = {'id': 'a', 'title': 'Synthetic Stage Four', 'date': '2024-11-08',
+                  'time': '12:00', 'virtual': True, 'absolute': True}
         self.assertEqual(race.suggested_match(row, 'UTC', [choice]), 'a')
+        self.assertEqual(race.suggested_match(row, 'UTC', [dict(choice, time='12:10')]), 'a')
+        self.assertEqual(race.suggested_match(row, 'UTC', [dict(choice, time='11:50')]), 'a')
+        self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, time='12:11')]))
+        self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, time='11:49')]))
         self.assertIsNone(race.suggested_match(row, None, [choice]))
-        self.assertIsNone(race.suggested_match(row, 'UTC', [choice, dict(choice, id='b')]))
+        self.assertIsNone(race.suggested_match(row, 'UTC', [choice, dict(choice, id='b', time='12:09')]))
+        self.assertEqual(race.suggested_match(row, 'UTC', [choice, dict(choice, id='b', virtual=False)]), 'a')
         self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, time='13:00')]))
         self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, virtual=False)]))
+        self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, absolute=False)]))
+        self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, date='2024-11-09')]))
+        self.assertIsNone(race.suggested_match(row, 'UTC', [dict(choice, title='Different Event')]))
+        self.assertIsNone(race.suggested_match(result(event='Stage 4 - 2024'), 'UTC',
+                                               [dict(choice, title='Stage 2 - 2024')]))
         dst = result(date='2024-11-03', start_time='01:30')
-        self.assertIsNone(race.suggested_match(dst, 'America/Los_Angeles', [dict(choice, time='01:30')]))
+        self.assertIsNone(race.suggested_match(dst, 'America/Los_Angeles', [dict(choice, date='2024-11-03', time='01:30')]))
+        before_dst = result(date='2024-11-03', start_time='00:55')
+        self.assertIsNone(race.suggested_match(before_dst, 'America/Los_Angeles',
+                                               [dict(choice, date='2024-11-03', time='01:00')]))
         with Store(self.app.data_dir) as store:
             day = result(date='2024-11-08')
             self.assertEqual(len(race.candidates(store, day, 'UTC')), 1)
@@ -354,6 +398,34 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(len(choices), 2)
             self.assertIsNone(race.suggested_match(result(start_time='11:33'), 'UTC', choices))
             self.assertEqual(choices[0]['watts'], 233)
+            self.assertEqual(choices[0]['date'], '2024-11-08')
+
+    def test_candidate_date_and_qualifying_match_are_preselected_for_confirmation(self):
+        identity = self.stage([result(start_time='11:23')])
+        activity = {'activity_id': self.activity_id, 'start_time': '2024-11-08T11:33:00+00:00',
+                    'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
+                    'title': 'Synthetic Stage Four', 'match_watts': 233, 'match_watts_source': 'FIT session'}
+        with patch('rideworks.race_page.matching_activities', return_value=[activity]):
+            status, _, page = self.app.get('/race-results/review/' + identity)
+        self.assertEqual(status, 200)
+        self.assertIn(b'2024-11-08 11:33', page)
+        self.assertIn(f'<option value="{self.activity_id}" selected>'.encode(), page)
+        self.assertIn(b'name="0.action" value="confirm" checked', page)
+
+    def test_selected_activity_outside_race_date_still_shows_its_date(self):
+        identity = self.stage()
+        fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
+                  '0.activity': '', '0.manual': self.activity_id, '0.action': 'confirm',
+                  '0.shown_activity': '', '0.shown_revision': 'new'}
+        fields.update({f'0.{key}': '' if value is None else str(value) for key, value in result().items()})
+        activity = {'activity_id': self.activity_id, 'start_time': '2024-11-09T11:33:00+00:00',
+                    'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
+                    'title': 'Synthetic Stage Four', 'match_watts': 233, 'match_watts_source': 'FIT session'}
+        with patch('rideworks.race_page.matching_activities', return_value=[activity]):
+            status, _, page = self.app.post('/race-results/review/' + identity, urlencode(fields).encode(), 'http://localhost:8766')
+        self.assertEqual(status, 200)
+        self.assertIn(b'2024-11-09 11:33', page)
+        self.assertIn(f'<option value="{self.activity_id}" selected>'.encode(), page)
 
     def test_form_discloses_api_and_requires_origin(self):
         status, _, body = self.app.get('/race-results/import')

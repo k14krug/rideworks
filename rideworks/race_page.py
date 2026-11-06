@@ -3,9 +3,10 @@
 from html import escape
 import json
 from urllib.parse import parse_qs
+from zoneinfo import ZoneInfo
 
 from .history import presentation
-from .race_results import FIELDS, PROMPT_VERSION, candidates, matching_activities, normalize_row, revision, row_errors, suggested_match
+from .race_results import FIELDS, PROMPT_VERSION, activity_candidate, candidates, matching_activities, normalize_row, revision, row_errors, suggested_match
 from .web import shell
 
 
@@ -15,6 +16,15 @@ def esc(value):
 
 def value_text(value, suffix=''):
     return 'Unknown' if value is None else f'{value}{suffix}'
+
+
+def candidate_label(choice):
+    label = f"{choice['date']} {choice['time']} · {choice['title']} · {choice['type']}"
+    if not choice['absolute']:
+        label += ' · timezone unknown'
+    if choice['watts'] is not None:
+        label += f" · {choice['watts']} W ({choice['watts_source']})"
+    return label
 
 
 def results_page(store, query=''):
@@ -114,12 +124,12 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             state = 'New — review before confirming'
         options = '<option value="">Select a candidate</option>'
         for choice in choices:
-            label = f"{choice['time']} · {choice['title']} · {choice['type']}"
-            if choice['watts'] is not None:
-                label += f" · {choice['watts']} W ({choice['watts_source']})"
-            options += f'<option value="{esc(choice["id"])}"{" selected" if choice["id"] == selected else ""}>{esc(label)}</option>'
+            options += f'<option value="{esc(choice["id"])}"{" selected" if choice["id"] == selected else ""}>{esc(candidate_label(choice))}</option>'
         if selected and all(choice['id'] != selected for choice in choices):
-            options += f'<option value="{esc(selected)}" selected>Selected activity {esc(selected)}</option>'
+            activity = next((activity for activity in activities if activity['activity_id'] == selected), None)
+            choice = activity_candidate(activity, ZoneInfo(timezone_name) if timezone_name else None) if activity else None
+            label = candidate_label(choice) if choice else f'Selected activity {selected} (date unavailable)'
+            options += f'<option value="{esc(selected)}" selected>{esc(label)}</option>'
         inputs = []
         labels = {'date': 'Date', 'start_time': 'Start time', 'event': 'Event', 'race_group': 'Race group',
                   'finish': 'Finish', 'avg_watts': 'Zwift avg watts', 'race_score': 'Racing Score',
@@ -152,7 +162,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     notice = f'<p class="race-error" role="alert">{esc(message)}</p>' if message else ''
     usage = json.loads(source['usage_json']) if source['usage_json'] else None
     usage_text = f'<p>Reported usage: {esc(json.dumps(usage))}</p>' if usage else '<p>API usage was not reported.</p>'
-    older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect watt values. '
+    older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect values, including watts and scores. '
                     'Check every row against the screenshot or extract it again.</p>'
                     if source['prompt_version'] != PROMPT_VERSION else '')
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
@@ -163,7 +173,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <input type="hidden" name="nonce" value="{esc(nonce)}">
 <label>Screenshot display timezone (IANA, optional)<input name="timezone" maxlength="100" value="{esc(timezone_name)}"></label>
 <p>Dates and times are normalized for review; the original model response is retained. Update candidates and duplicate status after editing or changing timezone.
-Candidates show local time, ride type, title and available source average watts; different watt sources may disagree.
+Candidates show the activity date, local time, ride type, title and available source average watts; different watt sources may disagree.
 <a href="/activities" target="_blank" rel="noopener">Find an activity ID</a>.</p>
 {''.join(cards) if cards else '<p>No fully visible race rows were returned. Try another screenshot.</p>'}
 <div class="race-actions"><button type="submit" name="operation" value="preview">Review changes</button>

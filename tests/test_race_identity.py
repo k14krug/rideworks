@@ -86,6 +86,24 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 1)
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM activities').fetchone()[0], 2)
 
+    def test_derived_list_count_does_not_prove_a_single_physical_source_row(self):
+        old, corrected = result(date='2024-11-06'), result(date='2024-11-08')
+        old_import, new_import = self.stage([old]), self.stage([corrected])
+        old_ride, new_ride = self.activity(old), self.activity(corrected)
+        self.prior(old_import, old, old_ride, count=1)
+        stored = self.store.connection.execute(
+            'SELECT reconciliation_id, decisions_json FROM race_import_reconciliations WHERE import_id=?',
+            (old_import,)).fetchone()
+        provenance = json.loads(stored['decisions_json'])
+        provenance['count_type'] = 'derived_distinct_races'
+        self.store.connection.execute('UPDATE race_import_reconciliations SET decisions_json=? WHERE reconciliation_id=?',
+                                      (json.dumps(provenance), stored['reconciliation_id']))
+        candidate = self.candidates(new_import, [corrected], [new_ride])[0][0]
+        self.assertFalse(candidate['proven_same'])
+        with self.assertRaisesRegex(race.RaceError, 'unresolved'):
+            self.commit(new_import, [self.item(corrected, new_ride)], [new_ride])
+        self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
+
     def test_different_image_recurring_race_requires_scoped_distinct_choice(self):
         old, new = result(date='2024-11-06'), result(date='2024-11-08')
         old_import = self.stage([old], image(height=400))
@@ -217,7 +235,7 @@ class IdentityTests(unittest.TestCase):
         old_ride, new_ride = self.activity(old), self.activity(new)
         self.prior(old_import, old, old_ride)
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
-                  'visible_count': '1', 'visible_confirmed': 'yes', '0.group': 'different',
+                  'list_acknowledged': 'yes',
                   '0.shown_activity': '', '0.shown_revision': 'new'}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in new.items()})
         route = '/race-results/review/' + new_import
@@ -241,7 +259,7 @@ class IdentityTests(unittest.TestCase):
         self.prior(old_import, old, old_ride)
         candidate = self.candidates(new_import, [new], [new_ride])[0][0]
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
-                  'visible_count': '1', 'visible_confirmed': 'yes', '0.group': 'different',
+                  'list_acknowledged': 'yes',
                   '0.shown_activity': new_ride['activity_id'], '0.shown_revision': 'new',
                   '0.identity.' + identity_key(old_ride['activity_id']): 'different:' + candidate['token']}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in new.items()})
@@ -249,7 +267,7 @@ class IdentityTests(unittest.TestCase):
         with patch('rideworks.race_page.matching_activities', return_value=[old_ride, new_ride]):
             status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
-        self.assertNotIn(b'value="confirm" disabled', page)
+        self.assertIn(b'value="confirm" disabled', page)
         fields['operation'] = 'confirm'
         with patch('rideworks.race_results.matching_activities', return_value=[old_ride, new_ride]):
             status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')

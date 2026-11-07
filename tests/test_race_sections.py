@@ -157,8 +157,8 @@ class SectionTests(unittest.TestCase):
         self.assertTrue(all_complete)
         self.assertEqual([item['row'] for item in observed], [complete, unreadable, fragment])
         page = self.app.get('/race-results/review/' + identity)[2]
-        self.assertIn(b'Possible section-boundary fragment', page)
-        self.assertIn(b'Same screenshot race row as observation 1', page)
+        self.assertIn(b'These two extractions may be the same race', page)
+        self.assertNotIn(b'Possible section-boundary fragment', page)
         self.assertIn(b'Loop', page)
         corrected = dict(unreadable, date='2024-11-09')
         activities = [self.activity(complete), self.activity(corrected)]
@@ -237,8 +237,8 @@ class SectionTests(unittest.TestCase):
         self.assertEqual([s['status'] for s in sections], ['completed', 'completed'])
         self.assertEqual(self.app.get(f'/race-results/section/{identity}/1')[0], 200)
         page = self.app.get('/race-results/review/' + identity)[2]
-        self.assertIn(b'Same screenshot race row as observation 2', page)
-        self.assertIn(b'Compare overlapping observations and both crop contexts', page)
+        self.assertIn(b'These two extractions may be the same race', page)
+        self.assertIn(b'Compare screenshot crops', page)
         self.assertIn(b'value="confirm" disabled', page)
 
         activities = [self.activity(row) for row in (first, second, third)]
@@ -270,7 +270,7 @@ class SectionTests(unittest.TestCase):
                 race.commit_rows(self.store, identity, draft, visible_count=2, visible_confirmed=True)
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
 
-    def test_http_review_requires_explicit_correction_and_commits_provenance(self):
+    def test_http_review_requires_acknowledgment_and_commits_provenance(self):
         first = result(date='2024-11-07', event='Synthetic Stage One')
         second = result(date='2024-11-08', event='Synthetic Stage Four')
         disputed = dict(second, race_score=199)
@@ -278,26 +278,25 @@ class SectionTests(unittest.TestCase):
         identity = self.staged([[first, second], [disputed, third]])
         activities = [self.activity(row) for row in (first, second, third)]
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
-                  'visible_count': '3', 'visible_confirmed': 'yes'}
+                  'overlap.1.2': 'same'}
         for index, row in enumerate((first, second, disputed, third)):
             fields.update({f'{index}.{key}': '' if value is None else str(value) for key, value in row.items()})
-            fields[f'{index}.group'] = '2' if index == 2 else 'different'
             fields[f'{index}.shown_activity'] = ''
             fields[f'{index}.shown_revision'] = 'new'
         route = '/race-results/review/' + identity
         with patch('rideworks.race_page.matching_activities', return_value=activities):
             status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
-        self.assertIn(b'name="1.corrected"', page)
+        self.assertIn(b'The extractions disagree', page)
         self.assertIn(b'value="confirm" disabled', page)
-        self.assertIn(b'Same screenshot race row as observation 2', page)
+        self.assertIn(b'I checked these races against my screenshot', page)
         fields['operation'] = 'confirm'
         for index, activity in zip((0, 1, 3), activities):
             fields[f'{index}.shown_activity'] = activity['activity_id']
         with patch('rideworks.race_results.matching_activities', return_value=activities):
             self.assertEqual(self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
             self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
-            fields['1.corrected'] = 'yes'
+            fields['list_acknowledged'] = 'yes'
             status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
         self.assertIn(b'Added 3', page)

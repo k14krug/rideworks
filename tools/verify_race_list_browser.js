@@ -1,0 +1,50 @@
+/* Playwright check against preview_race_results.py --list-case. */
+async page => {
+  const base = new URL(page.url()).origin;
+  let checks = 0;
+  const check = (condition, message) => { checks++; if (!condition) throw Error(message); };
+  await page.setViewportSize({width: 1440, height: 900});
+  await page.goto(base + '/race-results/import');
+  await page.evaluate(async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 768; canvas.height = 939;
+    const context = canvas.getContext('2d');
+    context.fillStyle = 'white'; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = 'black'; context.font = '20px sans-serif';
+    for (let i = 0; i < 17; i++) context.fillText(`Synthetic race ${i + 1}`, 10, 30 + i * 50);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const files = new DataTransfer();
+    files.items.add(new File([blob], 'synthetic-list.png', {type: 'image/png'}));
+    document.querySelector('input[name=image]').files = files.files;
+  });
+  await page.locator('input[name=timezone]').fill('UTC');
+  await page.getByRole('button', {name: 'Extract screenshot'}).click();
+  check(await page.locator('.race-candidate-row').count() === 18, 'all source candidates shown before reconciliation');
+  check(await page.locator('.race-overlap').count() === 1, 'only one overlap question');
+  check((await page.locator('.race-overlap').innerText()).includes('2026-09-27'), 'Electric Break duplicate identified');
+  check(await page.locator('select[name$=".group"]').count() === 0, 'ordinary rows need no grouping clicks');
+  check(await page.locator('input[name=visible_count]').count() === 0, 'no typed physical-row count');
+  check(await page.locator('button[value=confirm]').isDisabled(), 'unresolved pair blocks batch');
+  check(!(await page.locator('main').innerText()).includes('Possible section-boundary fragment'), 'no generic seam warning');
+  await page.locator('input[name="overlap.8.9"][value=same]').check();
+  await page.getByRole('button', {name: 'Review changes'}).click();
+  check(await page.locator('.race-candidate-row').count() === 17, '17 compact distinct race rows');
+  check((await page.locator('main').innerText()).includes('17 automatically matched'), 'all activities matched automatically');
+  check(await page.locator('button[value=confirm]').isDisabled(), 'final acknowledgment required');
+  await page.locator('.race-candidate-row').first().getByText('Edit', {exact: true}).click();
+  check(await page.locator('.race-candidate-row').first().locator('.race-fields input').count() === 8, 'all eight fields editable');
+  await page.locator('input[name="0.date"]').fill('2026-10-10');
+  await page.getByRole('button', {name: 'Review changes'}).click();
+  await page.locator('input[name=list_acknowledged]').check();
+  check(await page.locator('button[value=confirm]').isDisabled(), 'one unmatched race blocks whole batch');
+  await page.locator('.race-candidate-row').first().getByText('Edit', {exact: true}).click();
+  await page.locator('input[name="0.date"]').fill('2026-09-01');
+  await page.getByRole('button', {name: 'Review changes'}).click();
+  await page.locator('input[name=list_acknowledged]').check();
+  check(await page.locator('button[value=confirm]').isEnabled(), 'corrected and acknowledged list is ready');
+  await page.setViewportSize({width: 390, height: 900});
+  check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no mobile page overflow');
+  await page.locator('button[value=confirm]').click();
+  check((await page.locator('main').innerText()).includes('Added 17'), 'entire race list saved together');
+  return `${checks} synthetic 17-race browser checks passed; no OpenAI request was made.`;
+}

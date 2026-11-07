@@ -38,7 +38,8 @@ def _prior_groups(store, saved):
                 members = tuple(group.get('observations', []))
                 if members:
                     groups.add(members)
-                    single_row |= record['visible_count'] == 1 and len(provenance.get('groups', [])) == 1
+                    single_row |= (provenance.get('count_type') != 'derived_distinct_races'
+                                   and record['visible_count'] == 1 and len(provenance.get('groups', [])) == 1)
     return groups, single_row
 
 

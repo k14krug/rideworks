@@ -1,6 +1,7 @@
 """Explicit source-observation reconciliation, independent of activity matching."""
 
 import json
+import re
 
 from .race_results import RaceError, normalize_row, validate_shape
 
@@ -30,6 +31,86 @@ def adjacent(first, second, sections):
         return False
     left, right = sections[first['section']], sections[second['section']]
     return max(left['top'], right['top']) < min(left['bottom'], right['bottom'])
+
+
+def overlap_candidates(source_observations, sections):
+    """Identify possible repeated source rows, never asserting that they are equal."""
+    pairs = []
+    for right, second in enumerate(source_observations):
+        b = normalize_row(second['row'])
+        for left, first in enumerate(source_observations[:right]):
+            if not adjacent(first, second, sections):
+                continue
+            a = normalize_row(first['row'])
+            words_a = set(re.findall(r'[a-z0-9]+', (a.get('event') or '').casefold()))
+            words_b = set(re.findall(r'[a-z0-9]+', (b.get('event') or '').casefold()))
+            words_a -= {'zwift', 'race', 'racing', 'stage', 'event', 'the'}
+            words_b -= {'zwift', 'race', 'racing', 'stage', 'event', 'the'}
+            title_evidence = bool({word for word in words_a & words_b if len(word) >= 3 and not word.isdecimal()})
+            same_time = bool(a.get('start_time') and a['start_time'] == b.get('start_time'))
+            same_date = bool(a.get('date') and a['date'] == b.get('date'))
+            same_finish = a.get('finish') is not None and a['finish'] == b.get('finish')
+            missing_date = not a.get('date') or not b.get('date')
+            same_title = bool(a.get('event') and a['event'].casefold() == (b.get('event') or '').casefold())
+            if ((title_evidence and (same_date or missing_date or (same_time and same_title and same_finish)))
+                    or (same_date and same_time and same_finish)):
+                pairs.append((left, right))
+                if len(pairs) > 400:
+                    raise RaceError('Too many possible overlapping races to review safely. Try a shorter screenshot.')
+    return pairs
+
+
+def overlap_groups(source_observations, sections, choices, *, require_resolved=True):
+    """Apply pair-level Owner decisions and retain all source observations."""
+    pairs = overlap_candidates(source_observations, sections)
+    if set(choices) - set(pairs):
+        raise RaceError('Overlap decisions changed. Review the race list again.')
+    parents = list(range(len(source_observations)))
+
+    def root(index):
+        while parents[index] != index:
+            index = parents[index]
+        return index
+
+    unresolved = []
+    for left, right in pairs:
+        choice = choices.get((left, right), '')
+        if choice not in ('same', 'different'):
+            if choice:
+                raise RaceError('Invalid overlap decision. Review the race list again.')
+            unresolved.append((left, right))
+        elif choice == 'same':
+            a, b = root(left), root(right)
+            if a != b:
+                parents[max(a, b)] = min(a, b)
+    groups_by_root = {}
+    for index in range(len(source_observations)):
+        groups_by_root.setdefault(root(index), []).append(index)
+    groups = list(groups_by_root.values())
+    for group in groups:
+        members = [source_observations[index]['section'] for index in group]
+        if len(set(members)) != len(members):
+            raise RaceError('A race cannot contain two observations from the same section.')
+    if any(choices.get(pair) == 'different' and root(pair[0]) == root(pair[1]) for pair in pairs):
+        raise RaceError('Overlap decisions contradict one another. Review the race list again.')
+    if unresolved and require_resolved:
+        raise RaceError('Decide whether each possible overlap is the same race or two races.')
+    return groups, unresolved
+
+
+def apply_overlap_choices(source_observations, sections, draft, choices, *, require_resolved=True):
+    if len(draft) != len(source_observations):
+        raise RaceError('The race list changed. Reload the review.')
+    groups, unresolved = overlap_groups(source_observations, sections, choices, require_resolved=require_resolved)
+    prepared = [{**item, 'group': 'different'} for item in draft]
+    for group in groups:
+        for index in group[1:]:
+            targets = [other for other in group if other < index
+                       and adjacent(source_observations[index], source_observations[other], sections)]
+            if not targets:
+                raise RaceError('Overlap decisions cannot be reconciled in screenshot order.')
+            prepared[index]['group'] = str(targets[-1] + 1)
+    return prepared, groups, unresolved
 
 
 def reconcile(source_observations, sections, complete, draft, visible_count, confirmed, *, require_corrections=True):

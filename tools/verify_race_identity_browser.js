@@ -19,16 +19,12 @@ async page => {
   await page.getByRole('button', {name: 'Extract screenshot'}).click();
   const reviewUrl = page.url();
   const reconcile = async () => {
-    await page.locator('input[name=visible_count]').fill('2');
-    await page.locator('input[name=visible_confirmed]').check();
-    await page.locator('select[name="0.group"]').selectOption('different');
-    await page.locator('select[name="1.group"]').selectOption('different');
-    await page.locator('select[name="2.group"]').selectOption('2');
+    await page.locator('input[name="overlap.1.2"][value=same]').check();
     await page.getByRole('button', {name: 'Review changes'}).click();
   };
   await reconcile();
   check(await page.locator('.race-identity-card').count() === 1, 'possible prior association shown');
-  check(await page.getByRole('button', {name: 'Confirm Batch'}).isDisabled(), 'unresolved identity blocks batch');
+  check(await page.locator('button[value=confirm]').isDisabled(), 'unresolved identity blocks batch');
   await page.getByText('Compare original screenshots').click();
   check(await page.locator('.race-identity-card img').count() === 2, 'both screenshots available');
   check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no mobile overflow');
@@ -36,12 +32,12 @@ async page => {
   await choice.selectOption({label: 'Different races — retain both'});
   await page.locator('input[name="0.replace"]').check();
   await page.getByRole('button', {name: 'Review changes'}).click();
-  await page.locator('input[name="1.corrected"]').check();
-  check(await page.getByRole('button', {name: 'Confirm Batch'}).isDisabled(), 'a retained prior result cannot be replaced by another batch row');
+  await page.locator('input[name=list_acknowledged]').check();
+  check(await page.locator('button[value=confirm]').isDisabled(), 'a retained prior result cannot be replaced by another batch row');
   check((await page.locator('main').innerText()).includes('would be replaced'), 'retained-result conflict is explained');
   await page.locator('.race-identity-card select').selectOption({label: 'Same race — correct old attachment'});
   await page.getByRole('button', {name: 'Review changes'}).click();
-  check(await page.getByRole('button', {name: 'Confirm Batch'}).isDisabled(), 'same race blocks batch');
+  check(await page.locator('button[value=confirm]').isDisabled(), 'same race blocks batch');
   const removalUrl = await page.locator('.race-identity-card a').getAttribute('href');
   await page.goto(base + removalUrl);
   check((await page.locator('main').innerText()).includes('source screenshot and result history will be retained'), 'separate removal confirmation');
@@ -50,8 +46,8 @@ async page => {
   await reconcile();
   check(await page.locator('.race-identity-card').count() === 0, 'removed prior link no longer blocks');
   await page.locator('input[name="0.replace"]').check();
-  await page.locator('input[name="1.corrected"]').check();
-  await page.getByRole('button', {name: 'Confirm Batch'}).click();
+  await page.locator('input[name=list_acknowledged]').check();
+  await page.locator('button[value=confirm]').click();
   check((await page.locator('main').innerText()).includes('Added 2'), 'freshly revalidated full batch saved');
   return `${checks} synthetic identity browser checks passed; no OpenAI request was made.`;
 }

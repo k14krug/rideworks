@@ -10,7 +10,10 @@
     notice.hidden = !dirty;
   };
   form.addEventListener('input', event => {
-    if (!event.target.classList.contains('race-approval')) dirty = true;
+    if (!event.target.classList.contains('race-approval')) {
+      dirty = true;
+      form.querySelector('input[name="list_acknowledged"]').checked = false;
+    }
     update();
   });
   update();

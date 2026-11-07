@@ -852,6 +852,7 @@ class Application:
     def race_review_post(self, identity, body, origin):
         from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, normalize_row, validate_timezone
         from .race_page import review_page as race_review_page
+        from .race_reconcile import observations, overlap_candidates
         try:
             values = parse_qs(body.decode('utf-8'), max_num_fields=2100, keep_blank_values=True, strict_parsing=True)
             if any(len(value) != 1 for value in values.values()):
@@ -867,19 +868,21 @@ class Application:
                 source = load_import(store, identity)
                 if source is None:
                     return 404, {}, b'Race import not found.'
-                extracted = json.loads(source['rows_json'])
+                extracted, sections, _ = observations(store, source)
                 draft = []
-                expected = {'nonce', 'timezone', 'operation', 'visible_count'}
-                if 'visible_count' not in values:
-                    raise RaceError('Verify the visible row count before confirming.')
-                count_text = values['visible_count'].strip()
-                visible_count = int(count_text) if re.fullmatch(r'[0-9]{1,3}', count_text) else None
-                visible_confirmed = values.get('visible_confirmed') == 'yes'
-                if 'visible_confirmed' in values:
-                    expected.add('visible_confirmed')
+                expected = {'nonce', 'timezone', 'operation'}
+                acknowledged = values.get('list_acknowledged') == 'yes'
+                if 'list_acknowledged' in values:
+                    expected.add('list_acknowledged')
+                overlaps = {}
+                for left, right in overlap_candidates(extracted, sections):
+                    key = f'overlap.{left}.{right}'
+                    if key in values:
+                        expected.add(key)
+                        overlaps[(left, right)] = values[key]
                 for index in range(len(extracted)):
                     prefix = f'{index}.'
-                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('shown_activity', 'shown_revision', 'group')}
+                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('shown_activity', 'shown_revision')}
                     expected.update(keys)
                     if not keys <= values.keys():
                         raise RaceError('The review form is incomplete. Reload and try again.')
@@ -891,11 +894,8 @@ class Application:
                         else:
                             row[field] = raw or None
                     replacement = prefix + 'replace'
-                    corrected = prefix + 'corrected'
                     if replacement in values:
                         expected.add(replacement)
-                    if corrected in values:
-                        expected.add(corrected)
                     identity_prefix = prefix + 'identity.'
                     identity_choices = {}
                     for key in values:
@@ -906,19 +906,21 @@ class Application:
                             identity_choices[identity_key] = values[key]
                             expected.add(key)
                     draft.append({'values': normalize_row(row), 'action': 'confirm', 'replace': values.get(replacement) == 'yes',
-                                  'group': values[prefix + 'group'], 'corrected': values.get(corrected) == 'yes',
                                   'identity': identity_choices,
                                   'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
                 if set(values) != expected:
                     raise RaceError('Unexpected review field. Reload and try again.')
                 if operation == 'preview':
-                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', visible_count=count_text, visible_confirmed=visible_confirmed))
+                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(
+                        store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', overlap_choices=overlaps))
                 try:
                     with store._transaction(write=True):
                         counts = commit_rows(store, identity, draft, timezone_name=zone,
-                                             visible_count=visible_count, visible_confirmed=visible_confirmed)
+                                             overlap_choices=overlaps, list_acknowledged=acknowledged)
                 except RaceError as exc:
-                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc), visible_count=count_text, visible_confirmed=visible_confirmed))
+                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(
+                        store, source, self.settings.nonce, draft=draft, timezone_name=zone or '',
+                        message=str(exc), overlap_choices=overlaps, list_acknowledged=acknowledged))
                 summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}."
                 html = shell('Race import complete', f'<h1>Import complete</h1><p>{escape(summary)}</p><p><a href="/race-results">View Race Results</a></p>', active='races')
                 return 200, {'Content-Type': 'text/html'}, self.page(store, html)

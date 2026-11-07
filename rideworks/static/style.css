@@ -1023,6 +1023,9 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .race-crop-comparison img{display:block;width:100%;height:auto}
 .race-crop-comparison p{overflow-wrap:anywhere}
 .race-error{color:#a32222}
+.race-review-panel pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.race-overlap{margin:.75rem 0;padding:.6rem;border:1px solid #d5e0ec;border-radius:.5rem}
+.race-overlap label{display:inline-flex;align-items:center;margin-right:1rem}
 .race-actions{display:flex;flex-wrap:wrap;gap:.75rem}
 @media(max-width:1100px){.race-fields{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.race-header{align-items:flex-start;flex-direction:column}.race-fields,.race-crop-comparison{grid-template-columns:repeat(2,minmax(0,1fr))}.rw-page .race-panel.race-review-panel .race-fields input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls select{min-height:38px}}

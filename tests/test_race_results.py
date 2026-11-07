@@ -136,7 +136,7 @@ class RaceTests(unittest.TestCase):
 
     def review_fields(self, *, operation='preview'):
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': operation,
-                  'visible_count': '1', 'visible_confirmed': 'yes', '0.group': 'different',
+                  'list_acknowledged': 'yes',
                   '0.shown_activity': '', '0.shown_revision': 'new'}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in result().items()})
         return fields
@@ -206,7 +206,7 @@ class RaceTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn(b'value="2024-11-08"', page)
         self.assertIn(b'value="11:33"', page)
-        self.assertIn(b'Source reconciliation required', page)
+        self.assertNotIn(b'Source observation', page)
         with Store(self.app.data_dir) as store:
             self.assertEqual(json.loads(race.load_import(store, identity)['rows_json']), [raw])
 
@@ -279,7 +279,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(source['schema_version'], race.SCHEMA_VERSION)
         status, _, body = self.app.get('/race-results/review/' + identity)
         self.assertEqual(status, 200)
-        for text in ('Review Race Import', 'Confirm Batch', 'Zwift avg watts', 'Screenshot display timezone'):
+        for text in ('Review Race Import', 'Import all 2 races', 'Race avg W', 'Screenshot timezone'):
             self.assertIn(text, body.decode())
 
     def test_api_failure_leaves_history_unchanged_and_sanitized(self):
@@ -317,7 +317,7 @@ class RaceTests(unittest.TestCase):
         fields = self.review_fields()
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
-        self.assertIn(b'New', page)
+        self.assertIn(b'Matched', page)
         fields['operation'] = 'confirm'
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 400)
@@ -580,7 +580,7 @@ class RaceTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn(b'2024-11-09 11:33', page)
         self.assertIn(b'diagnostic only', page)
-        self.assertIn(b'Unresolved', page)
+        self.assertIn(b'Needs correction', page)
         self.assertIn(b'name="0.shown_activity" value=""', page)
 
     def test_form_discloses_api_and_requires_origin(self):

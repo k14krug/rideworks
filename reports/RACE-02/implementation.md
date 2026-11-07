@@ -9,10 +9,38 @@ The subsequent cross-import identity blocker was addressed under the revised
 [issue #60](https://github.com/k14krug/rideworks/issues/60). Synthetic
 implementation and verification are complete. The Owner, acting as Analyst,
 approved the earlier Gate 1 in chat. Subsequent Owner testing exposed a
-wrapped-title crop fragment, and the Analyst revised the JIT. The revised
-implementation now stops for renewed HARD — Analyst Gate 1 review; the task is
-not yet accepted. Do not merge or deploy. No production data was accessed or
-changed during this implementation.
+wrapped-title crop fragment and an unnecessarily technical review screen;
+the Analyst revised the JIT. The revised implementation now stops for renewed
+HARD — Analyst Gate 1 review; the task is not yet accepted. Do not merge or
+deploy. No production data was accessed or changed during this implementation.
+
+## Race-first review simplification
+
+The default review is a compact table, with all eight fields editable on
+demand, a race/match/attention summary, plain estimated cost, the original
+screenshot, and collapsed technical details. Ordinary observations start as
+separate races without an Owner decision. Only plausible pairs from adjacent,
+overlapping sections receive a same-race/two-races question and optional crop
+comparison. No observation is silently merged or removed. A single final
+list acknowledgment replaces the typed physical-row count; it is not proof
+that extraction found every source row.
+
+The candidate heuristic compares normalized dates, times, title words and
+finish when available. It is an aid to review, not proof of identity or a
+guarantee that every bad extraction will be flagged. A wrapped-title fragment
+with missing date remains a possible pair when it shares distinctive title
+text. Conflicting source values must be checked and corrected against the
+screenshot. Pair decisions, raw observations and the derived distinct-race
+count are preserved; the final transaction recomputes the pairs, grouping,
+identity conflicts and automatic matches. A count derived from a checked list
+is explicitly marked in provenance and is not treated as the older explicitly
+verified physical-row count when determining prior same-image identity.
+
+Synthetic coverage includes 17 races with the 2026-09-27 Stage 3 Electric
+Break overlap: one pair question, no per-row source decision, all eight fields
+editable, no writes while a pair, match or acknowledgment is unresolved,
+and one atomic 17-race commit after correction. The interface remains subject
+to Analyst and Owner review; the mock cannot establish real-model accuracy.
 
 ## Section-specific prompt revision
 
@@ -23,13 +51,12 @@ common field/schema rules remain, and full-image mode retains its prior
 `zrp-races-v3` prompt. The import and each section retain the effective
 version and crop coordinates.
 
-Raw observations are never removed or automatically grouped. The review flags
-the first/last observation of a section where its corresponding edge is
-internal as a *possible* boundary fragment; order does not establish its pixel
-position, and a complete row can have unreadable fields. The Owner must still
-compare source crops, explicitly reconcile observations and correct
-conflicting values. Physical-row count, unique automatic matching and final
-transaction validation remain mandatory.
+Raw observations are never removed or automatically grouped. The earlier
+first/last-observation boundary warnings have been removed: observation order
+does not establish pixel position, and a complete row can have unreadable
+fields. The Owner resolves flagged overlap pairs and checks conflicting values
+against the screenshot. Final-list acknowledgment, unique automatic matching
+and transaction validation remain mandatory.
 
 The synthetic 768×939 seam regression draws a wrapped “Stage 4 Loop de Loop”
 across the boundary and mocks a separate “Loop” observation. It verifies
@@ -50,7 +77,9 @@ blanket wider-date duplicate rule unsafe.
 The revised implementation first considers shared original-image SHA and
 surviving Owner-reviewed row/group provenance. A source row is known to be the
 same only when supported by a shared immutable import observation, or by
-reviewed single-row evidence for both imports of the same image. All other
+an explicitly verified physical single-row count in an earlier import of the
+same image together with a single current reviewed race. A derived list count
+is not treated as a verified physical-row count. All other
 same-image pairs, including legacy imports, remain explicit review candidates.
 For different images, candidates use an OCR-date neighborhood of ±3 calendar
 days, local clock time within 10 minutes, and distinctive event words. This is
@@ -161,9 +190,9 @@ pixel-derived row ownership.
   were checked. This is not a bill; regional premiums or other charges can
   differ. Unknown usage or pricing is unavailable/partial.
 - Dimension-based section plans retain original images, bounds and raw model
-  observations; section failures block confirmation. Owner-reviewed grouping,
-  correction and visible physical-row count are revalidated in the commit
-  transaction. No pixel-derived row count is used. Both sectioned and
+  observations; section failures block confirmation. Pair decisions, final
+  list acknowledgment and matching are revalidated in the commit transaction.
+  No pixel-derived row count is used. Both sectioned and
   full-image modes are available for the later Owner comparison.
 - Attempt-level usage and request IDs are retained where available; unknown
   usage yields a partial/unavailable estimate. The implementation is not
@@ -171,22 +200,23 @@ pixel-derived row ownership.
 
 ## Verification
 
-- `.venv/bin/python -m unittest discover -s tests` — **620 tests passed** using
+- `.venv/bin/python -m unittest discover -s tests` — **625 tests passed** using
   synthetic data, including migration, rollback, FIT/analytics and race tests.
-- `PYTHONPATH=tests .venv/bin/python -m unittest test_race_sections
-  test_race_results test_race_matching test_race_cost test_race_identity` —
-  **60 tests passed**, including the B.9 identity regressions.
-- Browser verification on three disposable mock-only scenarios: **14 checks**
+- `PYTHONPATH=tests .venv/bin/python -m unittest test_race_review_simplified
+  test_race_sections test_race_results test_race_matching test_race_cost
+  test_race_identity` — **65 tests passed**, including the B.9 identity regressions.
+- Browser verification on four disposable mock-only scenarios: **14 checks**
   for extraction/reconciliation, matching, cost, Activities columns and
   removal confirmation; **10 checks** for same/different identity decisions,
-  source comparison, retained-result protection, separate removal and
-  revalidation; **11 checks** for the seam fragment, missing-date block,
-  explicit reconciliation, correction and mobile layout.
+  source comparison, retained-result protection, separate removal and revalidation;
+  **9 checks** for the seam fragment and missing-date block; **15 checks** for
+  the 17-race list, one overlap decision, acknowledgment, matching and mobile layout.
   Start the fixtures with `.venv/bin/python tools/preview_race_results.py
   --data-dir <new-empty-directory> --port <port>` and add `--identity-case` or
-  `--seam-case` for the other scenarios. The corresponding Playwright workflows are
+  `--seam-case` or `--list-case` for the other scenarios. The corresponding Playwright workflows are
   `tools/verify_race_results_browser.js` and
-  `tools/verify_race_identity_browser.js` and `tools/verify_race_seam_browser.js`.
+  `tools/verify_race_identity_browser.js`, `tools/verify_race_seam_browser.js`
+  and `tools/verify_race_list_browser.js`.
   Equivalent top-level snippets were executed in the integrated browser; no
   live extraction was used.
 - A synthetic in-memory matching benchmark matched 17 rows against 10,000
@@ -194,8 +224,9 @@ pixel-derived row ownership.
   production performance guarantee.
 - `.venv/bin/python reports/RACE-02/row_probe.py` — produced the counts above.
 - `git diff --check` — passed.
-- Pylance syntax checks passed for the revised Python source, section tests
-  and preview; the `extract` signature check found nine compatible call sites.
+- Pylance syntax checks passed for the revised Python source, review tests and
+  preview; signature checks found 12 compatible `commit_rows` call sites and
+  three compatible `review_page` call sites.
   `node --check` passed for the synthetic browser scripts.
 - No live model call, real screenshot, production database or browser-based
   Owner test was used in this verification. The checks do not establish extraction accuracy,

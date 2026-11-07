@@ -524,10 +524,11 @@ def _now_iso():
 _DEFAULT_ZONE = object()
 
 
-def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False):
+def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False,
+                overlap_choices=None, list_acknowledged=False):
     from .race_identity import possible_associations, validate_identity_choices
     from .race_matching import batch_matches
-    from .race_reconcile import observations, reconcile
+    from .race_reconcile import apply_overlap_choices, observations, reconcile
 
     counts = {'added': 0, 'unchanged': 0, 'replaced': 0, 'skipped': 0}
     with store._transaction(write=True):
@@ -540,6 +541,15 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
             raise RaceError('Source screenshot is missing or failed integrity verification.') from exc
         timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
         source_rows, sections, complete = observations(store, source)
+        if overlap_choices is not None:
+            rows, planned_groups, _ = apply_overlap_choices(source_rows, sections, rows, overlap_choices)
+            visible_count = len(planned_groups)
+            visible_confirmed = list_acknowledged
+            if not list_acknowledged:
+                raise RaceError('Check the race list against your screenshot before importing.')
+            for group in planned_groups:
+                if len(group) > 1:
+                    rows[group[0]]['corrected'] = list_acknowledged
         groups = reconcile(source_rows, sections, complete, rows, visible_count, visible_confirmed)
         for item in rows:
             if item['action'] != 'confirm':
@@ -589,6 +599,12 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
              'values': rows[group[0]]['values'], 'activity_id': decision['activity_id'],
              'corrected': bool(rows[group[0]].get('corrected'))}
             for group, decision in zip(groups, decisions)]}
+        if overlap_choices is not None:
+            provenance['count_type'] = 'derived_distinct_races'
+            provenance['list_acknowledged'] = True
+            provenance['overlap_decisions'] = [
+                {'observations': [left + 1, right + 1], 'decision': choice}
+                for (left, right), choice in sorted(overlap_choices.items())]
         store.connection.execute('INSERT INTO race_import_reconciliations VALUES (?,?,?,?,?)',
                                  (str(uuid4()), import_id, _now_iso(), visible_count,
                                   json.dumps(provenance, ensure_ascii=False)))

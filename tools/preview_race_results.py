@@ -2,6 +2,7 @@
 """Disposable synthetic Race Results preview with no external API calls."""
 
 import argparse
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
@@ -28,6 +29,7 @@ def main():
     cases = parser.add_mutually_exclusive_group()
     cases.add_argument('--identity-case', action='store_true')
     cases.add_argument('--seam-case', action='store_true')
+    cases.add_argument('--list-case', action='store_true')
     args = parser.parse_args()
     if (args.data_dir / 'rideworks.sqlite3').exists():
         parser.error('Synthetic preview requires a new empty store.')
@@ -39,15 +41,22 @@ def main():
     ]
     if args.seam_case:
         rows[0]['event'] = 'Stage 4 Loop de Loop'
+    if args.list_case:
+        rows = [dict(rows[0], date=f'2026-09-{day:02d}', event=f'Synthetic Route {day}') for day in range(1, 9)]
+        rows.append(dict(rows[0], date='2026-09-27', event='Stage 3 Electric Break'))
+        rows.extend(dict(rows[0], date=f'2026-09-{day:02d}', event=f'Synthetic Route {day}')
+                    for day in range(9, 17))
     with tempfile.TemporaryDirectory() as temp:
         archive = Path(temp) / 'synthetic.zip'
         with zipfile.ZipFile(archive, 'w') as bundle:
             bundle.writestr('activities.csv', csv_bytes([
-                export_row('1', filename='activities/one.fit', title=rows[0]['event']),
-                export_row('2', filename='activities/two.fit', title=rows[1]['event'])]))
-            bundle.writestr('activities/one.fit', make_fit(avg_power=233))
-            bundle.writestr('activities/two.fit', make_fit(avg_power=234,
-                            session_start_time=1100000300, session_timestamp=1100000302))
+                export_row(str(index + 1), filename=f'activities/{index}.fit', title=row['event'])
+                for index, row in enumerate(rows)]))
+            for index, row in enumerate(rows):
+                stamp = datetime.fromisoformat(row['date'] + 'T' + row['start_time'] + ':00+00:00')
+                fit_time = int((stamp - datetime(1989, 12, 31, tzinfo=timezone.utc)).total_seconds())
+                bundle.writestr(f'activities/{index}.fit', make_fit(
+                    avg_power=233 + index, session_start_time=fit_time, session_timestamp=fit_time + 2))
         with Store(args.data_dir) as store:
             result = store.import_strava_export(archive)
             if result['failures']:
@@ -71,7 +80,9 @@ def main():
     def fake_extract(*_):
         nonlocal calls
         calls += 1
-        if args.seam_case:
+        if args.list_case:
+            output = rows[:9] if calls % 2 else rows[8:]
+        elif args.seam_case:
             output = ([rows[0], dict(rows[1], date=None)] if calls % 2 else
                       [dict(rows[0], date=None, event='Loop', avg_watts=None, race_score=None)])
         else:

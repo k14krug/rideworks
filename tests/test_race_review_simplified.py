@@ -88,6 +88,7 @@ class RaceListIntegrationTests(unittest.TestCase):
                     token = re.search(rb'name="verify\.0\.1" value="([0-9a-f]{64})"', page)
                     self.assertIsNotNone(token)
                     fields['verify.0.1'] = token.group(1).decode()
+                    fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
                     fields['operation'] = 'confirm'
                     fields['overlap.0.1'] = 'different'
                     self.assertEqual(app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
@@ -151,6 +152,7 @@ class RaceListIntegrationTests(unittest.TestCase):
                 self.assertEqual(page.count(b'class="race-candidate-row"'), 17)
                 self.assertIn(b'17 races identified', page)
                 self.assertIn(b'value="confirm" disabled', page)
+                fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
                 fields['operation'] = 'confirm'
                 fields.pop('list_acknowledged')
                 self.assertEqual(app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)

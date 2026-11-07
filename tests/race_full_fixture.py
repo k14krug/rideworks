@@ -27,6 +27,7 @@ def seed_history(store):
                          finish=index + 1, avg_watts=160 + index, race_score=180 + index,
                          race_score_change=index % 7 - 3))
         starts.append(start + timedelta(seconds=13 + 16 * index))
+    rows[14]['event'] = 'MeridianCircuit by Lumen'
     with tempfile.TemporaryDirectory() as temp:
         path = Path(temp) / 'synthetic.zip'
         with zipfile.ZipFile(path, 'w') as archive:
@@ -40,10 +41,13 @@ def seed_history(store):
                     avg_power=230 + i, session_start_time=seconds, session_timestamp=seconds + 2))
         result = store.import_strava_export(path)
         assert not result['failures'], result['failures']
-    apply_observations(store, [dict(id=100 + i, name=row['event'], start_date=start.isoformat(),
+    apply_observations(store, [dict(id=100 + i, name=f'Zwift - Race: {row["event"]} (E)', start_date=start.isoformat(),
                                   type='Ride', sport_type='VirtualRide', elapsed_time=1200)
                               for i, (row, start) in enumerate(zip(rows[14:], starts[14:]))],
                        'synthetic', int(starts[-1].timestamp()) + 3600)
+    # Deliberately differ from the stored title in one long word, as in the
+    # privately checked live import. Both names here are invented.
+    rows[14]['event'] = 'MeridiagCircuit by Lumen'
     return rows
 
 

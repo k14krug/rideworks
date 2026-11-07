@@ -1,6 +1,7 @@
 """Synthetic cross-import identity and atomic correction tests."""
 
 import json
+import re
 from datetime import date, timedelta
 from pathlib import Path
 import tempfile
@@ -322,6 +323,7 @@ class IdentityTests(unittest.TestCase):
         self.assertIn(b'Previous original screenshot', page)
         self.assertIn(b'value="confirm" disabled', page)
         fields.update({'operation': 'confirm', '0.shown_activity': new_ride['activity_id']})
+        fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
         with patch('rideworks.race_results.matching_activities', return_value=[old_ride, new_ride]):
             self.assertEqual(self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
@@ -344,6 +346,7 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn(b'value="confirm" disabled', page)
         fields['operation'] = 'confirm'
+        fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
         with patch('rideworks.race_results.matching_activities', return_value=[old_ride, new_ride]):
             status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)

@@ -4,6 +4,7 @@ import io
 from http.client import HTTPConnection
 import json
 from pathlib import Path
+import re
 import sqlite3
 import tempfile
 import threading
@@ -318,6 +319,7 @@ class RaceTests(unittest.TestCase):
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
         self.assertIn(b'Matched', page)
+        fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
         fields['operation'] = 'confirm'
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 400)
@@ -488,6 +490,8 @@ class RaceTests(unittest.TestCase):
         identity = self.stage()
         fields = self.review_fields(operation='confirm')
         fields['0.shown_activity'] = self.activity_id
+        page = self.app.get('/race-results/review/' + identity)[2]
+        fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
         for field, value in (('0.manual', self.activity_id), ('0.activity', self.activity_id), ('0.action', 'skip')):
             with self.subTest(field=field):
                 forged = dict(fields, **{field: value})
@@ -594,6 +598,8 @@ class RaceTests(unittest.TestCase):
     def test_invalid_integer_keeps_review_edits_for_correction(self):
         identity = self.stage()
         fields = self.review_fields(operation='confirm')
+        page = self.app.get('/race-results/review/' + identity)[2]
+        fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
         fields['0.shown_activity'] = self.activity_id
         fields['0.event'] = 'Corrected synthetic event'
         fields['0.avg_watts'] = '12x'

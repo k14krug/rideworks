@@ -293,6 +293,7 @@ class SectionTests(unittest.TestCase):
         self.assertIn(b'I checked these races against my screenshot', page)
         verification = re.search(rb'name="verify\.1\.2" value="([0-9a-f]{64})"', page)
         self.assertIsNotNone(verification)
+        fields['confirmation_token'] = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page).group(1).decode()
         fields['operation'] = 'confirm'
         for index, activity in zip((0, 1, 3), activities):
             fields[f'{index}.shown_activity'] = activity['activity_id']

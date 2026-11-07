@@ -1,5 +1,9 @@
 # RACE-02 — Full-image import and explicit review approvals
 
+> Historical report for `89be95e`. The current review package is
+> [Final import consent and bounded title variation](owner-review-revision.md).
+> The extra restoration checkbox and 16/17 matcher limitation below are superseded.
+
 ## Review state and authority
 
 Ready for renewed HARD — Analyst Gate 1 on draft PR #61. Owner Gate 2 and

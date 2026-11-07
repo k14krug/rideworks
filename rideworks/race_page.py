@@ -11,7 +11,7 @@ from .race_cost import estimate_cost
 from .race_identity import identity_key, possible_associations, validate_identity_choices
 from .race_matching import batch_matches
 from .race_reconcile import apply_overlap_choices, observations, overlap_candidates, overlap_conflicts
-from .race_results import CURRENT_PROMPT_VERSIONS, FIELDS, RaceError, activity_candidate, matching_activities, normalize_row, restoration_approval, result_revision, result_state, row_errors, screenshot
+from .race_results import CURRENT_PROMPT_VERSIONS, FIELDS, RaceError, activity_candidate, matching_activities, normalize_row, import_confirmation, result_revision, result_state, row_errors, screenshot
 from .web import shell
 
 
@@ -122,7 +122,7 @@ No race results are saved until you review and confirm them.</p>
 
 
 def review_page(store, source, nonce, *, draft=None, timezone_name=None, message='',
-                overlap_choices=None, list_acknowledged=False, conflict_verifications=None, restoration_consent=None):
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None):
     observed, sections, complete = observations(store, source)
     if draft is None:
         draft = [{'values': normalize_row(item['row']), 'replace': False} for item in observed]
@@ -162,8 +162,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     cards = []
     approvals_pending = False
     status_counts = Counter()
-    restoration = restoration_approval(store, source, groups, final_rows, decisions, timezone_name)
-    restoration_checked = bool(restoration_consent and restoration_consent == restoration['token'])
+    confirmation = import_confirmation(store, source, groups, final_rows, decisions, timezone_name)
     for index, item in enumerate(draft):
         row = item['values']
         observation = observed[index]
@@ -194,13 +193,11 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         elif existing:
             state = ('Already imported' if json.loads(existing['values_json']) == row and existing['display_timezone'] == (timezone_name or None)
                      else 'Replacement approval required')
-        elif removed:
-            state = 'Restoration approval required'
         else:
             state = 'Matched'
         status_counts[state] += 1
         matched = next((choice for choice in choices if choice['id'] == selected), None)
-        match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p>' if matched
+        match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p><p>{esc(decision["reason"])}</p>' if matched
                          else f'<p class="race-error">{esc(decision["reason"])}</p>' if decision['reason'] else '')
         identity_cards = []
         if group_index is not None:
@@ -253,9 +250,9 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         shown_revision = result_revision(existing, removed)
         checked_replace = (' checked' if item.get('replace') and item.get('shown_activity') == selected
                            and item.get('shown_revision') == shown_revision else '')
-        needs_approval = bool(removed or (existing and
-                              (json.loads(existing['values_json']) != row or existing['display_timezone'] != (timezone_name or None))))
-        if needs_approval and not (restoration_checked if removed else checked_replace):
+        needs_approval = bool(existing and
+                              (json.loads(existing['values_json']) != row or existing['display_timezone'] != (timezone_name or None)))
+        if needs_approval and not checked_replace:
             approvals_pending = True
         approval = (f'<label><input type="checkbox" class="race-approval" name="{index}.replace" value="yes"{checked_replace}> '
                     'Approve replacement</label>' if needs_approval and existing else '')
@@ -349,21 +346,22 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     summary = f'{count_label} · {matched_count} {match_label} · {matching_errors} matching errors'
     categories = [
         ('OCR correction needed', 'OCR corrections'),
-        ('Restoration approval required', 'restorations to approve'),
         ('Replacement approval required', 'replacements to approve'),
         ('Conflicting values to verify', 'conflicting values to verify'),
         ('Existing attachment to review', 'existing attachments to review'),
     ]
     action_summary = ' · '.join(f'{status_counts[state]} {label}' for state, label in categories if status_counts[state])
     restore_control = ''
-    if restoration['rows']:
+    import_label = f'Import all {len(groups)} races'
+    if confirmation['rows']:
         restore_items = ''.join(
             f'<li>Race {item["row"] + 1}: {esc(item["values"]["date"])} · {esc(item["values"]["event"])}</li>'
-            for item in restoration['rows'])
-        restore_control = (f'<div class="race-restorations"><details><summary>Review the {len(restoration["rows"])} restorations</summary>'
-                           f'<ul>{restore_items}</ul></details><label><input type="checkbox" class="race-approval race-restoration-approval" '
-                           f'name="restore_displayed" value="{restoration["token"]}"{" checked" if restoration_checked else ""}> '
-                           f'I approve restoring these {len(restoration["rows"])} previously removed race results.</label></div>')
+            for item in confirmation['rows'])
+        restore_count = len(confirmation['rows'])
+        restore_control = (f'<div class="race-restorations"><p>{restore_count} of these have previously been removed '
+                           'and will be restored if you import.</p><details><summary>Previously removed races</summary>'
+                           f'<ul>{restore_items}</ul></details></div>')
+        import_label = f'Import {len(groups)} races (restore {restore_count} previously removed)'
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
 <p><a href="/race-results">Back to Race Results</a></p></div></header>
 <section class="panel race-panel race-review-panel">{notice}{older_prompt}
@@ -374,6 +372,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <details><summary>Technical details</summary><pre>{esc(json.dumps(technical, ensure_ascii=False, indent=2))}</pre></details>
 <form class="race-review-form" data-matched="{str(matched).lower()}" action="/race-results/review/{esc(source['import_id'])}" method="post">
 <input type="hidden" name="nonce" value="{esc(nonce)}">
+<input type="hidden" name="confirmation_token" value="{confirmation['token']}">
 <details><summary>Screenshot timezone: {esc(timezone_name or "Unknown")}</summary><label>Timezone (IANA)
 <input name="timezone" maxlength="100" value="{esc(timezone_name)}"></label></details>
 {''.join(pair_cards)}
@@ -386,7 +385,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 I checked these races against my screenshot.</label>
 <p>Each race must match a different activity before the whole batch can be imported. If an activity is missing, check your sync coverage; edit extracted values only when the screenshot differs.</p>
 <div class="race-actions"><button type="submit" name="operation" value="preview">Review changes</button>
-<button type="submit" name="operation" value="confirm"{disabled}>Import all {len(groups)} races</button></div>
+<button type="submit" name="operation" value="confirm"{disabled}>{import_label}</button></div>
 <p class="race-review-dirty" role="status" hidden>Fields changed. Select Review changes to recompute all matches.</p>
 </form><script src="/static/race_review.js" defer></script></section>''', active='races', page_class='race-page')
 

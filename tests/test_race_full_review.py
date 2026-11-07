@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import tempfile
 import unittest
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from race_full_fixture import seed_history, seed_restorations, stage, items
@@ -34,8 +35,8 @@ class FullReviewTests(unittest.TestCase):
                 fields[f'{index}.{field}'] = '' if value is None else str(value)
             fields[f'{index}.shown_activity'] = item['shown_activity']
             fields[f'{index}.shown_revision'] = item['shown_revision']
-        token = re.search(rb'name="restore_displayed" value="([0-9a-f]{64})"', page)
-        fields['restore_displayed'] = token.group(1).decode()
+        token = re.search(rb'name="confirmation_token" value="([0-9a-f]{64})"', page)
+        fields['confirmation_token'] = token.group(1).decode()
         return fields
 
     def post(self, fields):
@@ -46,15 +47,21 @@ class FullReviewTests(unittest.TestCase):
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_result_history').fetchone()[0], 11)
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 11)
 
-    def test_full_default_seventeen_matches_one_scoped_restoration_consent(self):
+    def test_full_default_seventeen_matches_and_explicit_final_restore_action(self):
         page = self.app.get(self.route)[2]
         self.assertIn(b'17 races identified', page)
         self.assertIn(b'17 automatically matched', page)
         self.assertIn(b'0 matching errors', page)
-        self.assertIn(b'11 restorations to approve', page)
+        self.assertIn(b'11 of these have previously been removed and will be restored if you import.', page)
+        self.assertIn(b'Import 17 races (restore 11 previously removed)', page)
+        self.assertNotIn(b'Restoration approval required', page)
+        self.assertIn(b'One character differs in a long event word', page)
+        self.assertIn(b'Zwift - Race: MeridianCircuit by Lumen (E)', page)
         self.assertNotIn(b'need attention', page)
         self.assertEqual(page.count(b'class="race-candidate-row"'), 17)
-        self.assertEqual(page.count(b'name="restore_displayed"'), 1)
+        self.assertNotIn(b'name="restore_displayed"', page)
+        self.assertEqual(page.count(b'type="checkbox"'), 1)
+        self.assertEqual(page.count(b'<td>Matched\n'), 17)
         self.assertNotIn(b'class="race-overlap"', page)
         self.assertNotIn(b'Approve replacement</label>', page)
         self.assertNotIn(b'.replace"', page)
@@ -64,13 +71,13 @@ class FullReviewTests(unittest.TestCase):
         self.assertEqual(sections[0]['prompt_version'], race.PROMPT_VERSION)
         self.assertIn(b'<option value="full" selected>', self.app.get('/race-results/import')[2])
         fields = self.form(page)
-        consent = fields.pop('restore_displayed')
+        consent = fields.pop('confirmation_token')
         self.assertEqual(self.post(fields)[0], 400)
         self.assert_no_confirmed_changes()
-        fields['restore_displayed'] = 'invalid'
+        fields['confirmation_token'] = 'invalid'
         self.assertEqual(self.post(fields)[0], 400)
         self.assert_no_confirmed_changes()
-        fields['restore_displayed'] = consent
+        fields['confirmation_token'] = consent
         before = self.store.activity_history()
         self.assertEqual(self.post(fields)[0], 200)
         self.assertEqual(self.store.activity_history(), before)
@@ -79,11 +86,47 @@ class FullReviewTests(unittest.TestCase):
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 11)
         provenance = json.loads(self.store.connection.execute(
             'SELECT decisions_json FROM race_import_reconciliations WHERE import_id=?', (self.identity,)).fetchone()[0])
-        self.assertEqual(len(provenance['restoration_approval']['rows']), 11)
-        self.assertEqual(provenance['matching_version'], 'race-automatic-v2')
+        self.assertEqual(len(provenance['import_confirmation']['restorations']), 11)
+        self.assertEqual(provenance['import_confirmation']['action'], 'confirm')
+        self.assertEqual(provenance['matching_version'], 'race-automatic-v3')
         self.assertTrue(all(group['match_evidence']['time_source_id'] for group in provenance['groups']))
         self.assertEqual(json.loads(race.load_import(self.store, self.identity)['rows_json']), self.rows)
         self.assertEqual(self.post(fields)[0], 400)  # stale consent cannot replay after restoration
+        activity_id = fields['0.shown_activity']
+        race.remove_result(self.store, activity_id, race.result_revision(*race.result_state(self.store, activity_id)))
+        self.assertEqual(self.post(fields)[0], 400)  # nor resurrect a subsequent removal
+        self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 16)
+
+    def test_preview_and_acknowledgment_cannot_restore_without_final_action(self):
+        fields = self.form()
+        fields['operation'] = 'preview'
+        self.assertEqual(self.post(fields)[0], 200)
+        self.assert_no_confirmed_changes()
+        fields['operation'] = 'confirm'
+        fields.pop('list_acknowledged')
+        self.assertEqual(self.post(fields)[0], 400)
+        self.assert_no_confirmed_changes()
+
+    def test_final_action_binds_nonrestoration_assignments_and_history(self):
+        fields = self.form()
+        activities = race.matching_activities(self.store)
+        first, second = (fields[f'{index}.shown_activity'] for index in (11, 12))
+        for activity in activities:
+            if activity['activity_id'] in (first, second):
+                activity['activity_id'] = second if activity['activity_id'] == first else first
+        fields['11.shown_activity'], fields['12.shown_activity'] = second, first
+        with patch('rideworks.race_results.matching_activities', return_value=activities):
+            status, _, page = self.post(fields)
+        self.assertEqual(status, 400)
+        self.assertIn(b'displayed import or saved history changed', page)
+        self.assert_no_confirmed_changes()
+        fields = self.form()
+        # History alone changing also invalidates the action, even if current
+        # result/tombstone and all eleven restorations are unchanged.
+        self.store.connection.execute('INSERT INTO race_result_history VALUES (?,?,?,?,?,?)',
+            ('synthetic-revision', first, self.identity, json.dumps(self.rows[11]), 'UTC', 'synthetic'))
+        self.assertEqual(self.post(fields)[0], 400)
+        self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
 
     def test_edited_values_timezone_and_missing_activity_invalidate_consent(self):
         for key, value in (('0.avg_watts', '222'), ('timezone', 'Etc/UTC'), ('16.date', '2024-06-20')):
@@ -112,6 +155,8 @@ class FullReviewTests(unittest.TestCase):
         self.assertIn(b'1 replacements to approve', self.app.get(self.route)[2])
         self.assertEqual(self.post(fields)[0], 400)
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
+        self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_result_history').fetchone()[0], 12)
+        self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 11)
         other = stage(self.store, self.rows)
         self.assertEqual(self.app.post('/race-results/review/' + other, urlencode(fields).encode(),
                                       'http://localhost:8766')[0], 400)

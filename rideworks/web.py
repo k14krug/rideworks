@@ -871,9 +871,11 @@ class Application:
                 extracted, sections, _ = observations(store, source)
                 draft = []
                 expected = {'nonce', 'timezone', 'operation'}
-                restoration_consent = values.get('restore_displayed')
-                if 'restore_displayed' in values:
-                    expected.add('restore_displayed')
+                confirmation_token = values.get('confirmation_token')
+                if 'confirmation_token' in values:
+                    expected.add('confirmation_token')
+                if operation == 'confirm' and not confirmation_token:
+                    raise RaceError('Reload the review before using the final import action.')
                 acknowledged = values.get('list_acknowledged') == 'yes'
                 if 'list_acknowledged' in values:
                     expected.add('list_acknowledged')
@@ -921,17 +923,17 @@ class Application:
                 if operation == 'preview':
                     return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(
                         store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', overlap_choices=overlaps,
-                        conflict_verifications=conflict_verifications, restoration_consent=restoration_consent))
+                        conflict_verifications=conflict_verifications))
                 try:
                     with store._transaction(write=True):
                         counts = commit_rows(store, identity, draft, timezone_name=zone,
                                              overlap_choices=overlaps, list_acknowledged=acknowledged,
-                                             conflict_verifications=conflict_verifications, restoration_consent=restoration_consent)
+                                             conflict_verifications=conflict_verifications, confirmation_token=confirmation_token)
                 except RaceError as exc:
                     return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(
                         store, source, self.settings.nonce, draft=draft, timezone_name=zone or '',
                         message=str(exc), overlap_choices=overlaps, list_acknowledged=acknowledged,
-                        conflict_verifications=conflict_verifications, restoration_consent=restoration_consent))
+                        conflict_verifications=conflict_verifications))
                 summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}."
                 html = shell('Race import complete', f'<h1>Import complete</h1><p>{escape(summary)}</p><p><a href="/race-results">View Race Results</a></p>', active='races')
                 return 200, {'Content-Type': 'text/html'}, self.page(store, html)

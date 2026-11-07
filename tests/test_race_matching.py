@@ -93,6 +93,45 @@ class BatchMatchingTests(unittest.TestCase):
         self.assertIn('timestamp', batch_matches([row()], 'America/Los_Angeles',
                       [activity(absolute_time=False)])[0]['reason'])
 
+    def test_bounded_title_variant_requires_independent_evidence_and_unique_candidate(self):
+        race = row(event='MeridiagCircuit by Lumen')
+        ride = activity(title='Zwift - Race: MéridianCircuit by Lumen (E)')
+        result = batch_matches([race], 'America/Los_Angeles', [ride])[0]
+        self.assertEqual(result['activity_id'], 'a')
+        self.assertIn('One character differs', result['reason'])
+        self.assertEqual(race['event'], 'MeridiagCircuit by Lumen')  # no OCR rewrite
+        for changed in (
+                {'activity_type': 'Virtual Run'},
+                {'start_time': '2024-09-28T16:14:00+00:00'},
+                {'start_time': '2024-09-27T16:21:00+00:00'},
+                {'absolute_time': False},
+                {'title': 'Zwift Lumen Coffee Social'},
+                {'title': 'Zwift MeridxxxCircuit by Lumen'}):
+            with self.subTest(changed=changed):
+                self.assertIsNone(batch_matches([race], 'America/Los_Angeles',
+                                                [dict(ride, **changed)])[0]['activity_id'])
+        for competitor in (dict(ride, activity_id='b'),
+                           activity('b', title=race['event'])):
+            result = batch_matches([race], 'America/Los_Angeles', [ride, competitor])[0]
+            self.assertIsNone(result['activity_id'])
+            self.assertEqual(result['issue'], 'ambiguous')
+            self.assertIn('do not distinguish', result['reason'])
+        staged = dict(race, event='Stage 3 ' + race['event'])
+        self.assertIsNone(batch_matches([staged], 'America/Los_Angeles',
+                         [dict(ride, title='Stage 4 ' + ride['title'])])[0]['activity_id'])
+
+    def test_title_normalization_and_one_long_word_limit(self):
+        self.assertTrue(titles_agree('MéridianCircuit — Lumen', 'Zwift: MeridianCircuit / Lumen (E)'))
+        self.assertTrue(titles_agree('MeridianCircuiit Lumen', 'MeridianCircuit Lumen'))
+        self.assertTrue(titles_agree('MeridianCircui Lumen', 'MeridianCircuit Lumen'))
+        for event, source in (
+                ('MeridiagCircuit', 'MeridianCircuit'),  # no independent distinctive anchor
+                ('MeridiagCircuit Lumen', 'MeridianCircuit Lumex'),  # two variants
+                ('MeridiagCircuit Lumen', 'MeridixxCircuit Lumen'),
+                ('Amber Bridge', 'Amher Bridge'),  # short-word edits stay rejected
+                ('Electric Break', 'Electric Coffee Social')):
+            self.assertFalse(titles_agree(event, source))
+
     def test_ten_minute_window_is_unchanged(self):
         for minute, expected in ((20, 'a'), (21, None)):
             result = batch_matches([row()], 'America/Los_Angeles',

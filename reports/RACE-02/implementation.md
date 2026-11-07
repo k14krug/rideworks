@@ -2,7 +2,7 @@
 
 ## Status
 
-The current review package is [Full-image import and explicit review approvals](full-image-review.md).
+The current review package is [Final import consent and bounded title variation](owner-review-revision.md).
 The Owner's live comparison established the full-image default and authorized a
 bounded review/matching correction. The implementation is awaiting renewed
 HARD — Analyst Gate 1; Owner Gate 2 remains outstanding. The investigation below

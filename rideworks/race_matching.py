@@ -3,12 +3,13 @@
 from collections import Counter
 from datetime import date, datetime
 import re
+import unicodedata
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .race_results import activity_candidate, row_errors
 
 
-MATCHING_VERSION = 'race-automatic-v2'
+MATCHING_VERSION = 'race-automatic-v3'
 GENERIC_WORDS = frozenset({
     'zwift', 'zracing', 'racing', 'race', 'races', 'ride', 'stage',
     'event', 'virtual', 'dura', 'ace',
@@ -35,7 +36,9 @@ def stages(title):
 
 def distinctive_words(title):
     title = STAGE.sub(' ', title)
-    return {word for word in re.findall(r'[a-z0-9]+', title.casefold())
+    title = ''.join(char for char in unicodedata.normalize('NFKD', title.casefold())
+                    if not unicodedata.combining(char))
+    return {word for word in re.findall(r'[a-z0-9]+', title)
             if len(word) > 3 and not word.isdecimal() and word not in GENERIC_WORDS}
 
 
@@ -43,24 +46,46 @@ def unambiguous_time(stamp, zone):
     return stamp.replace(tzinfo=zone, fold=0).utcoffset() == stamp.replace(tzinfo=zone, fold=1).utcoffset()
 
 
-def titles_agree(event, title):
+def one_character_difference(left, right):
+    """One substitution, insertion or deletion; no general fuzzy similarity."""
+    if left == right or abs(len(left) - len(right)) > 1:
+        return False
+    if len(left) == len(right):
+        return sum(a != b for a, b in zip(left, right)) == 1
+    shorter, longer = sorted((left, right), key=len)
+    index = next((i for i, pair in enumerate(zip(shorter, longer)) if pair[0] != pair[1]), len(shorter))
+    return shorter[index:] == longer[index + 1:]
+
+
+def title_evidence(event, title):
     """Require the visible event wording, rather than a single shared word.
 
     A one-word event must have the same distinctive title, while a longer
     event may be contained in a source title with additional route wording.
-    Only an explicitly ellipsized final word may match a word prefix.
+    One long word may differ by one character if another distinctive word
+    agrees. Callers must also enforce independent ride evidence and uniqueness.
     """
     event_words, title_words = distinctive_words(event), distinctive_words(title)
     if not event_words or not title_words:
-        return False
+        return None
     missing = event_words - title_words
     if missing and event.rstrip().endswith(('...', '…')):
         tokens = re.findall(r'[a-z0-9]+', event.casefold())
         if tokens and missing == {tokens[-1]} and len(tokens[-1]) >= 4:
             missing = set() if any(word.startswith(tokens[-1]) for word in title_words) else missing
-    if missing:
-        return False
-    return len(event_words) > 1 or event_words == title_words
+    if not missing:
+        return 'wording' if len(event_words) > 1 or event_words == title_words else None
+    if len(missing) == 1 and event_words & title_words:
+        word = next(iter(missing))
+        alternatives = title_words - event_words
+        if len(word) >= 8 and sum(len(other) >= 8 and one_character_difference(word, other)
+                                  for other in alternatives) == 1:
+            return 'minor_spelling'
+    return None
+
+
+def titles_agree(event, title):
+    return title_evidence(event, title) is not None
 
 
 def batch_matches(rows, timezone_name, activities):
@@ -107,10 +132,13 @@ def batch_matches(rows, timezone_name, activities):
             elif (len(stages(choice['title'])) > 1 or
                   (event_stages and stages(choice['title']) and event_stages != stages(choice['title']))):
                 issue, reason = 'stage', 'The event stage conflicts with this activity.'
-            elif not titles_agree(row['event'], choice['title']):
+            elif not (title_match := title_evidence(row['event'], choice['title'])):
                 issue, reason = 'title', 'The activity title does not identify the visible event.'
             else:
                 issue, reason = None, 'Matches date, time, cycling type and event.'
+                if title_match == 'minor_spelling':
+                    reason = ('One character differs in a long event word; the remaining distinctive wording, '
+                              'date, time and virtual cycling type agree, with no stage conflict.')
                 eligible.append(choice['id'])
             if not day_delta:
                 rejected[issue] += 1
@@ -119,9 +147,10 @@ def batch_matches(rows, timezone_name, activities):
         decision['candidates'].sort(key=lambda c: (
             c['date'] != row['date'], abs(c['time_delta_seconds']), c['id']))
         if len(eligible) == 1:
-            decision.update(activity_id=eligible[0], reason='Matched automatically.')
+            evidence = next(c['reason'] for c in decision['candidates'] if c['id'] == eligible[0])
+            decision.update(activity_id=eligible[0], reason='Unique automatic match. ' + evidence)
         elif len(eligible) > 1:
-            decision.update(issue='ambiguous', reason='Multiple activities qualify for this race; automatic matching is ambiguous.')
+            decision.update(issue='ambiguous', reason='Multiple activities qualify for this race; date, time and title evidence do not distinguish them. Automatic matching is ambiguous.')
         elif not rejected:
             decision.update(issue='missing', reason='No activity was found on this date. Check the screenshot date and sync coverage.')
         else:

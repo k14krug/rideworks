@@ -526,28 +526,40 @@ def _now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
-def restoration_approval(store, source, groups, rows, decisions, timezone_name):
-    """Describe exactly the displayed restorations; never authorize replacements."""
+def import_confirmation(store, source, groups, rows, decisions, timezone_name):
+    """Bind the final import action to all displayed assignments and saved history.
+
+    Restoration is part of this explicit action. Active replacements still need
+    their own approval. Recompute inside the write transaction before any writes.
+    """
     restorations = []
+    assignments = []
     for group, row, decision in zip(groups, rows, decisions):
         activity_id = decision['activity_id']
         if not activity_id:
             continue
         current, removed = result_state(store, activity_id)
+        history = [dict(item) for item in store.connection.execute(
+            'SELECT * FROM race_result_history WHERE activity_id=? ORDER BY revision_id', (activity_id,))]
+        removals = [dict(item) for item in store.connection.execute(
+            'SELECT * FROM race_result_removals WHERE activity_id=? ORDER BY removal_id', (activity_id,))]
+        assignments.append({'row': group[0], 'activity_id': activity_id,
+                            'current': dict(current) if current else None,
+                            'history': history, 'removals': removals})
         if removed:
             restorations.append({'row': group[0], 'activity_id': activity_id,
                                  'revision': result_revision(current, removed), 'values': row})
     binding = [source['import_id'], source['image_sha256'], source['rows_json'],
-               groups, rows, timezone_name, restorations]
+               groups, rows, timezone_name, assignments]
     token = hashlib.sha256(json.dumps(binding, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-    return {'token': token if restorations else None, 'rows': restorations}
+    return {'token': token, 'rows': restorations}
 
 
 _DEFAULT_ZONE = object()
 
 
 def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False,
-                overlap_choices=None, list_acknowledged=False, conflict_verifications=None, restoration_consent=None):
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None, confirmation_token=None):
     from .race_identity import possible_associations, validate_identity_choices
     from .race_matching import MATCHING_VERSION, batch_matches
     from .race_reconcile import apply_overlap_choices, observations, overlap_conflicts, reconcile
@@ -603,10 +615,10 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
         candidates = possible_associations(store, source, groups, [item['values'] for item in final_rows],
                                            decisions, timezone_name, visible_count)
         identity_decisions = validate_identity_choices(candidates, final_rows, decisions, timezone_name)
-        restoration = restoration_approval(store, source, groups, [item['values'] for item in final_rows],
-                                          decisions, timezone_name)
-        if restoration_consent is not None and restoration_consent != restoration['token']:
-            raise RaceError('The displayed restorations changed. Review and approve them again.')
+        confirmation = import_confirmation(store, source, groups, [item['values'] for item in final_rows],
+                                           decisions, timezone_name)
+        if confirmation_token is not None and confirmation_token != confirmation['token']:
+            raise RaceError('The displayed import or saved history changed. Review changes before importing.')
         for item, decision in zip(final_rows, decisions):
             row, activity_id = item['values'], decision['activity_id']
             if item.get('activity_id') and item['activity_id'] != activity_id:
@@ -621,7 +633,7 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
                 continue
             if current and not item['replace']:
                 raise RaceError('A changed result needs explicit replacement approval.')
-            if removed and not item['replace'] and restoration_consent is None:
+            if removed and not item['replace'] and confirmation_token is None:
                 raise RaceError('A previously removed result needs explicit restoration approval.')
             now = datetime.now(timezone.utc).isoformat()
             store.connection.execute('INSERT INTO race_result_history VALUES (?,?,?,?,?,?)',
@@ -639,8 +651,10 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
              'match_evidence': next(choice for choice in decision['candidates'] if choice['id'] == decision['activity_id']),
              'corrected': bool(rows[group[0]].get('corrected'))}
             for group, decision in zip(groups, decisions)]}
-        if restoration_consent is not None:
-            provenance['restoration_approval'] = restoration
+        if confirmation_token is not None:
+            provenance['import_confirmation'] = {'token': confirmation['token'],
+                                                'restorations': confirmation['rows'],
+                                                'action': 'confirm'}
         if overlap_choices is not None:
             provenance['count_type'] = 'derived_distinct_races'
             provenance['list_acknowledged'] = True

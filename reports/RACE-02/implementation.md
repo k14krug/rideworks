@@ -7,9 +7,10 @@ deterministic overlapping tiles and explicit Owner observation reconciliation.
 The subsequent cross-import identity blocker was addressed under the revised
 [JIT](../../docs/tasks/RACE-02.md), section B.9, and
 [issue #60](https://github.com/k14krug/rideworks/issues/60). Synthetic
-implementation and verification are complete; the draft awaits HARD — Analyst
-Gate 1 review, not acceptance. Do not use the branch for real imports, merge
-or deploy. No production data was accessed or changed.
+implementation and verification are complete. The Owner, acting as Analyst,
+approved Gate 1 in chat; Owner-operated local Gate 2 testing remains, and the
+task is not yet accepted. Do not merge or deploy. No production data was
+accessed or changed.
 
 ## Corrected-date wrong-attachment regression
 

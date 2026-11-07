@@ -206,6 +206,20 @@ class IdentityTests(unittest.TestCase):
             self.commit(new_import, [self.item(corrected, new_ride), self.item(other, other_ride)],
                         [new_ride, other_ride])
 
+    def test_legacy_same_image_unique_title_time_preserves_distant_candidate(self):
+        old = result(date='2023-01-01', race_score=123)
+        corrected = result(date='2024-11-08', race_score=456)
+        other = result(date='2024-12-01', event='Stage 3 Lakeview')
+        old_import, new_import = self.stage([old, other]), self.stage([corrected, other])
+        old_ride, new_ride, other_ride = self.activity(old), self.activity(corrected), self.activity(other)
+        self.prior(old_import, old, old_ride)
+        candidate = self.candidates(new_import, [corrected, other], [new_ride, other_ride])[0][0]
+        self.assertTrue(candidate['same_image'])
+        self.assertFalse(candidate['proven_same'])
+        with self.assertRaisesRegex(race.RaceError, 'unresolved'):
+            self.commit(new_import, [self.item(corrected, new_ride), self.item(other, other_ride)],
+                        [new_ride, other_ride])
+
     def test_same_hash_multiple_rows_and_legacy_provenance_are_not_assumed_same(self):
         old, new = result(date='2024-11-06'), result(date='2024-11-08')
         old_import, new_import = self.stage([old, new]), self.stage([old, new])
@@ -291,7 +305,7 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
 
     def test_http_preview_displays_legacy_pair_and_rejects_unreviewed_commit(self):
-        old, new = result(date='2024-11-06'), result(date='2024-11-08')
+        old, new = result(date='2023-01-01'), result(date='2024-11-08')
         old_import, new_import = self.stage([old]), self.stage([new])
         old_ride, new_ride = self.activity(old), self.activity(new)
         self.prior(old_import, old, old_ride)

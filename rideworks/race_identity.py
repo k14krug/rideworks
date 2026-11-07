@@ -110,7 +110,7 @@ def possible_associations(store, source, groups, rows, decisions, timezone_name,
                 or (visible_count == 1 and old_single and len(old_groups) == 1)
             )
             matching_source = False
-            if same_image and old_groups:
+            if same_image:
                 old_rows = json.loads(saved['source_rows_json'])
                 old_members = {member for old_group in old_groups for member in old_group}
                 if any(type(member) is not int or member < 1 or member > len(old_rows) for member in old_members):
@@ -122,6 +122,12 @@ def possible_associations(store, source, groups, rows, decisions, timezone_name,
                         and signature == _source_signature(old_rows[old - 1])
                         and source_signatures[signature] == old_signatures[signature] == 1)
                     for current in group for old in old_members)
+                if not old_groups:
+                    signature = _source_signature(previous)
+                    matching_source = (signature is not None
+                                       and source_signatures[signature] == old_signatures[signature] == 1
+                                       and any(_source_signature(source_rows[current]) == signature
+                                               for current in group))
             if not proven_same and not matching_source and not _nearby(row, previous):
                 continue
             if saved['import_id'] not in available:

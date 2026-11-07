@@ -213,12 +213,12 @@ pixel-derived row ownership.
 
 ## Verification
 
-- `.venv/bin/python -m unittest discover -s tests -q` — **629 tests passed** using
+- `.venv/bin/python -m unittest discover -s tests -q` — **630 tests passed** using
   synthetic data, including migration, rollback, FIT/analytics and race tests.
 - `PYTHONPATH=tests .venv/bin/python -m unittest -q test_race_identity
-  test_race_review_simplified test_race_sections test_race_results` — **61 tests
+  test_race_review_simplified test_race_sections test_race_results` — **62 tests
   passed**. They include 17- and 33-race same-image reimports, corrected values,
-  a prior wrong Activity attachment, recurring races, and value-bound pair
+  a prior wrong Activity attachment (including legacy provenance), recurring races, and value-bound pair
   verification for conflicting score, signed change, date and watts.
 - Browser verification on four disposable mock-only scenarios: **21 checks**
   for extraction/reconciliation, matching, cost, Activities columns and

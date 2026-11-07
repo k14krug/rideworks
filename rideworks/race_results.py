@@ -490,38 +490,11 @@ def _now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
-def other_result_conflicts(store, rows, decisions):
-    from .race_matching import distinctive_words
-
-    dates = sorted({row['date'] for row, decision in zip(rows, decisions)
-                    if decision['activity_id'] and row.get('date')})
-    if not dates:
-        return {}
-    placeholders = ','.join('?' for _ in dates)
-    existing = store.connection.execute(
-        f"SELECT activity_id, values_json FROM race_results WHERE json_extract(values_json, '$.date') IN ({placeholders})",
-        dates).fetchall()
-    conflicts = {}
-    for index, (row, decision) in enumerate(zip(rows, decisions)):
-        if not decision['activity_id']:
-            continue
-        words = distinctive_words(row['event'])
-        for saved in existing:
-            if saved['activity_id'] == decision['activity_id']:
-                continue
-            previous = json.loads(saved['values_json'])
-            if (previous.get('date') == row['date'] and previous.get('start_time') == row['start_time']
-                    and isinstance(previous.get('event'), str)
-                    and words & distinctive_words(previous['event'])):
-                conflicts[index] = saved['activity_id']
-                break
-    return conflicts
-
-
 _DEFAULT_ZONE = object()
 
 
 def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False):
+    from .race_identity import possible_associations, validate_identity_choices
     from .race_matching import batch_matches
     from .race_reconcile import observations, reconcile
 
@@ -530,6 +503,10 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
         source = load_import(store, import_id)
         if source is None:
             raise RaceError('Screenshot import was not found.')
+        try:
+            screenshot(store, import_id)
+        except OSError as exc:
+            raise RaceError('Source screenshot is missing or failed integrity verification.') from exc
         timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
         source_rows, sections, complete = observations(store, source)
         groups = reconcile(source_rows, sections, complete, rows, visible_count, visible_confirmed)
@@ -548,11 +525,9 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
                     if not decision['activity_id']]
         if failures:
             raise RaceError('Batch blocked: ' + ' '.join(failures))
-        conflicts = other_result_conflicts(store, [item['values'] for item in final_rows], decisions)
-        if conflicts:
-            details = ' '.join(f'Observation {groups[index][0] + 1} may already be linked to a different activity ({activity_id}).'
-                               for index, activity_id in conflicts.items())
-            raise RaceError('Batch blocked: ' + details + ' Review and remove any incorrect attachment on Race Results first.')
+        candidates = possible_associations(store, source, groups, [item['values'] for item in final_rows],
+                                           decisions, timezone_name, visible_count)
+        identity_decisions = validate_identity_choices(candidates, final_rows, decisions, timezone_name)
         for item, decision in zip(final_rows, decisions):
             row, activity_id = item['values'], decision['activity_id']
             if item.get('activity_id') and item['activity_id'] != activity_id:
@@ -578,7 +553,7 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
                 accepted_at=excluded.accepted_at''',
                 (activity_id, import_id, encoded, timezone_name, now))
             counts['replaced' if current else 'added'] += 1
-        provenance = {'timezone': timezone_name, 'groups': [
+        provenance = {'timezone': timezone_name, 'identity_decisions': identity_decisions, 'groups': [
             {'observations': [index + 1 for index in group], 'choices': [rows[index]['group'] for index in group],
              'values': rows[group[0]]['values'], 'activity_id': decision['activity_id'],
              'corrected': bool(rows[group[0]].get('corrected'))}

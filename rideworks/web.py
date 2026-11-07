@@ -853,7 +853,7 @@ class Application:
         from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, normalize_row, validate_timezone
         from .race_page import review_page as race_review_page
         try:
-            values = parse_qs(body.decode('utf-8'), max_num_fields=1600, keep_blank_values=True, strict_parsing=True)
+            values = parse_qs(body.decode('utf-8'), max_num_fields=2100, keep_blank_values=True, strict_parsing=True)
             if any(len(value) != 1 for value in values.values()):
                 raise RaceError('Invalid review form. Reload and try again.')
             values = {key: value[0] for key, value in values.items()}
@@ -896,8 +896,18 @@ class Application:
                         expected.add(replacement)
                     if corrected in values:
                         expected.add(corrected)
+                    identity_prefix = prefix + 'identity.'
+                    identity_choices = {}
+                    for key in values:
+                        if key.startswith(identity_prefix):
+                            identity_key = key.removeprefix(identity_prefix)
+                            if not re.fullmatch(r'[0-9a-f]{64}', identity_key):
+                                raise RaceError('Invalid source identity decision. Reload and try again.')
+                            identity_choices[identity_key] = values[key]
+                            expected.add(key)
                     draft.append({'values': normalize_row(row), 'action': 'confirm', 'replace': values.get(replacement) == 'yes',
                                   'group': values[prefix + 'group'], 'corrected': values.get(corrected) == 'yes',
+                                  'identity': identity_choices,
                                   'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
                 if set(values) != expected:
                     raise RaceError('Unexpected review field. Reload and try again.')

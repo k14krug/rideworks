@@ -3,12 +3,14 @@
 from html import escape
 import json
 from urllib.parse import parse_qs
+from zoneinfo import ZoneInfo
 
 from .history import presentation
 from .race_cost import estimate_cost
+from .race_identity import identity_key, possible_associations, validate_identity_choices
 from .race_matching import batch_matches
 from .race_reconcile import adjacent, observations, reconcile
-from .race_results import FIELDS, PROMPT_VERSION, RaceError, matching_activities, normalize_row, other_result_conflicts, result_revision, result_state, row_errors
+from .race_results import FIELDS, PROMPT_VERSION, RaceError, activity_candidate, matching_activities, normalize_row, result_revision, result_state, row_errors, screenshot
 from .web import shell
 
 
@@ -131,8 +133,20 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         if not message and str(visible_count):
             message = str(exc)
     final_rows = [draft[group[0]]['values'] for group in groups]
-    decisions = batch_matches(final_rows, timezone_name, matching_activities(store))
-    conflicts = other_result_conflicts(store, final_rows, decisions)
+    activities = matching_activities(store)
+    decisions = batch_matches(final_rows, timezone_name, activities)
+    identity_error = ''
+    try:
+        screenshot(store, source['import_id'])
+        conflicts = (possible_associations(store, source, groups, final_rows, decisions, timezone_name, int(visible_count))
+                     if groups else [])
+    except RaceError as exc:
+        conflicts = [[] for _ in groups]
+        identity_error = str(exc)
+    except OSError:
+        conflicts = [[] for _ in groups]
+        identity_error = 'Source screenshot is missing or failed integrity verification.'
+    activity_by_id = {activity['activity_id']: activity for activity in activities}
     decision_by_root = {group[0]: (i, decision) for i, (group, decision) in enumerate(zip(groups, decisions))}
     group_by_member = {member: group[0] for group in groups for member in group}
     cards = []
@@ -152,7 +166,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             state = 'Invalid — correct fields before confirming'
         elif not selected:
             state = 'Unresolved — batch blocked'
-        elif group_index in conflicts:
+        elif group_index is not None and conflicts[group_index]:
             state = 'Possible existing attachment — batch blocked'
         elif existing:
             state = ('Already imported' if json.loads(existing['values_json']) == row and existing['display_timezone'] == (timezone_name or None)
@@ -164,10 +178,38 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         matched = next((choice for choice in choices if choice['id'] == selected), None)
         match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p>' if matched
                          else f'<p class="race-error">{esc(decision["reason"])}</p>' if decision['reason'] else '')
-        if group_index in conflicts:
-            match_details += (f'<p class="race-error">This race may already be linked to a different activity '
-                              f'({esc(conflicts[group_index])}). Review and remove any incorrect attachment on '
-                              f'<a href="/race-results">Race Results</a> first.</p>')
+        identity_cards = []
+        if group_index is not None:
+            for candidate in conflicts[group_index]:
+                key = identity_key(candidate['activity_id'])
+                selected_identity = item.get('identity', {}).get(key, '')
+                same_value = 'same:' + candidate['token']
+                different_value = 'different:' + candidate['token']
+                choice_options = (f'<option value="">Choose after comparing source evidence</option>'
+                                  f'<option value="{same_value}"{" selected" if selected_identity == same_value else ""}>Same race — correct old attachment</option>')
+                if not candidate['proven_same']:
+                    choice_options += (f'<option value="{different_value}"'
+                                       f'{" selected" if selected_identity == different_value else ""}>Different races — retain both</option>')
+                old_activity = activity_by_id.get(candidate['activity_id'])
+                old_choice = activity_candidate(old_activity, ZoneInfo(timezone_name)) if old_activity and timezone_name else None
+                old_label = candidate_label(old_choice) if old_choice else 'Activity date/time unavailable'
+                evidence = 'Same original screenshot' if candidate['same_image'] else 'Nearby date, time and event wording; not proof of identity'
+                integrity = ('' if candidate['source_available'] else
+                             '<p class="race-error">A source screenshot is unavailable or failed integrity verification. Identity review is blocked.</p>')
+                identity_cards.append(f'''<div class="race-identity-card">
+<p class="race-error">Possible existing attachment — {esc(evidence)}.
+{"Preserved row provenance identifies the same source row; remove the old attachment first." if candidate["proven_same"] else "Compare the source evidence before choosing."}</p>
+<p>New automatic Activity: {esc(candidate_label(matched) if matched else "Unavailable")}</p>
+<p>Old linked Activity: {esc(old_label)} ({esc(candidate["activity_id"])})</p>
+<p>Old result: {esc(json.dumps(candidate["values"], ensure_ascii=False))}; screenshot timezone: {esc(candidate["old_timezone"] or "Unknown")};
+import: {esc(candidate["import_id"])}</p>{integrity}
+<details><summary>Compare original screenshots</summary><div class="race-crop-comparison">
+<div><p>Current screenshot</p><img src="/race-results/image/{esc(source["import_id"])}" alt="Current original screenshot"></div>
+<div><p>Previous screenshot</p><img src="/race-results/image/{esc(candidate["import_id"])}" alt="Previous original screenshot"></div>
+</div></details>
+<label>Source race identity <select name="{index}.identity.{key}">{choice_options}</select></label>
+<p>For the same race, <a href="/race-results/remove/{esc(candidate["activity_id"])}" target="_blank" rel="noopener">remove the old race result</a> separately, then return and review changes.</p>
+</div>''')
         nearby = ''.join(f'<li>{esc(candidate_label(choice))}</li>' for choice in choices[:20])
         diagnostics = (f'<details><summary>Nearby activities (diagnostic only)</summary><ul>{nearby}</ul>'
                        f'{"<p>Only the first 20 are shown.</p>" if len(choices) > 20 else ""}</details>'
@@ -225,13 +267,25 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <label>Source observation <select name="{index}.group">{group_options}</select></label>
 <div class="race-fields">{''.join(inputs)}</div>{f'<ul class="race-error">{errors}</ul>' if errors else ''}
 {correction}
-{prior}<input type="hidden" name="{index}.shown_activity" value="{esc(selected)}">
+{prior}{''.join(identity_cards)}<input type="hidden" name="{index}.shown_activity" value="{esc(selected)}">
 <input type="hidden" name="{index}.shown_revision" value="{esc(shown_revision)}">
 <div class="race-row-controls">{match_details}{diagnostics}{approval}</div>
 </fieldset>''')
     if not complete and not message:
         message = 'A section failed or is incomplete. Resolve the extraction issue or try a shorter screenshot; no race results can be saved.'
-    notice = f'<p class="race-error" role="alert">{esc(message)}</p>' if message else ''
+    try:
+        review_items = []
+        for group, candidates_for_row in zip(groups, conflicts):
+            item = draft[group[0]]
+            valid_keys = {identity_key(candidate['activity_id']) for candidate in candidates_for_row}
+            review_items.append({**item, 'identity': {key: value for key, value in item.get('identity', {}).items()
+                                                     if key in valid_keys}})
+        validate_identity_choices(conflicts, review_items, decisions, timezone_name or None)
+        identity_ready = True
+    except RaceError as exc:
+        identity_ready = False
+        identity_error = str(exc)
+    notice = f'<p class="race-error" role="alert">{esc(message or identity_error)}</p>' if message or identity_error else ''
     usage = json.loads(source['usage_json']) if source['usage_json'] else None
     attempts = []
     for section in sections:
@@ -253,7 +307,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect values, including watts and scores. '
                     'Check every row against the screenshot or extract it again.</p>'
                     if source['prompt_version'] != PROMPT_VERSION else '')
-    matched = bool(groups) and not conflicts and all(decision['activity_id'] for decision in decisions)
+    matched = bool(groups) and not identity_error and identity_ready and all(decision['activity_id'] for decision in decisions)
     disabled = ' disabled' if not matched or approvals_pending else ''
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
 <p><a href="/race-results">Back to Race Results</a></p></div></header>

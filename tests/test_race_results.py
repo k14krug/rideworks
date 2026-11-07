@@ -510,7 +510,7 @@ class RaceTests(unittest.TestCase):
         self.assertIn(wrong_id.encode(), page)
         self.assertIn(b'value="confirm" disabled', page)
         with Store(self.app.data_dir) as store:
-            with self.assertRaisesRegex(race.RaceError, 'different activity'):
+            with self.assertRaisesRegex(race.RaceError, 'prior association'):
                 self.commit_rows(store, identity, [self.item()])
             self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
             race.remove_result(store, wrong_id, race.result_revision(*race.result_state(store, wrong_id)))

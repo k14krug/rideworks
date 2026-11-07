@@ -3,66 +3,43 @@
 ## Status
 
 The Analyst withdrew the source-pixel row-ownership requirement and authorized
-deterministic overlapping tiles and explicit Owner observation reconciliation;
-see [issue #60](https://github.com/k14krug/rideworks/issues/60) and the revised
-[JIT](../../docs/tasks/RACE-02.md). That work is implemented, but a separate
-incorrect-attachment case below blocks the task. Gate 1 is **not** complete.
-The branch is work-in-progress and must not be used for real imports, merged
-or deployed. No production data was accessed or changed.
+deterministic overlapping tiles and explicit Owner observation reconciliation.
+The subsequent cross-import identity blocker was addressed under the revised
+[JIT](../../docs/tasks/RACE-02.md), section B.9, and
+[issue #60](https://github.com/k14krug/rideworks/issues/60). Synthetic
+implementation and verification are complete; the draft awaits HARD — Analyst
+Gate 1 review, not acceptance. Do not use the branch for real imports, merge
+or deploy. No production data was accessed or changed.
 
-## Blocking case: corrected date on an existing wrong attachment
+## Corrected-date wrong-attachment regression
 
-The current conflict check compares a newly matched race against saved results
-only when their extracted date, start time and distinctive event words overlap.
-If an earlier extraction used a wrong date and was saved on a different
-Activity, correcting that date can produce a valid automatic match to the
-intended Activity without finding the old attachment. On a disposable
-synthetic store, the following demonstration added one result and left **two
-active associations**. The intended interpretation is that the earlier
-observation represented the same physical race with an OCR date error; the
-records alone do not prove that identity.
+At prior branch head `3cfeb2b`, a disposable synthetic reimport with a corrected
+date added a second association without detecting an earlier wrong attachment.
+The old check considered only equal OCR dates; recurring events also made a
+blanket wider-date duplicate rule unsafe.
 
-```bash
-.venv/bin/python - <<'PY'
-import json, sys, tempfile
-from pathlib import Path
-from unittest.mock import patch
-from uuid import uuid4
-sys.path.insert(0, 'tests')
-from test_race_sections import image, result
-from rideworks import race_results as race
-from rideworks.store import Store
-with tempfile.TemporaryDirectory() as root:
-    with Store(Path(root) / 'store') as store:
-        row = result(date='2024-11-08')
-        previous = result(date='2024-11-06')
-        with patch('rideworks.race_results.configuration', return_value=('', 'gpt-6-luna', 10_000_000)):
-            old_import = race.stage_import(store, image(), 'UTC', extractor=lambda *_: ([previous], None), mode='full')
-            identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: ([row], None), mode='full')
-        wrong, correct = str(uuid4()), str(uuid4())
-        for activity in (wrong, correct):
-            store.connection.execute('INSERT INTO activities VALUES (?,?)', (activity, 'synthetic'))
-        store.connection.execute('INSERT INTO race_results VALUES (?,?,?,?,?)',
-                                 (wrong, old_import, json.dumps(previous), 'UTC', 'synthetic'))
-        candidate = {'activity_id': correct, 'start_time': row['date'] + 'T' + row['start_time'] + ':00+00:00',
-                     'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
-                     'title': row['event'], 'match_watts': None, 'match_watts_source': None}
-        item = {'values': row, 'group': 'different', 'corrected': False, 'action': 'confirm',
-                'replace': False, 'shown_activity': correct, 'shown_revision': 'new'}
-        with patch('rideworks.race_results.matching_activities', return_value=[candidate]):
-            outcome = race.commit_rows(store, identity, [item], visible_count=1, visible_confirmed=True)
-        print('New results added:', outcome['added'])
-        print('Active associations:', store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0])
-PY
-```
+The revised implementation first considers shared original-image SHA and
+surviving Owner-reviewed row/group provenance. A source row is known to be the
+same only when supported by a shared immutable import observation, or by
+reviewed single-row evidence for both imports of the same image. All other
+same-image pairs, including legacy imports, remain explicit review candidates.
+For different images, candidates use an OCR-date neighborhood of ±3 calendar
+days, local clock time within 10 minutes, and distinctive event words. This is
+a bounded candidate search, **not** proof of identity or a guarantee of
+detecting every possible historical OCR error.
 
-JIT section B.7 requires wrong-Activity conflicts to be surfaced and removed
-before saving. Because recurring races can share event names and times,
-widening the date comparison alone may also block different legitimate races.
-**Analyst decision requested:** specify a safe cross-import identity and
-resolution workflow for uncertain old attachments, including how to distinguish
-different recurring races without silently transferring links or requiring
-deletion of unrelated results. No policy or bypass is assumed here.
+The review shows both original screenshots, stored result and Activity details.
+“Same race” blocks and links to the separate confirmed removal; it never
+changes the old record as a batch side effect. “Different races” is bound to
+the new import, source observations and values, selected automatic Activity,
+old import and exact old-result revision. Decisions are recomputed and recorded
+with successful import reconciliation. Stale source/result revisions, missing
+or corrupt images, unresolved pairs, and over 400 possible pairs block the
+batch. A result marked “different” cannot simultaneously be replaced by
+another row in that batch. Existing Activity matching and the whole-batch gate
+remain independent. Tests cover legacy provenance, same-hash distinct rows,
+cross-date correction, recurring races, removal/restoration, stale decisions,
+source corruption, multiple rows, and retained-result replacement.
 
 ## Synthetic evidence
 
@@ -139,8 +116,8 @@ pixel-derived row ownership.
 - An experimental automatic matcher checks date, local time, timezone/DST,
   distinctive title words, explicit stage conflicts, candidate uniqueness and
   collisions; the review and final transaction recompute the full batch.
-  Manual selection and skipping are rejected. The same-day/same-time
-  possible-old-attachment check has the blocking limitation described above.
+  Manual selection and skipping are rejected. Cross-import candidate evidence
+  and explicit source-identity decisions are separate from matching.
 - Removal records a tombstone without deleting source or activity evidence;
   restoration/replacement requires explicit approval. Activities displays
   separate score and race watts using a bounded query.
@@ -165,24 +142,45 @@ pixel-derived row ownership.
 
 ## Verification
 
-- `.venv/bin/python -m unittest discover -s tests` — 604 tests passed before
-  the last test and failure-accounting edits; the final full suite was not run
-  after finding the blocker.
-- `.venv/bin/python -m unittest discover -s tests -p 'test_race*.py'` — 47
-  tests passed after those edits, using synthetic data and mocked API calls.
-- Mock-only browser checks: 12 import/reconciliation checks, six Activity
-  value/layout checks, removal confirmation, and a mobile crop-comparison
-  check passed on a disposable store. A prior assertion incorrectly used
-  `innerText` for CSS-generated mobile labels; the values were verified with
-  actual element selectors and the desktop headings separately.
+- `.venv/bin/python -m unittest discover -s tests` — **618 tests passed** using
+  synthetic data, including migration, rollback, FIT/analytics and race tests.
+- Browser verification on two disposable mock-only stores: **18 checks** for
+  extraction/reconciliation, confirmation, removal and desktop/mobile
+  Activities; **10 checks** for same/different identity decisions, source
+  comparison, retained-result protection, separate removal and revalidation.
+  Start the fixtures with `.venv/bin/python tools/preview_race_results.py
+  --data-dir <new-empty-directory> --port <port>` and add `--identity-case`
+  for the latter. The corresponding Playwright workflows are
+  `tools/verify_race_results_browser.js` and
+  `tools/verify_race_identity_browser.js`. No live extraction was used.
+- A synthetic in-memory matching benchmark matched 17 rows against 10,000
+  Activities in 0.047 seconds; it excludes database retrieval and is not a
+  production performance guarantee.
 - `.venv/bin/python reports/RACE-02/row_probe.py` — produced the counts above.
 - `git diff --check` — passed.
-- Pylance syntax checks passed for the new section/reconciliation modules,
-  extraction module and section tests; `node --check` passed for both review
-  and synthetic browser scripts.
+- Pylance syntax checks passed for the changed Python source and identity
+  tests; `node --check` passed for the review and synthetic browser scripts.
 - No live model call, real screenshot, production database or browser-based
   Owner test was used. The checks do not establish extraction accuracy,
-  account/model availability, or Gate 1 acceptance.
+  account/model availability, or Analyst acceptance. Owner Gate 2 remains
+  necessary for full-image versus sectioned per-field accuracy and actual cost.
+
+The matching-only benchmark command was:
+
+```bash
+.venv/bin/python - <<'PY'
+from datetime import date, timedelta
+from time import perf_counter
+from rideworks.race_matching import batch_matches
+start = date(1997, 1, 1)
+activities = [{'activity_id': str(i), 'start_time': (start + timedelta(days=i)).isoformat() + 'T11:33:00+00:00', 'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None, 'title': 'Stage 4 Hillcrest', 'match_watts': None, 'match_watts_source': None} for i in range(10000)]
+rows = [{'date': (start + timedelta(days=i)).isoformat(), 'start_time': '11:33', 'event': 'Stage 4 Hillcrest', 'race_group': '0-210', 'finish': 1, 'avg_watts': 160, 'race_score': 180, 'race_score_change': 0} for i in range(9983, 10000)]
+begin = perf_counter()
+matched = batch_matches(rows, 'UTC', activities)
+elapsed = perf_counter() - begin
+print(f'Synthetic matching: {len(rows)} rows, {len(activities)} activities, {sum(bool(item["activity_id"]) for item in matched)} matches, {elapsed:.3f} seconds')
+PY
+```
 
 ## Migration safety
 

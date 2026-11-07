@@ -85,7 +85,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### RACE-02 — Race screenshot accuracy, whole-batch matching and safe correction
 
-**Status:** blocked — a corrected-date reimport can create a second active association when a previously misdated race was attached to a different Activity. Analyst guidance is required on safe identity reconciliation across imports; see the [investigation](reports/RACE-02/implementation.md), [Issue #60](https://github.com/k14krug/rideworks/issues/60), and the [Analyst-authored JIT](docs/tasks/RACE-02.md). No production-data edits are authorized.
+**Status:** in_progress — implementation and synthetic verification are ready for HARD — Analyst Gate 1 review in [PR #61](https://github.com/k14krug/rideworks/pull/61). See [Issue #60](https://github.com/k14krug/rideworks/issues/60) and the [Analyst-authored JIT](docs/tasks/RACE-02.md). No production-data edits are authorized.
 
 **Purpose:** Address screenshot transcription errors (including wrong dates, stage numbers and scores), use `gpt-6-luna`, test overlapping image sections, show estimated aggregated API cost, and ensure all distinct extracted races match existing activities automatically **or the entire batch fails without any confirmed-result writes**. Support explicit result removal/correction and race-specific columns on Activities.
 

@@ -2,11 +2,13 @@
 """Disposable synthetic Race Results preview with no external API calls."""
 
 import argparse
+import json
 from pathlib import Path
 import sys
 import tempfile
 from unittest.mock import patch
 import zipfile
+from uuid import uuid4
 
 root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root))
@@ -23,6 +25,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', type=Path, required=True)
     parser.add_argument('--port', type=int, default=18893)
+    parser.add_argument('--identity-case', action='store_true')
     args = parser.parse_args()
     if (args.data_dir / 'rideworks.sqlite3').exists():
         parser.error('Synthetic preview requires a new empty store.')
@@ -45,6 +48,20 @@ def main():
             result = store.import_strava_export(archive)
             if result['failures']:
                 raise RuntimeError('Synthetic activities could not be imported.')
+    if args.identity_case:
+        from test_race_sections import image
+        old = dict(rows[1], date='2024-11-07')
+        with Store(args.data_dir) as store, \
+                patch.object(race_results, 'configuration', return_value=('', 'gpt-6-luna', 10_000_000)):
+            old_import = race_results.stage_import(store, image(height=400), 'UTC',
+                                                    extractor=lambda *_: ([old], None), mode='full')
+            old_activity = next(activity['activity_id'] for activity in race_results.matching_activities(store)
+                                if activity['title'] == rows[0]['event'])
+            values = json.dumps(old)
+            store.connection.execute('INSERT INTO race_results VALUES (?,?,?,?,?)',
+                                     (old_activity, old_import, values, 'UTC', 'synthetic'))
+            store.connection.execute('INSERT INTO race_result_history VALUES (?,?,?,?,?,?)',
+                                     (str(uuid4()), old_activity, old_import, values, 'UTC', 'synthetic'))
     calls = 0
 
     def fake_extract(*_):

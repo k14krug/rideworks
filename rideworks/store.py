@@ -389,6 +389,36 @@ PRAGMA user_version = 13;
 COMMIT;
 """
 
+MIGRATION_14 = """
+BEGIN IMMEDIATE;
+CREATE TABLE race_import_sections (
+    import_id TEXT NOT NULL REFERENCES race_imports(import_id),
+    section_index INTEGER NOT NULL,
+    top INTEGER NOT NULL,
+    bottom INTEGER NOT NULL,
+    width INTEGER NOT NULL,
+    image_height INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('planned','running','completed','failed')),
+    model TEXT NOT NULL,
+    prompt_version TEXT NOT NULL,
+    schema_version TEXT NOT NULL,
+    output_json TEXT,
+    usage_json TEXT,
+    request_id TEXT,
+    error TEXT,
+    PRIMARY KEY (import_id, section_index)
+);
+CREATE TABLE race_import_reconciliations (
+    reconciliation_id TEXT PRIMARY KEY,
+    import_id TEXT NOT NULL REFERENCES race_imports(import_id),
+    recorded_at TEXT NOT NULL,
+    visible_count INTEGER NOT NULL,
+    decisions_json TEXT NOT NULL
+);
+PRAGMA user_version = 14;
+COMMIT;
+"""
+
 
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
@@ -425,7 +455,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
+        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -473,6 +503,9 @@ class Store:
                 version = 12
             if version == 12:
                 self.connection.executescript(MIGRATION_13)
+                version = 13
+            if version == 13:
+                self.connection.executescript(MIGRATION_14)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

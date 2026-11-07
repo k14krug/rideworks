@@ -1,14 +1,68 @@
-# RACE-02 investigation: source-row ownership and independent work
+# RACE-02 investigation and implementation handoff
 
 ## Status
 
-The Analyst reviewed the earlier overlap stop and authorized a source-row
-ownership experiment and independent work on the other RACE-02 requirements;
-see [issue #60](https://github.com/k14krug/rideworks/issues/60). The new
-source-pixel probe below still gives unsafe row counts, so the task is blocked
-again pending Analyst guidance. Gate 1 is not complete. The branch is
-work-in-progress and must not be used for real imports, merged or deployed.
-No production data was accessed or changed.
+The Analyst withdrew the source-pixel row-ownership requirement and authorized
+deterministic overlapping tiles and explicit Owner observation reconciliation;
+see [issue #60](https://github.com/k14krug/rideworks/issues/60) and the revised
+[JIT](../../docs/tasks/RACE-02.md). That work is implemented, but a separate
+incorrect-attachment case below blocks the task. Gate 1 is **not** complete.
+The branch is work-in-progress and must not be used for real imports, merged
+or deployed. No production data was accessed or changed.
+
+## Blocking case: corrected date on an existing wrong attachment
+
+The current conflict check compares a newly matched race against saved results
+only when their extracted date, start time and distinctive event words overlap.
+If an earlier extraction used a wrong date and was saved on a different
+Activity, correcting that date can produce a valid automatic match to the
+intended Activity without finding the old attachment. On a disposable
+synthetic store, the following demonstration added one result and left **two
+active associations**. The intended interpretation is that the earlier
+observation represented the same physical race with an OCR date error; the
+records alone do not prove that identity.
+
+```bash
+.venv/bin/python - <<'PY'
+import json, sys, tempfile
+from pathlib import Path
+from unittest.mock import patch
+from uuid import uuid4
+sys.path.insert(0, 'tests')
+from test_race_sections import image, result
+from rideworks import race_results as race
+from rideworks.store import Store
+with tempfile.TemporaryDirectory() as root:
+    with Store(Path(root) / 'store') as store:
+        row = result(date='2024-11-08')
+        previous = result(date='2024-11-06')
+        with patch('rideworks.race_results.configuration', return_value=('', 'gpt-6-luna', 10_000_000)):
+            old_import = race.stage_import(store, image(), 'UTC', extractor=lambda *_: ([previous], None), mode='full')
+            identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: ([row], None), mode='full')
+        wrong, correct = str(uuid4()), str(uuid4())
+        for activity in (wrong, correct):
+            store.connection.execute('INSERT INTO activities VALUES (?,?)', (activity, 'synthetic'))
+        store.connection.execute('INSERT INTO race_results VALUES (?,?,?,?,?)',
+                                 (wrong, old_import, json.dumps(previous), 'UTC', 'synthetic'))
+        candidate = {'activity_id': correct, 'start_time': row['date'] + 'T' + row['start_time'] + ':00+00:00',
+                     'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
+                     'title': row['event'], 'match_watts': None, 'match_watts_source': None}
+        item = {'values': row, 'group': 'different', 'corrected': False, 'action': 'confirm',
+                'replace': False, 'shown_activity': correct, 'shown_revision': 'new'}
+        with patch('rideworks.race_results.matching_activities', return_value=[candidate]):
+            outcome = race.commit_rows(store, identity, [item], visible_count=1, visible_confirmed=True)
+        print('New results added:', outcome['added'])
+        print('Active associations:', store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0])
+PY
+```
+
+JIT section B.7 requires wrong-Activity conflicts to be surfaced and removed
+before saving. Because recurring races can share event names and times,
+widening the date comparison alone may also block different legitimate races.
+**Analyst decision requested:** specify a safe cross-import identity and
+resolution workflow for uncertain old attachments, including how to distinguish
+different recurring races without silently transferring links or requiring
+deletion of unrelated results. No policy or bypass is assumed here.
 
 ## Synthetic evidence
 
@@ -76,21 +130,17 @@ Even regular source-pixel spacing is insufficient to identify table ownership:
 a heading can resemble another row boundary, and a clipped last row lacks a
 bottom border. More heuristics may reject these examples, but we have not
 established how they can reliably distinguish table content without also
-rejecting valid variants. The safe fallback is to reject the whole screenshot
-with a clear row-boundary diagnostic before making an API request or changing
-confirmed results, and invite the Owner to provide a clearer screenshot.
-This fallback is not yet implemented and does not by itself satisfy the JIT's
-sectioning acceptance criteria.
+rejecting valid variants. These counts are historical evidence, not the current implementation or a
+requirement to reject the screenshot. The revised JIT explicitly withdraws
+pixel-derived row ownership.
 
-## Independent work in progress
+## Implemented work in progress
 
 - An experimental automatic matcher checks date, local time, timezone/DST,
   distinctive title words, explicit stage conflicts, candidate uniqueness and
   collisions; the review and final transaction recompute the full batch.
   Manual selection and skipping are rejected. The same-day/same-time
-  possible-old-attachment check is conservative but does not establish a
-  universal identity across OCR errors or different screenshots; that case
-  needs further design and tests.
+  possible-old-attachment check has the blocking limitation described above.
 - Removal records a tombstone without deleting source or activity evidence;
   restoration/replacement requires explicit approval. Activities displays
   separate score and race watts using a bounded query.
@@ -104,32 +154,39 @@ sectioning acceptance criteria.
   [prompt-caching documentation](https://developers.openai.com/api/docs/guides/prompt-caching)
   were checked. This is not a bill; regional premiums or other charges can
   differ. Unknown usage or pricing is unavailable/partial.
-- Section planning, section provenance, attempt/retry accounting (including
-  failed requests), fail-closed extraction, row-coverage validation, and
-  complete overlapping-section reconciliation are **not implemented**. The
-  current single-image path cannot prove source-row completeness. Do not use
-  this work-in-progress branch for real screenshot imports.
+- Dimension-based section plans retain original images, bounds and raw model
+  observations; section failures block confirmation. Owner-reviewed grouping,
+  correction and visible physical-row count are revalidated in the commit
+  transaction. No pixel-derived row count is used. Both sectioned and
+  full-image modes are available for the later Owner comparison.
+- Attempt-level usage and request IDs are retained where available; unknown
+  usage yields a partial/unavailable estimate. The implementation is not
+  approved for real screenshot imports.
 
 ## Verification
 
-- `.venv/bin/python -m unittest discover -s tests` — 596 tests passed using
-  synthetic data, including migration rollback and batch-matching tests.
+- `.venv/bin/python -m unittest discover -s tests` — 604 tests passed before
+  the last test and failure-accounting edits; the final full suite was not run
+  after finding the blocker.
+- `.venv/bin/python -m unittest discover -s tests -p 'test_race*.py'` — 47
+  tests passed after those edits, using synthetic data and mocked API calls.
+- Mock-only browser checks: 12 import/reconciliation checks, six Activity
+  value/layout checks, removal confirmation, and a mobile crop-comparison
+  check passed on a disposable store. A prior assertion incorrectly used
+  `innerText` for CSS-generated mobile labels; the values were verified with
+  actual element selectors and the desktop headings separately.
 - `.venv/bin/python reports/RACE-02/row_probe.py` — produced the counts above.
 - `git diff --check` — passed.
+- Pylance syntax checks passed for the new section/reconciliation modules,
+  extraction module and section tests; `node --check` passed for both review
+  and synthetic browser scripts.
 - No live model call, real screenshot, production database or browser-based
-  Owner test was used. The tests do not establish extraction accuracy,
-  account/model availability, section coverage or Gate 1 acceptance.
-
-## Analyst guidance
-
-The Analyst directed source-row ownership before model extraction, with each
-row owned by exactly one section and overlapping pixels used only as context.
-Uncertain row boundaries or output coverage must block the batch. The proposed
-pixel-based planner remains an experiment, not a validated detector.
+  Owner test was used. The checks do not establish extraction accuracy,
+  account/model availability, or Gate 1 acceptance.
 
 ## Migration safety
 
-The planned additive migration retains existing active results, imports,
+The additive migrations retain existing active results, imports,
 screenshots and revision history, and adds a removal audit record rather than
 deleting source evidence. Migrations and rollback checks use disposable stores
 only. Before any separately authorized production activation, stop database

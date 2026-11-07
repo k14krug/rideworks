@@ -7,7 +7,8 @@ from urllib.parse import parse_qs
 from .history import presentation
 from .race_cost import estimate_cost
 from .race_matching import batch_matches
-from .race_results import FIELDS, PROMPT_VERSION, matching_activities, normalize_row, other_result_conflicts, result_revision, result_state, row_errors
+from .race_reconcile import adjacent, observations, reconcile
+from .race_results import FIELDS, PROMPT_VERSION, RaceError, matching_activities, normalize_row, other_result_conflicts, result_revision, result_state, row_errors
 from .web import shell
 
 
@@ -109,31 +110,49 @@ No race results are saved until you review and confirm them.</p>
 <label>Screenshot <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required></label>
 <label>Screenshot display timezone (IANA, optional)
 <input name="timezone" maxlength="100" value="America/Los_Angeles"></label>
+<label>Extraction mode <select name="mode">
+<option value="sectioned">Overlapping sections</option>
+<option value="full">Full image (comparison)</option></select></label>
 <p>Leave timezone blank if unknown. Unknown timezone prevents automatic matching.</p>
 <button type="submit">Extract screenshot</button></form></section>''',
                  active='races', page_class='race-page')
 
 
-def review_page(store, source, nonce, *, draft=None, timezone_name=None, message=''):
-    extracted = json.loads(source['rows_json'])
+def review_page(store, source, nonce, *, draft=None, timezone_name=None, message='', visible_count='', visible_confirmed=False):
+    observed, sections, complete = observations(store, source)
     if draft is None:
-        draft = [{'values': normalize_row(row), 'replace': False} for row in extracted]
+        draft = [{'values': normalize_row(item['row']), 'group': '', 'replace': False} for item in observed]
     timezone_name = source['display_timezone'] if timezone_name is None else timezone_name
-    activities = matching_activities(store)
-    decisions = batch_matches([item['values'] for item in draft], timezone_name, activities)
-    conflicts = other_result_conflicts(store, [item['values'] for item in draft], decisions)
+    try:
+        groups = reconcile(observed, sections, complete, draft, int(visible_count), visible_confirmed,
+                           require_corrections=False)
+    except (RaceError, ValueError, TypeError) as exc:
+        groups = []
+        if not message and str(visible_count):
+            message = str(exc)
+    final_rows = [draft[group[0]]['values'] for group in groups]
+    decisions = batch_matches(final_rows, timezone_name, matching_activities(store))
+    conflicts = other_result_conflicts(store, final_rows, decisions)
+    decision_by_root = {group[0]: (i, decision) for i, (group, decision) in enumerate(zip(groups, decisions))}
+    group_by_member = {member: group[0] for group in groups for member in group}
     cards = []
     approvals_pending = False
-    for index, (item, decision) in enumerate(zip(draft, decisions)):
+    for index, item in enumerate(draft):
         row = item['values']
+        observation = observed[index]
+        group_index, decision = decision_by_root.get(index, (None, {'activity_id': None, 'reason': '', 'candidates': []}))
         choices = decision['candidates']
         selected = decision['activity_id']
         existing, removed = result_state(store, selected) if selected else (None, None)
-        if row_errors(row):
+        if index in group_by_member and group_by_member[index] != index:
+            state = f'Same screenshot race row as observation {group_by_member[index] + 1}'
+        elif group_index is None:
+            state = 'Source reconciliation required'
+        elif row_errors(row):
             state = 'Invalid — correct fields before confirming'
         elif not selected:
             state = 'Unresolved — batch blocked'
-        elif index in conflicts:
+        elif group_index in conflicts:
             state = 'Possible existing attachment — batch blocked'
         elif existing:
             state = ('Already imported' if json.loads(existing['values_json']) == row and existing['display_timezone'] == (timezone_name or None)
@@ -143,11 +162,11 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         else:
             state = 'New — review before confirming'
         matched = next((choice for choice in choices if choice['id'] == selected), None)
-        match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p>'
-                         if matched else f'<p class="race-error">{esc(decision["reason"])}</p>')
-        if index in conflicts:
+        match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p>' if matched
+                         else f'<p class="race-error">{esc(decision["reason"])}</p>' if decision['reason'] else '')
+        if group_index in conflicts:
             match_details += (f'<p class="race-error">This race may already be linked to a different activity '
-                              f'({esc(conflicts[index])}). Review and remove any incorrect attachment on '
+                              f'({esc(conflicts[group_index])}). Review and remove any incorrect attachment on '
                               f'<a href="/race-results">Race Results</a> first.</p>')
         nearby = ''.join(f'<li>{esc(candidate_label(choice))}</li>' for choice in choices[:20])
         diagnostics = (f'<details><summary>Nearby activities (diagnostic only)</summary><ul>{nearby}</ul>'
@@ -174,17 +193,57 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             approvals_pending = True
         approval = (f'<label><input type="checkbox" class="race-approval" name="{index}.replace" value="yes"{checked_replace}> '
                     'Approve replacement or restoration</label>' if needs_approval else '')
-        cards.append(f'''<fieldset class="race-review-row"><legend>Row {index + 1} — {esc(state)}</legend>
+        prior_observations = [(other_index, other) for other_index, other in enumerate(observed[:index])
+                              if adjacent(observation, other, sections)]
+        group_options = '<option value="">Choose after comparing screenshot rows</option>'
+        group_options += f'<option value="different"{" selected" if item.get("group") == "different" else ""}>Different physical race row</option>'
+        for other_index, _ in prior_observations:
+            number = str(other_index + 1)
+            group_options += f'<option value="{number}"{" selected" if item.get("group") == number else ""}>Same screenshot race row as observation {number}</option>'
+        image_path = (f'/race-results/image/{source["import_id"]}' if observation['legacy']
+                      else f'/race-results/section/{source["import_id"]}/{observation["section"]}')
+        comparisons = ''.join(
+            f'<div><p>Observation {other_index + 1}: {esc(json.dumps(other["row"], ensure_ascii=False))}</p>'
+            f'<img src="/race-results/section/{esc(source["import_id"])}/{other["section"]}" '
+            f'alt="Section for observation {other_index + 1}"></div>'
+            for other_index, other in prior_observations)
+        compare = (f'<details><summary>Compare overlapping observations and both crop contexts</summary>'
+                   f'<div class="race-crop-comparison"><div><p>Observation {index + 1}</p>'
+                   f'<img src="{esc(image_path)}" alt="Section for observation {index + 1}"></div>'
+                   f'<div>{comparisons}</div></div></details>' if comparisons else '')
+        group = next((group for group in groups if group[0] == index), [])
+        needs_correction = bool(group and any(observed[member]['row'] != observation['row'] for member in group[1:]))
+        if needs_correction:
+            approvals_pending = True
+        correction = (f'<label><input type="checkbox" class="race-approval" name="{index}.corrected" value="yes">'
+                      'I checked and corrected these final values against the screenshot because grouped observations disagree.</label>'
+                      if needs_correction else '')
+        cards.append(f'''<fieldset class="race-review-row"><legend>Observation {index + 1} — {esc(state)}</legend>
+<p>Section {observation["section"] + 1}; original model observation: {esc(json.dumps(observation["row"], ensure_ascii=False))}</p>
+<details><summary>View this section</summary><img class="race-image" src="{esc(image_path)}" alt="Source section for observation {index + 1}"></details>
+{compare}
+<label>Source observation <select name="{index}.group">{group_options}</select></label>
 <div class="race-fields">{''.join(inputs)}</div>{f'<ul class="race-error">{errors}</ul>' if errors else ''}
+{correction}
 {prior}<input type="hidden" name="{index}.shown_activity" value="{esc(selected)}">
 <input type="hidden" name="{index}.shown_revision" value="{esc(shown_revision)}">
 <div class="race-row-controls">{match_details}{diagnostics}{approval}</div>
 </fieldset>''')
+    if not complete and not message:
+        message = 'A section failed or is incomplete. Resolve the extraction issue or try a shorter screenshot; no race results can be saved.'
     notice = f'<p class="race-error" role="alert">{esc(message)}</p>' if message else ''
     usage = json.loads(source['usage_json']) if source['usage_json'] else None
-    usage_text = f'<p>Reported usage: {esc(json.dumps(usage))}</p>' if usage else '<p>API usage was not reported.</p>'
-    estimate = estimate_cost([{'model': source['model'], 'service_tier': usage.get('service_tier'),
-                               'usage': usage}] if usage else [{'model': source['model']}])
+    attempts = []
+    for section in sections:
+        if section['status'] != 'planned':
+            section_usage = json.loads(section['usage_json']) if section['usage_json'] else None
+            attempts.append({'model': section['model'], 'service_tier': section_usage.get('service_tier') if section_usage else None,
+                             'usage': section_usage})
+    if not sections:
+        attempts = [{'model': source['model'], 'service_tier': usage.get('service_tier') if usage else None, 'usage': usage}]
+    usage_text = ''.join(f'<p>Section {section["section_index"] + 1}: {esc(section["status"])}'
+                         f'{": " + esc(section["error"]) if section["error"] else ""}</p>' for section in sections)
+    estimate = estimate_cost(attempts)
     amount = estimate['amount_usd']
     cost_text = (f"${amount:.8f}" if amount is not None else 'unavailable')
     if estimate['state'] == 'partial':
@@ -194,7 +253,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect values, including watts and scores. '
                     'Check every row against the screenshot or extract it again.</p>'
                     if source['prompt_version'] != PROMPT_VERSION else '')
-    matched = bool(decisions) and not conflicts and all(decision['activity_id'] for decision in decisions)
+    matched = bool(groups) and not conflicts and all(decision['activity_id'] for decision in decisions)
     disabled = ' disabled' if not matched or approvals_pending else ''
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
 <p><a href="/race-results">Back to Race Results</a></p></div></header>
@@ -203,8 +262,14 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <form class="race-review-form" data-matched="{str(matched).lower()}" action="/race-results/review/{esc(source['import_id'])}" method="post">
 <input type="hidden" name="nonce" value="{esc(nonce)}">
 <label>Screenshot display timezone (IANA, optional)<input name="timezone" maxlength="100" value="{esc(timezone_name)}"></label>
+<label>Number of visible physical race rows in the original screenshot
+<input name="visible_count" type="number" min="1" max="100" value="{esc(visible_count)}"></label>
+<label><input name="visible_confirmed" type="checkbox" value="yes"{" checked" if visible_confirmed else ""}>
+I verified this count against the screenshot, not the profile total.</label>
 <p>Dates and times are normalized for review; the original model response is retained. Select Review changes after editing fields or changing timezone.
-Every row must match a different activity automatically or the entire batch is blocked. Nearby activities are shown for diagnosis, not selection.
+For each observation, explicitly mark a different physical row or the same screenshot row as an earlier overlapping observation.
+Correct conflicting final values on the first observation and verify them against the screenshot. Every distinct race must match a different activity automatically or the entire batch is blocked.
+Nearby activities are shown for diagnosis, not selection.
 Activity details include the local date, time, ride type, title and available source average watts; different watt sources may disagree.</p>
 {''.join(cards) if cards else '<p>No fully visible race rows were returned. Try another screenshot.</p>'}
 <div class="race-actions"><button type="submit" name="operation" value="preview">Review changes</button>

@@ -77,6 +77,12 @@ MAX_ROWS = 100
 class RaceError(ValueError):
     """A recoverable race import error safe to display in the browser."""
 
+    def __init__(self, message, *, usage=None, request_id=None, output=None):
+        super().__init__(message)
+        self.usage = usage
+        self.request_id = request_id
+        self.output = output
+
 
 def configuration(environ=None):
     env = os.environ if environ is None else environ
@@ -187,6 +193,21 @@ class _NoRedirect(HTTPRedirectHandler):
         return None
 
 
+def api_usage(data):
+    if not isinstance(data, dict) or not isinstance(data.get('usage'), dict):
+        return None
+    usage = data['usage']
+    cleaned = {k: v for k, v in usage.items() if k in ('input_tokens', 'output_tokens', 'total_tokens')
+               and type(v) is int and v >= 0}
+    for name, allowed in (('input_tokens_details', {'cached_tokens', 'cache_write_tokens'}),
+                          ('output_tokens_details', {'reasoning_tokens'})):
+        details = usage.get(name)
+        if isinstance(details, dict):
+            cleaned[name] = {k: v for k, v in details.items() if k in allowed and type(v) is int and v >= 0}
+    cleaned['service_tier'] = data.get('service_tier')
+    return cleaned
+
+
 def extract(payload, image_type, key, model, *, opener=None):
     if not key:
         raise RaceError('Configure OPENAI_API_KEY locally before extracting a screenshot.')
@@ -201,12 +222,21 @@ def extract(payload, image_type, key, model, *, opener=None):
     }
     request = Request('https://api.openai.com/v1/responses', data=json.dumps(request_data).encode(),
                       headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}, method='POST')
+    usage = None
+    request_id = None
+    output = None
     try:
         with (opener or build_opener(_NoRedirect())).open(request, timeout=60) as response:
+            candidate_id = getattr(response, 'headers', {}).get('x-request-id')
+            if isinstance(candidate_id, str) and re.fullmatch(r'[A-Za-z0-9._:-]{1,128}', candidate_id):
+                request_id = candidate_id
             response_body = response.read(2_000_001)
         if len(response_body) > 2_000_000:
             raise RaceError('The extraction response was too large.')
         data = json.loads(response_body)
+        usage = api_usage(data)
+        if isinstance(data, dict) and 'output' in data:
+            output = json.dumps(data['output'], ensure_ascii=False)
         if not isinstance(data, dict) or data.get('status') != 'completed':
             raise RaceError('Extraction was incomplete. Try again or use a smaller image.')
         texts = []
@@ -219,30 +249,31 @@ def extract(payload, image_type, key, model, *, opener=None):
                         texts.append(content.get('text'))
         if len(texts) != 1 or not isinstance(texts[0], str):
             raise RaceError('The extraction service returned no usable race data.')
-        rows = validate_shape(json.loads(texts[0]))
-        usage = data.get('usage')
-        if not isinstance(usage, dict):
-            usage = None
-        else:
-            usage = {k: v for k, v in usage.items() if k in ('input_tokens', 'output_tokens', 'total_tokens')
-                     and type(v) is int and v >= 0} | {
-                name: {k: v for k, v in details.items() if k in allowed and type(v) is int and v >= 0}
-                for name, allowed in (
-                    ('input_tokens_details', {'cached_tokens', 'cache_write_tokens'}),
-                    ('output_tokens_details', {'reasoning_tokens'}),
-                )
-                if isinstance((details := data['usage'].get(name)), dict)
-            }
-            usage['service_tier'] = data.get('service_tier')
+        output = texts[0]
+        rows = validate_shape(json.loads(output))
+        if request_id:
+            usage = usage if usage is not None else {}
+            usage['request_id'] = request_id
         return rows, usage
     except HTTPError as exc:
-        raise RaceError(f'OpenAI extraction failed (HTTP {exc.code}). Check configuration and try again.') from exc
+        candidate_id = exc.headers.get('x-request-id') if exc.headers else None
+        if isinstance(candidate_id, str) and re.fullmatch(r'[A-Za-z0-9._:-]{1,128}', candidate_id):
+            request_id = candidate_id
+        try:
+            error_body = exc.read(2_000_001)
+            if error_body and len(error_body) <= 2_000_000:
+                usage = api_usage(json.loads(error_body))
+        except (OSError, ValueError):
+            usage = None
+        raise RaceError(f'OpenAI extraction failed (HTTP {exc.code}). Check configuration and try again.',
+                        usage=usage, request_id=request_id) from exc
     except (URLError, TimeoutError, socket.timeout) as exc:
         raise RaceError('OpenAI extraction could not be reached or timed out. Try again.') from exc
     except (ValueError, TypeError, AttributeError, KeyError) as exc:
         if isinstance(exc, RaceError):
-            raise
-        raise RaceError('The extraction service returned invalid JSON or an invalid response.') from exc
+            raise RaceError(str(exc), usage=usage, request_id=request_id, output=output) from exc
+        raise RaceError('The extraction service returned invalid JSON or an invalid response.',
+                        usage=usage, request_id=request_id, output=output) from exc
 
 
 def archive_image(store, payload, suffix):
@@ -273,18 +304,61 @@ def archive_image(store, payload, suffix):
     return digest, str(path.relative_to(store.data_dir))
 
 
-def stage_import(store, payload, timezone_name, *, extractor=None):
+def stage_import(store, payload, timezone_name, *, extractor=None, mode='sectioned'):
+    from .race_sections import crop_image, image_dimensions, plan_sections
+
     key, model, limit = configuration()
     image_type, suffix = validate_image(payload, limit)
     timezone_name = validate_timezone(timezone_name)
-    rows, usage = (extractor or extract)(payload, image_type, key, model)
-    validate_shape({'races': rows})
+    if not key and extractor is None:
+        raise RaceError('Configure OPENAI_API_KEY locally before extracting a screenshot.')
+    if mode not in ('sectioned', 'full'):
+        raise RaceError('Choose a valid screenshot extraction mode.')
+    width, height = image_dimensions(payload)
+    bounds = plan_sections(width, height) if mode == 'sectioned' else [(0, height)]
     digest, path = archive_image(store, payload, suffix)
     identity = str(uuid4())
     with store._transaction(write=True):
         store.connection.execute('INSERT INTO race_imports VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (identity, SOURCE_TYPE, digest, len(payload), image_type, path, datetime.now(timezone.utc).isoformat(),
-             timezone_name, model, PROMPT_VERSION, SCHEMA_VERSION, json.dumps(rows), json.dumps(usage) if usage else None))
+             timezone_name, model, PROMPT_VERSION, SCHEMA_VERSION, '[]', None))
+        for index, (top, bottom) in enumerate(bounds):
+            store.connection.execute('''INSERT INTO race_import_sections
+                (import_id,section_index,top,bottom,width,image_height,status,model,prompt_version,schema_version)
+                VALUES (?,?,?,?,?,?,'planned',?,?,?)''',
+                (identity, index, top, bottom, width, height, model, PROMPT_VERSION, SCHEMA_VERSION))
+    all_rows = []
+    for index, (top, bottom) in enumerate(bounds):
+        with store._transaction(write=True):
+            store.connection.execute('UPDATE race_import_sections SET status=? WHERE import_id=? AND section_index=?',
+                                     ('running', identity, index))
+        try:
+            crop = crop_image(payload, top, bottom)
+            rows, usage = (extractor or extract)(crop, 'image/png', key, model)
+            try:
+                validate_shape({'races': rows})
+            except RaceError as exc:
+                raise RaceError(str(exc), usage=usage, output=json.dumps({'races': rows})) from exc
+            if len(all_rows) + len(rows) > MAX_ROWS:
+                raise RaceError('The extraction returned too many observations. Try a shorter screenshot.',
+                                usage=usage, output=json.dumps(rows, ensure_ascii=False))
+        except RaceError as exc:
+            with store._transaction(write=True):
+                store.connection.execute('''UPDATE race_import_sections
+                    SET status='failed',output_json=?,usage_json=?,request_id=?,error=?
+                    WHERE import_id=? AND section_index=?''',
+                    (exc.output, json.dumps(exc.usage) if exc.usage is not None else None,
+                     exc.request_id, str(exc), identity, index))
+            break
+        all_rows.extend(rows)
+        request_id = usage.get('request_id') if isinstance(usage, dict) else None
+        with store._transaction(write=True):
+            store.connection.execute('''UPDATE race_import_sections SET status='completed',
+                output_json=?,usage_json=?,request_id=? WHERE import_id=? AND section_index=?''',
+                (json.dumps(rows, ensure_ascii=False), json.dumps(usage) if usage is not None else None,
+                 request_id, identity, index))
+            store.connection.execute('UPDATE race_imports SET rows_json=? WHERE import_id=?',
+                                     (json.dumps(all_rows, ensure_ascii=False), identity))
     return identity
 
 
@@ -447,37 +521,39 @@ def other_result_conflicts(store, rows, decisions):
 _DEFAULT_ZONE = object()
 
 
-def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
+def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False):
     from .race_matching import batch_matches
+    from .race_reconcile import observations, reconcile
 
-    source = load_import(store, import_id)
-    if source is None:
-        raise RaceError('Screenshot import was not found.')
-    timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
-    original_rows = json.loads(source['rows_json'])
-    if not rows or len(rows) != len(original_rows):
-        raise RaceError('The review no longer matches the extracted rows. Reload the review.')
     counts = {'added': 0, 'unchanged': 0, 'replaced': 0, 'skipped': 0}
     with store._transaction(write=True):
+        source = load_import(store, import_id)
+        if source is None:
+            raise RaceError('Screenshot import was not found.')
+        timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
+        source_rows, sections, complete = observations(store, source)
+        groups = reconcile(source_rows, sections, complete, rows, visible_count, visible_confirmed)
         for item in rows:
             if item['action'] != 'confirm':
                 raise RaceError('Every row must be matched automatically; skipping is not permitted.')
+        final_rows = [rows[group[0]] for group in groups]
+        for item in final_rows:
             row = item['values']
             errors = row_errors(row)
             if errors:
                 raise RaceError('Correct invalid rows before confirming: ' + ' '.join(errors))
             validate_shape({'races': [row]})
-        decisions = batch_matches([item['values'] for item in rows], timezone_name, matching_activities(store))
-        failures = [f"Row {index + 1}: {decision['reason']}" for index, decision in enumerate(decisions)
+        decisions = batch_matches([item['values'] for item in final_rows], timezone_name, matching_activities(store))
+        failures = [f"Observation {groups[index][0] + 1}: {decision['reason']}" for index, decision in enumerate(decisions)
                     if not decision['activity_id']]
         if failures:
             raise RaceError('Batch blocked: ' + ' '.join(failures))
-        conflicts = other_result_conflicts(store, [item['values'] for item in rows], decisions)
+        conflicts = other_result_conflicts(store, [item['values'] for item in final_rows], decisions)
         if conflicts:
-            details = ' '.join(f'Row {index + 1} may already be linked to a different activity ({activity_id}).'
+            details = ' '.join(f'Observation {groups[index][0] + 1} may already be linked to a different activity ({activity_id}).'
                                for index, activity_id in conflicts.items())
             raise RaceError('Batch blocked: ' + details + ' Review and remove any incorrect attachment on Race Results first.')
-        for item, decision in zip(rows, decisions):
+        for item, decision in zip(final_rows, decisions):
             row, activity_id = item['values'], decision['activity_id']
             if item.get('activity_id') and item['activity_id'] != activity_id:
                 raise RaceError('Manual activity selection cannot override automatic matching.')
@@ -502,4 +578,12 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
                 accepted_at=excluded.accepted_at''',
                 (activity_id, import_id, encoded, timezone_name, now))
             counts['replaced' if current else 'added'] += 1
+        provenance = {'timezone': timezone_name, 'groups': [
+            {'observations': [index + 1 for index in group], 'choices': [rows[index]['group'] for index in group],
+             'values': rows[group[0]]['values'], 'activity_id': decision['activity_id'],
+             'corrected': bool(rows[group[0]].get('corrected'))}
+            for group, decision in zip(groups, decisions)]}
+        store.connection.execute('INSERT INTO race_import_reconciliations VALUES (?,?,?,?,?)',
+                                 (str(uuid4()), import_id, _now_iso(), visible_count,
+                                  json.dumps(provenance, ensure_ascii=False)))
     return counts

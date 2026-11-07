@@ -1019,7 +1019,10 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .rw-page .race-row-decisions input[type=radio],.rw-page .race-row-decisions input[type=checkbox]{min-height:0;margin:0}
 .race-review-row .race-error{margin:.3rem 0}
 .race-image{display:block;max-width:100%;height:auto;margin:1rem 0}
+.race-crop-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.race-crop-comparison img{display:block;width:100%;height:auto}
+.race-crop-comparison p{overflow-wrap:anywhere}
 .race-error{color:#a32222}
 .race-actions{display:flex;flex-wrap:wrap;gap:.75rem}
 @media(max-width:1100px){.race-fields{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:600px){.race-header{align-items:flex-start;flex-direction:column}.race-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.rw-page .race-panel.race-review-panel .race-fields input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls select{min-height:38px}}
+@media(max-width:600px){.race-header{align-items:flex-start;flex-direction:column}.race-fields,.race-crop-comparison{grid-template-columns:repeat(2,minmax(0,1fr))}.rw-page .race-panel.race-review-panel .race-fields input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls select{min-height:38px}}

@@ -679,6 +679,16 @@ class Application:
                     return 200, image_type, image
                 except (RaceError, OSError):
                     return self.not_found()
+            if path.startswith('/race-results/section/'):
+                from .race_results import RaceError
+                from .race_sections import section_image
+                try:
+                    identity, index = path.removeprefix('/race-results/section/').split('/')
+                    if not index.isascii() or not index.isdecimal():
+                        return self.not_found()
+                    return 200, 'image/png', section_image(store, identity, int(index))
+                except (RaceError, OSError, ValueError):
+                    return self.not_found()
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':
@@ -800,19 +810,20 @@ class Application:
             fields = {}
             for part in message.iter_parts():
                 name = part.get_param('name', header='content-disposition')
-                if part.get_content_disposition() != 'form-data' or name not in ('nonce', 'timezone', 'image') or name in fields:
+                if part.get_content_disposition() != 'form-data' or name not in ('nonce', 'timezone', 'mode', 'image') or name in fields:
                     raise RaceError('Invalid upload form.')
                 fields[name] = part.get_payload(decode=True)
-            if set(fields) != {'nonce', 'timezone', 'image'} or any(value is None for value in fields.values()):
+            if set(fields) != {'nonce', 'timezone', 'mode', 'image'} or any(value is None for value in fields.values()):
                 raise RaceError('Choose a screenshot and reload the upload form.')
             nonce = fields['nonce'].decode('utf-8')
             zone = fields['timezone'].decode('utf-8')
+            mode = fields['mode'].decode('utf-8')
             if not secrets.compare_digest(nonce.encode(), self.settings.nonce.encode()):
                 return 403, {}, b'Invalid race import action.'
             if len(zone) > 100:
                 raise RaceError('Timezone is too long.')
             with Store(self.data_dir) as store:
-                identity = stage_import(store, fields['image'], zone)
+                identity = stage_import(store, fields['image'], zone, mode=mode)
             return 303, {'Location': '/race-results/review/' + identity}, b''
         except (RaceError, UnicodeError) as exc:
             with Store(self.data_dir) as store:
@@ -858,10 +869,17 @@ class Application:
                     return 404, {}, b'Race import not found.'
                 extracted = json.loads(source['rows_json'])
                 draft = []
-                expected = {'nonce', 'timezone', 'operation'}
+                expected = {'nonce', 'timezone', 'operation', 'visible_count'}
+                if 'visible_count' not in values:
+                    raise RaceError('Verify the visible row count before confirming.')
+                count_text = values['visible_count'].strip()
+                visible_count = int(count_text) if re.fullmatch(r'[0-9]{1,3}', count_text) else None
+                visible_confirmed = values.get('visible_confirmed') == 'yes'
+                if 'visible_confirmed' in values:
+                    expected.add('visible_confirmed')
                 for index in range(len(extracted)):
                     prefix = f'{index}.'
-                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('shown_activity', 'shown_revision')}
+                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('shown_activity', 'shown_revision', 'group')}
                     expected.update(keys)
                     if not keys <= values.keys():
                         raise RaceError('The review form is incomplete. Reload and try again.')
@@ -873,19 +891,24 @@ class Application:
                         else:
                             row[field] = raw or None
                     replacement = prefix + 'replace'
+                    corrected = prefix + 'corrected'
                     if replacement in values:
                         expected.add(replacement)
+                    if corrected in values:
+                        expected.add(corrected)
                     draft.append({'values': normalize_row(row), 'action': 'confirm', 'replace': values.get(replacement) == 'yes',
+                                  'group': values[prefix + 'group'], 'corrected': values.get(corrected) == 'yes',
                                   'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
                 if set(values) != expected:
                     raise RaceError('Unexpected review field. Reload and try again.')
                 if operation == 'preview':
-                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or ''))
+                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', visible_count=count_text, visible_confirmed=visible_confirmed))
                 try:
                     with store._transaction(write=True):
-                        counts = commit_rows(store, identity, draft, timezone_name=zone)
+                        counts = commit_rows(store, identity, draft, timezone_name=zone,
+                                             visible_count=visible_count, visible_confirmed=visible_confirmed)
                 except RaceError as exc:
-                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc)))
+                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc), visible_count=count_text, visible_confirmed=visible_confirmed))
                 summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}."
                 html = shell('Race import complete', f'<h1>Import complete</h1><p>{escape(summary)}</p><p><a href="/race-results">View Race Results</a></p>', active='races')
                 return 200, {'Content-Type': 'text/html'}, self.page(store, html)

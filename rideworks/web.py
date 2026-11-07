@@ -23,7 +23,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'race_review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
 
 
 def duration(seconds):
@@ -143,6 +143,14 @@ def activities_page(store, query_string=''):
         body = '<section class="panel empty"><h2>No matching activities</h2><p>Try a different title, type or date range.</p><p><a href="/activities">Reset filters</a></p></section>'
     else:
         from .dashboard import average_power
+        identities = [row['activity_id'] for row in rows]
+        placeholders = ','.join('?' for _ in identities)
+        race_values = {
+            entry['activity_id']: json.loads(entry['values_json'])
+            for entry in store.connection.execute(
+                f'SELECT activity_id, values_json FROM race_results WHERE activity_id IN ({placeholders})',
+                identities)
+        }
         items = []
         for row in rows:
             origin = f'<p class="title-origin">{escape(row["title_origin"])}</p>' if row['title_source'] is None else ''
@@ -152,8 +160,13 @@ def activities_page(store, query_string=''):
             power, power_source = average_power(row)
             power_context = power_source['context'] if power_source else 'Average power unavailable'
             power_text = 'Unavailable' if power is None else f'{power:,g} W'
-            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span></a></li>''')
-        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Avg Pwr</span></div>'
+            race = race_values.get(row['activity_id'])
+            score = race['race_score'] if race else None
+            race_watts = race['avg_watts'] if race else None
+            score_text = '—' if score is None else str(score)
+            race_power_text = '—' if race_watts is None else f'{race_watts} W'
+            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span><span class="row-race-score">{escape(score_text)}</span><span class="row-race-power" title="Zwift screenshot race average">{escape(race_power_text)}</span></a></li>''')
+        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Activity avg Pwr</span><span>Racing Score</span><span>Race avg W</span></div>'
         body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0
@@ -648,6 +661,10 @@ class Application:
             if path == '/race-results/import':
                 from .race_page import upload_page
                 return 200, 'text/html', self.page(store, upload_page(self.settings.nonce))
+            if path.startswith('/race-results/remove/'):
+                from .race_page import removal_page
+                html = removal_page(store, path.removeprefix('/race-results/remove/'), self.settings.nonce)
+                return (200, 'text/html', self.page(store, html)) if html else self.not_found()
             if path.startswith('/race-results/review/'):
                 from .race_results import load_import
                 from .race_page import review_page as race_review_page
@@ -661,6 +678,16 @@ class Application:
                     image_type, image = screenshot(store, path.removeprefix('/race-results/image/'))
                     return 200, image_type, image
                 except (RaceError, OSError):
+                    return self.not_found()
+            if path.startswith('/race-results/section/'):
+                from .race_results import RaceError
+                from .race_sections import section_image
+                try:
+                    identity, index = path.removeprefix('/race-results/section/').split('/')
+                    if not index.isascii() or not index.isdecimal():
+                        return self.not_found()
+                    return 200, 'image/png', section_image(store, identity, int(index))
+                except (RaceError, OSError, ValueError):
                     return self.not_found()
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
@@ -730,6 +757,8 @@ class Application:
         return self.page(store,html,display_zone=query_zone(query,'plan_tz').key)
 
     def post(self,path,body,origin):
+        if path.startswith('/race-results/remove/'):
+            return self.race_remove_post(path.removeprefix('/race-results/remove/'), body, origin)
         if path.startswith('/race-results/review/'):
             return self.race_review_post(path.removeprefix('/race-results/review/'), body, origin)
         if path == '/performance/ftp/add':
@@ -781,29 +810,50 @@ class Application:
             fields = {}
             for part in message.iter_parts():
                 name = part.get_param('name', header='content-disposition')
-                if part.get_content_disposition() != 'form-data' or name not in ('nonce', 'timezone', 'image') or name in fields:
+                if part.get_content_disposition() != 'form-data' or name not in ('nonce', 'timezone', 'mode', 'image') or name in fields:
                     raise RaceError('Invalid upload form.')
                 fields[name] = part.get_payload(decode=True)
-            if set(fields) != {'nonce', 'timezone', 'image'} or any(value is None for value in fields.values()):
+            if set(fields) != {'nonce', 'timezone', 'mode', 'image'} or any(value is None for value in fields.values()):
                 raise RaceError('Choose a screenshot and reload the upload form.')
             nonce = fields['nonce'].decode('utf-8')
             zone = fields['timezone'].decode('utf-8')
+            mode = fields['mode'].decode('utf-8')
             if not secrets.compare_digest(nonce.encode(), self.settings.nonce.encode()):
                 return 403, {}, b'Invalid race import action.'
             if len(zone) > 100:
                 raise RaceError('Timezone is too long.')
             with Store(self.data_dir) as store:
-                identity = stage_import(store, fields['image'], zone)
+                identity = stage_import(store, fields['image'], zone, mode=mode)
             return 303, {'Location': '/race-results/review/' + identity}, b''
         except (RaceError, UnicodeError) as exc:
             with Store(self.data_dir) as store:
                 return 400, {'Content-Type': 'text/html'}, self.page(store, upload_page(self.settings.nonce, message=str(exc)))
 
+    def race_remove_post(self, activity_id, body, origin):
+        from .race_results import RaceError, remove_result
+        from .race_page import removal_page
+        try:
+            values = parse_qs(body.decode('utf-8'), max_num_fields=2, keep_blank_values=True, strict_parsing=True)
+            if set(values) != {'nonce', 'revision'} or any(len(value) != 1 for value in values.values()):
+                raise RaceError('Invalid removal form. Reload and try again.')
+            if (not self.settings.access.allows_origin(origin, self.settings.port) or
+                    not secrets.compare_digest(values['nonce'][0].encode(), self.settings.nonce.encode())):
+                return 403, {}, b'Invalid race removal action.'
+            with Store(self.data_dir) as store:
+                try:
+                    remove_result(store, activity_id, values['revision'][0])
+                except RaceError as exc:
+                    html = removal_page(store, activity_id, self.settings.nonce, message=str(exc))
+                    return 400, {'Content-Type': 'text/html'}, self.page(store, html) if html else shell('Race result unavailable', f'<h1>Race result unavailable</h1><p>{escape(str(exc))}</p><p><a href="/race-results">Race Results</a></p>', active='races').encode()
+            return 303, {'Location': '/race-results'}, b''
+        except (UnicodeError, ValueError):
+            return 400, {}, b'Invalid race removal form.'
+
     def race_review_post(self, identity, body, origin):
         from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, normalize_row, validate_timezone
         from .race_page import review_page as race_review_page
         try:
-            values = parse_qs(body.decode('utf-8'), max_num_fields=1600, keep_blank_values=True, strict_parsing=True)
+            values = parse_qs(body.decode('utf-8'), max_num_fields=2100, keep_blank_values=True, strict_parsing=True)
             if any(len(value) != 1 for value in values.values()):
                 raise RaceError('Invalid review form. Reload and try again.')
             values = {key: value[0] for key, value in values.items()}
@@ -819,10 +869,17 @@ class Application:
                     return 404, {}, b'Race import not found.'
                 extracted = json.loads(source['rows_json'])
                 draft = []
-                expected = {'nonce', 'timezone', 'operation'}
+                expected = {'nonce', 'timezone', 'operation', 'visible_count'}
+                if 'visible_count' not in values:
+                    raise RaceError('Verify the visible row count before confirming.')
+                count_text = values['visible_count'].strip()
+                visible_count = int(count_text) if re.fullmatch(r'[0-9]{1,3}', count_text) else None
+                visible_confirmed = values.get('visible_confirmed') == 'yes'
+                if 'visible_confirmed' in values:
+                    expected.add('visible_confirmed')
                 for index in range(len(extracted)):
                     prefix = f'{index}.'
-                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('activity', 'manual', 'action', 'shown_activity', 'shown_revision')}
+                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('shown_activity', 'shown_revision', 'group')}
                     expected.update(keys)
                     if not keys <= values.keys():
                         raise RaceError('The review form is incomplete. Reload and try again.')
@@ -834,23 +891,35 @@ class Application:
                         else:
                             row[field] = raw or None
                     replacement = prefix + 'replace'
+                    corrected = prefix + 'corrected'
                     if replacement in values:
                         expected.add(replacement)
-                    if len(values[prefix + 'activity']) > 36 or len(values[prefix + 'manual']) > 36:
-                        raise RaceError('Invalid activity ID.')
-                    draft.append({'values': normalize_row(row), 'activity_id': values[prefix + 'manual'].strip() or values[prefix + 'activity'],
-                                  'action': values[prefix + 'action'], 'replace': values.get(replacement) == 'yes',
+                    if corrected in values:
+                        expected.add(corrected)
+                    identity_prefix = prefix + 'identity.'
+                    identity_choices = {}
+                    for key in values:
+                        if key.startswith(identity_prefix):
+                            identity_key = key.removeprefix(identity_prefix)
+                            if not re.fullmatch(r'[0-9a-f]{64}', identity_key):
+                                raise RaceError('Invalid source identity decision. Reload and try again.')
+                            identity_choices[identity_key] = values[key]
+                            expected.add(key)
+                    draft.append({'values': normalize_row(row), 'action': 'confirm', 'replace': values.get(replacement) == 'yes',
+                                  'group': values[prefix + 'group'], 'corrected': values.get(corrected) == 'yes',
+                                  'identity': identity_choices,
                                   'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
                 if set(values) != expected:
                     raise RaceError('Unexpected review field. Reload and try again.')
                 if operation == 'preview':
-                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or ''))
+                    return 200, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', visible_count=count_text, visible_confirmed=visible_confirmed))
                 try:
                     with store._transaction(write=True):
-                        counts = commit_rows(store, identity, draft, timezone_name=zone)
+                        counts = commit_rows(store, identity, draft, timezone_name=zone,
+                                             visible_count=visible_count, visible_confirmed=visible_confirmed)
                 except RaceError as exc:
-                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc)))
-                summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}; skipped {counts['skipped']}."
+                    return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc), visible_count=count_text, visible_confirmed=visible_confirmed))
+                summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}."
                 html = shell('Race import complete', f'<h1>Import complete</h1><p>{escape(summary)}</p><p><a href="/race-results">View Race Results</a></p>', active='races')
                 return 200, {'Content-Type': 'text/html'}, self.page(store, html)
         except RaceError as exc:

@@ -373,6 +373,22 @@ PRAGMA user_version = 12;
 COMMIT;
 """
 
+MIGRATION_13 = """
+BEGIN IMMEDIATE;
+CREATE TABLE race_result_removals (
+    removal_id TEXT PRIMARY KEY,
+    activity_id TEXT NOT NULL REFERENCES activities(activity_id),
+    import_id TEXT NOT NULL REFERENCES race_imports(import_id),
+    values_json TEXT NOT NULL,
+    display_timezone TEXT,
+    accepted_at TEXT NOT NULL,
+    removed_at TEXT NOT NULL
+);
+CREATE INDEX race_result_removals_activity ON race_result_removals(activity_id, removed_at);
+PRAGMA user_version = 13;
+COMMIT;
+"""
+
 
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
@@ -409,7 +425,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12):
+        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -454,6 +470,9 @@ class Store:
                 version = 11
             if version == 11:
                 self.connection.executescript(MIGRATION_12)
+                version = 12
+            if version == 12:
+                self.connection.executescript(MIGRATION_13)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

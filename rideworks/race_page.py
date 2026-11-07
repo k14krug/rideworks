@@ -3,10 +3,11 @@
 from html import escape
 import json
 from urllib.parse import parse_qs
-from zoneinfo import ZoneInfo
 
 from .history import presentation
-from .race_results import FIELDS, PROMPT_VERSION, activity_candidate, candidates, matching_activities, normalize_row, revision, row_errors, suggested_match
+from .race_cost import estimate_cost
+from .race_matching import batch_matches
+from .race_results import FIELDS, PROMPT_VERSION, matching_activities, normalize_row, other_result_conflicts, result_revision, result_state, row_errors
 from .web import shell
 
 
@@ -57,10 +58,11 @@ def results_page(store, query=''):
 <td><a href="/activities/{esc(record['activity_id'])}">{esc(value_text(data['event']))}</a>
 <small>{esc(title)}</small></td><td>{esc(value_text(data['race_group']))}</td>
 <td>{esc(value_text(data['finish']))}</td><td>{esc(value_text(data['avg_watts'], ' W'))}</td>
-<td>{esc(value_text(data['race_score']))}</td><td>{esc(change_text)}</td></tr>''')
+<td>{esc(value_text(data['race_score']))}</td><td>{esc(change_text)}</td>
+<td><a href="/race-results/remove/{esc(record['activity_id'])}">Remove race result</a></td></tr>''')
     table = (f'''<div class="race-table-wrap"><table class="race-table"><thead><tr>
 <th>Date</th><th>Event / Activity</th><th>Group</th><th>Finish</th><th>Zwift avg watts</th>
-<th>Racing Score</th><th>Change</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<th>Racing Score</th><th>Change</th><th>Action</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
 <nav aria-label="Race results pages"><a href="/race-results?sort={sort}&amp;page={max(1, page - 1)}">Previous</a>
 <span> Page {page} of {pages} </span><a href="/race-results?sort={sort}&amp;page={min(pages, page + 1)}">Next</a></nav>'''
              if rows else '<p>No confirmed race results yet. Import a screenshot to review and link races.</p>')
@@ -74,6 +76,25 @@ def results_page(store, query=''):
 <button type="submit">Apply</button></form>{table}
 <p>Zwift-reported watts are separate from FIT and RideWorks power measurements.</p></section>''',
                  active='races', page_class='race-page')
+
+
+def removal_page(store, activity_id, nonce, *, message=''):
+    current, removed = result_state(store, activity_id)
+    if not current:
+        return None
+    data = json.loads(current['values_json'])
+    snapshots = store.activity_history(activity_id)
+    title = presentation(snapshots[0])['title'] if snapshots else 'Activity unavailable'
+    notice = f'<p class="race-error" role="alert">{esc(message)}</p>' if message else ''
+    return shell('Remove race result', f'''<header class="race-header"><h1>Remove race result</h1></header>
+<section class="panel race-panel">{notice}<p>Remove <strong>{esc(value_text(data['event']))}</strong>
+from <strong>{esc(title)}</strong>?</p>
+<p>The activity, FIT data, source screenshot and result history will be retained.</p>
+<form action="/race-results/remove/{esc(activity_id)}" method="post">
+<input type="hidden" name="nonce" value="{esc(nonce)}">
+<input type="hidden" name="revision" value="{esc(result_revision(current, removed))}">
+<button type="submit">Remove race result</button> <a href="/race-results">Cancel</a>
+</form></section>''', active='races', page_class='race-page')
 
 
 def upload_page(nonce, *, message=''):
@@ -96,40 +117,42 @@ No race results are saved until you review and confirm them.</p>
 def review_page(store, source, nonce, *, draft=None, timezone_name=None, message=''):
     extracted = json.loads(source['rows_json'])
     if draft is None:
-        draft = [{'values': normalize_row(row), 'activity_id': '', 'action': 'skip', 'replace': False} for row in extracted]
-        initial = True
-    else:
-        initial = False
+        draft = [{'values': normalize_row(row), 'replace': False} for row in extracted]
     timezone_name = source['display_timezone'] if timezone_name is None else timezone_name
     activities = matching_activities(store)
+    decisions = batch_matches([item['values'] for item in draft], timezone_name, activities)
+    conflicts = other_result_conflicts(store, [item['values'] for item in draft], decisions)
     cards = []
-    for index, item in enumerate(draft):
+    approvals_pending = False
+    for index, (item, decision) in enumerate(zip(draft, decisions)):
         row = item['values']
-        choices = candidates(store, row, timezone_name, activities=activities)
-        if initial:
-            suggested = suggested_match(row, timezone_name, choices)
-            if suggested:
-                item['activity_id'] = suggested
-                item['action'] = 'confirm'
-        selected = item['activity_id']
-        existing = store.connection.execute('SELECT values_json, display_timezone FROM race_results WHERE activity_id=?', (selected,)).fetchone() if selected else None
+        choices = decision['candidates']
+        selected = decision['activity_id']
+        existing, removed = result_state(store, selected) if selected else (None, None)
         if row_errors(row):
             state = 'Invalid — correct fields before confirming'
         elif not selected:
-            state = 'Ambiguous' if len(choices) > 1 else 'Unmatched — select an activity or skip'
+            state = 'Unresolved — batch blocked'
+        elif index in conflicts:
+            state = 'Possible existing attachment — batch blocked'
         elif existing:
             state = ('Already imported' if json.loads(existing['values_json']) == row and existing['display_timezone'] == (timezone_name or None)
                      else 'Changed — replacement requires approval')
+        elif removed:
+            state = 'Previously removed — restoration requires approval'
         else:
             state = 'New — review before confirming'
-        options = '<option value="">Select a candidate</option>'
-        for choice in choices:
-            options += f'<option value="{esc(choice["id"])}"{" selected" if choice["id"] == selected else ""}>{esc(candidate_label(choice))}</option>'
-        if selected and all(choice['id'] != selected for choice in choices):
-            activity = next((activity for activity in activities if activity['activity_id'] == selected), None)
-            choice = activity_candidate(activity, ZoneInfo(timezone_name) if timezone_name else None) if activity else None
-            label = candidate_label(choice) if choice else f'Selected activity {selected} (date unavailable)'
-            options += f'<option value="{esc(selected)}" selected>{esc(label)}</option>'
+        matched = next((choice for choice in choices if choice['id'] == selected), None)
+        match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p>'
+                         if matched else f'<p class="race-error">{esc(decision["reason"])}</p>')
+        if index in conflicts:
+            match_details += (f'<p class="race-error">This race may already be linked to a different activity '
+                              f'({esc(conflicts[index])}). Review and remove any incorrect attachment on '
+                              f'<a href="/race-results">Race Results</a> first.</p>')
+        nearby = ''.join(f'<li>{esc(candidate_label(choice))}</li>' for choice in choices[:20])
+        diagnostics = (f'<details><summary>Nearby activities (diagnostic only)</summary><ul>{nearby}</ul>'
+                       f'{"<p>Only the first 20 are shown.</p>" if len(choices) > 20 else ""}</details>'
+                       if choices and not selected else '')
         inputs = []
         labels = {'date': 'Date', 'start_time': 'Start time', 'event': 'Event', 'race_group': 'Race group',
                   'finish': 'Finish', 'avg_watts': 'Zwift avg watts', 'race_score': 'Racing Score',
@@ -139,46 +162,55 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             max_length = '250' if key == 'event' else '50'
             inputs.append(f'<label>{labels[key]}<input type="{kind}" name="{index}.{key}" value="{esc(row[key])}" maxlength="{max_length}"></label>')
         errors = ''.join(f'<li>{esc(error)}</li>' for error in row_errors(row))
-        checked_confirm = ' checked' if item['action'] == 'confirm' else ''
-        checked_skip = ' checked' if item['action'] != 'confirm' else ''
-        checked_replace = ' checked' if item['replace'] else ''
         prior = (f'<p>Previously confirmed: {esc(json.dumps(json.loads(existing["values_json"]), ensure_ascii=False))}; '
                  f'display timezone: {esc(existing["display_timezone"] or "Unknown")}</p>'
                  if existing else '')
-        shown_revision = revision(existing['values_json'], existing['display_timezone']) if existing else 'new'
+        shown_revision = result_revision(existing, removed)
+        checked_replace = (' checked' if item.get('replace') and item.get('shown_activity') == selected
+                           and item.get('shown_revision') == shown_revision else '')
+        needs_approval = bool(removed or (existing and
+                              (json.loads(existing['values_json']) != row or existing['display_timezone'] != (timezone_name or None))))
+        if needs_approval and not checked_replace:
+            approvals_pending = True
+        approval = (f'<label><input type="checkbox" class="race-approval" name="{index}.replace" value="yes"{checked_replace}> '
+                    'Approve replacement or restoration</label>' if needs_approval else '')
         cards.append(f'''<fieldset class="race-review-row"><legend>Row {index + 1} — {esc(state)}</legend>
 <div class="race-fields">{''.join(inputs)}</div>{f'<ul class="race-error">{errors}</ul>' if errors else ''}
 {prior}<input type="hidden" name="{index}.shown_activity" value="{esc(selected)}">
 <input type="hidden" name="{index}.shown_revision" value="{esc(shown_revision)}">
-<div class="race-row-controls"><label class="race-candidate">Candidate activity<select name="{index}.activity">{options}</select></label>
-<details class="race-manual"><summary>Enter activity ID</summary>
-<label>Existing activity ID<input name="{index}.manual" maxlength="36" placeholder="Activity ID"></label></details>
-<div class="race-row-decisions">
-<label><input type="radio" name="{index}.action" value="skip"{checked_skip}> Skip</label>
-<label><input type="radio" name="{index}.action" value="confirm"{checked_confirm}> Confirm linked result</label>
-<label><input type="checkbox" name="{index}.replace" value="yes"{checked_replace}> Approve replacement if changed</label>
-</div></div>
+<div class="race-row-controls">{match_details}{diagnostics}{approval}</div>
 </fieldset>''')
     notice = f'<p class="race-error" role="alert">{esc(message)}</p>' if message else ''
     usage = json.loads(source['usage_json']) if source['usage_json'] else None
     usage_text = f'<p>Reported usage: {esc(json.dumps(usage))}</p>' if usage else '<p>API usage was not reported.</p>'
+    estimate = estimate_cost([{'model': source['model'], 'service_tier': usage.get('service_tier'),
+                               'usage': usage}] if usage else [{'model': source['model']}])
+    amount = estimate['amount_usd']
+    cost_text = (f"${amount:.8f}" if amount is not None else 'unavailable')
+    if estimate['state'] == 'partial':
+        cost_text += ' (partial; some usage or pricing is unavailable)'
+    usage_text += (f'<p>Estimated API cost: {esc(cost_text)} '
+                   f'({esc(estimate["pricing_version"])}; standard-tier estimate, not the amount billed).</p>')
     older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect values, including watts and scores. '
                     'Check every row against the screenshot or extract it again.</p>'
                     if source['prompt_version'] != PROMPT_VERSION else '')
+    matched = bool(decisions) and not conflicts and all(decision['activity_id'] for decision in decisions)
+    disabled = ' disabled' if not matched or approvals_pending else ''
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
 <p><a href="/race-results">Back to Race Results</a></p></div></header>
 <section class="panel race-panel race-review-panel">{notice}{older_prompt}<p>Model output can be wrong. Check every field, especially average watts, and ride against the original before confirming.</p>
 {usage_text}<details><summary>View original screenshot</summary><img class="race-image" src="/race-results/image/{esc(source['import_id'])}" alt="Uploaded race screenshot"></details>
-<form action="/race-results/review/{esc(source['import_id'])}" method="post">
+<form class="race-review-form" data-matched="{str(matched).lower()}" action="/race-results/review/{esc(source['import_id'])}" method="post">
 <input type="hidden" name="nonce" value="{esc(nonce)}">
 <label>Screenshot display timezone (IANA, optional)<input name="timezone" maxlength="100" value="{esc(timezone_name)}"></label>
-<p>Dates and times are normalized for review; the original model response is retained. Update candidates and duplicate status after editing or changing timezone.
-Candidates show the activity date, local time, ride type, title and available source average watts; different watt sources may disagree.
-<a href="/activities" target="_blank" rel="noopener">Find an activity ID</a>.</p>
+<p>Dates and times are normalized for review; the original model response is retained. Select Review changes after editing fields or changing timezone.
+Every row must match a different activity automatically or the entire batch is blocked. Nearby activities are shown for diagnosis, not selection.
+Activity details include the local date, time, ride type, title and available source average watts; different watt sources may disagree.</p>
 {''.join(cards) if cards else '<p>No fully visible race rows were returned. Try another screenshot.</p>'}
 <div class="race-actions"><button type="submit" name="operation" value="preview">Review changes</button>
-<button type="submit" name="operation" value="confirm">Confirm Import</button></div>
-</form></section>''', active='races', page_class='race-page')
+<button type="submit" name="operation" value="confirm"{disabled}>Confirm Batch</button></div>
+<p class="race-review-dirty" role="status" hidden>Fields changed. Select Review changes to recompute all matches.</p>
+</form><script src="/static/race_review.js" defer></script></section>''', active='races', page_class='race-page')
 
 
 def activity_panel(store, activity_id):

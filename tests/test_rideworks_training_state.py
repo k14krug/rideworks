@@ -187,7 +187,7 @@ class StoreTests(TestCase):
         with patch('rideworks.training_state.calculate_ride',wraps=__import__('rideworks.training_state',fromlist=['calculate_ride']).calculate_ride) as calc:
             training_state(self.store,'America/Los_Angeles',as_of=when);self.assertEqual(calc.call_count,1)
         with Store(self.root/'store') as reopened:
-            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],12)
+            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],13)
             self.assertEqual(reopened.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
             training_state(reopened,'America/Los_Angeles',as_of=when)
 
@@ -217,7 +217,7 @@ class StoreTests(TestCase):
         self.assertEqual(app.get('/static/training_state.js')[0],200)
 
     def test_rollback_schema_migration_preserves_accepted_tables(self):
-        for table in ('race_result_history','race_results','race_imports'):
+        for table in ('race_result_removals','race_result_history','race_results','race_imports'):
             self.store.connection.execute('DROP TABLE '+table)
         for table in ('power_curve_profiles','planning_feedback','planning_classifications','planning_classification_cache','planning_intents'):
             self.store.connection.execute('DROP TABLE '+table)

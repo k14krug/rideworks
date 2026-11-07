@@ -825,7 +825,7 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .activities-redesign .activity-row { padding-top: 8px; padding-bottom: 8px; font-size: 12px; align-items: start; }
 .activities-redesign .activity-row h2 { font-size: 12px; letter-spacing: 0; }
 .activities-redesign .row-identity h2 { color: var(--blue); }
-.activities-redesign .activity-row, .activities-redesign .activity-columns { grid-template-columns: minmax(0,20fr) 40px minmax(0,42fr) minmax(0,12fr) minmax(0,13fr) minmax(0,13fr); gap: 8px; max-width: 920px; }
+.activities-redesign .activity-row, .activities-redesign .activity-columns { grid-template-columns: minmax(0,18fr) 40px minmax(0,36fr) minmax(0,11fr) minmax(0,11fr) minmax(0,13fr) minmax(0,10fr) minmax(0,10fr); gap: 8px; max-width: 1100px; }
 .activities-redesign .activity-row > * { min-width: 0; overflow-wrap: anywhere; }
 .activities-redesign .row-date time { white-space: normal; }
 .activities-redesign :is(.title-origin, .row-type) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -936,7 +936,9 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .activities-redesign .row-date::before { content: 'Date: '; color: var(--muted); }
   .activities-redesign .row-distance::before { content: 'Distance: '; color: var(--muted); }
   .activities-redesign .row-duration::before { content: 'Duration: '; color: var(--muted); }
-  .activities-redesign .row-power::before { content: 'Avg Pwr: '; color: var(--muted); }
+  .activities-redesign .row-power::before { content: 'Activity avg Pwr: '; color: var(--muted); }
+  .activities-redesign .row-race-score::before { content: 'Racing Score: '; color: var(--muted); }
+  .activities-redesign .row-race-power::before { content: 'Race avg W: '; color: var(--muted); }
 }
 @media (max-width: 620px) {
   .rw-page h1 { font-size: 25px; }

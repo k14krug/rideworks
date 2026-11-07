@@ -23,7 +23,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'race_review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
 
 
 def duration(seconds):
@@ -143,6 +143,14 @@ def activities_page(store, query_string=''):
         body = '<section class="panel empty"><h2>No matching activities</h2><p>Try a different title, type or date range.</p><p><a href="/activities">Reset filters</a></p></section>'
     else:
         from .dashboard import average_power
+        identities = [row['activity_id'] for row in rows]
+        placeholders = ','.join('?' for _ in identities)
+        race_values = {
+            entry['activity_id']: json.loads(entry['values_json'])
+            for entry in store.connection.execute(
+                f'SELECT activity_id, values_json FROM race_results WHERE activity_id IN ({placeholders})',
+                identities)
+        }
         items = []
         for row in rows:
             origin = f'<p class="title-origin">{escape(row["title_origin"])}</p>' if row['title_source'] is None else ''
@@ -152,8 +160,13 @@ def activities_page(store, query_string=''):
             power, power_source = average_power(row)
             power_context = power_source['context'] if power_source else 'Average power unavailable'
             power_text = 'Unavailable' if power is None else f'{power:,g} W'
-            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span></a></li>''')
-        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Avg Pwr</span></div>'
+            race = race_values.get(row['activity_id'])
+            score = race['race_score'] if race else None
+            race_watts = race['avg_watts'] if race else None
+            score_text = '—' if score is None else str(score)
+            race_power_text = '—' if race_watts is None else f'{race_watts} W'
+            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span><span class="row-race-score">{escape(score_text)}</span><span class="row-race-power" title="Zwift screenshot race average">{escape(race_power_text)}</span></a></li>''')
+        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Activity avg Pwr</span><span>Racing Score</span><span>Race avg W</span></div>'
         body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0
@@ -648,6 +661,10 @@ class Application:
             if path == '/race-results/import':
                 from .race_page import upload_page
                 return 200, 'text/html', self.page(store, upload_page(self.settings.nonce))
+            if path.startswith('/race-results/remove/'):
+                from .race_page import removal_page
+                html = removal_page(store, path.removeprefix('/race-results/remove/'), self.settings.nonce)
+                return (200, 'text/html', self.page(store, html)) if html else self.not_found()
             if path.startswith('/race-results/review/'):
                 from .race_results import load_import
                 from .race_page import review_page as race_review_page
@@ -730,6 +747,8 @@ class Application:
         return self.page(store,html,display_zone=query_zone(query,'plan_tz').key)
 
     def post(self,path,body,origin):
+        if path.startswith('/race-results/remove/'):
+            return self.race_remove_post(path.removeprefix('/race-results/remove/'), body, origin)
         if path.startswith('/race-results/review/'):
             return self.race_review_post(path.removeprefix('/race-results/review/'), body, origin)
         if path == '/performance/ftp/add':
@@ -799,6 +818,26 @@ class Application:
             with Store(self.data_dir) as store:
                 return 400, {'Content-Type': 'text/html'}, self.page(store, upload_page(self.settings.nonce, message=str(exc)))
 
+    def race_remove_post(self, activity_id, body, origin):
+        from .race_results import RaceError, remove_result
+        from .race_page import removal_page
+        try:
+            values = parse_qs(body.decode('utf-8'), max_num_fields=2, keep_blank_values=True, strict_parsing=True)
+            if set(values) != {'nonce', 'revision'} or any(len(value) != 1 for value in values.values()):
+                raise RaceError('Invalid removal form. Reload and try again.')
+            if (not self.settings.access.allows_origin(origin, self.settings.port) or
+                    not secrets.compare_digest(values['nonce'][0].encode(), self.settings.nonce.encode())):
+                return 403, {}, b'Invalid race removal action.'
+            with Store(self.data_dir) as store:
+                try:
+                    remove_result(store, activity_id, values['revision'][0])
+                except RaceError as exc:
+                    html = removal_page(store, activity_id, self.settings.nonce, message=str(exc))
+                    return 400, {'Content-Type': 'text/html'}, self.page(store, html) if html else shell('Race result unavailable', f'<h1>Race result unavailable</h1><p>{escape(str(exc))}</p><p><a href="/race-results">Race Results</a></p>', active='races').encode()
+            return 303, {'Location': '/race-results'}, b''
+        except (UnicodeError, ValueError):
+            return 400, {}, b'Invalid race removal form.'
+
     def race_review_post(self, identity, body, origin):
         from .race_results import FIELDS, INTEGER_FIELDS, RaceError, commit_rows, load_import, normalize_row, validate_timezone
         from .race_page import review_page as race_review_page
@@ -822,7 +861,7 @@ class Application:
                 expected = {'nonce', 'timezone', 'operation'}
                 for index in range(len(extracted)):
                     prefix = f'{index}.'
-                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('activity', 'manual', 'action', 'shown_activity', 'shown_revision')}
+                    keys = {prefix + key for key in FIELDS} | {prefix + key for key in ('shown_activity', 'shown_revision')}
                     expected.update(keys)
                     if not keys <= values.keys():
                         raise RaceError('The review form is incomplete. Reload and try again.')
@@ -836,10 +875,7 @@ class Application:
                     replacement = prefix + 'replace'
                     if replacement in values:
                         expected.add(replacement)
-                    if len(values[prefix + 'activity']) > 36 or len(values[prefix + 'manual']) > 36:
-                        raise RaceError('Invalid activity ID.')
-                    draft.append({'values': normalize_row(row), 'activity_id': values[prefix + 'manual'].strip() or values[prefix + 'activity'],
-                                  'action': values[prefix + 'action'], 'replace': values.get(replacement) == 'yes',
+                    draft.append({'values': normalize_row(row), 'action': 'confirm', 'replace': values.get(replacement) == 'yes',
                                   'shown_activity': values[prefix + 'shown_activity'], 'shown_revision': values[prefix + 'shown_revision']})
                 if set(values) != expected:
                     raise RaceError('Unexpected review field. Reload and try again.')
@@ -850,7 +886,7 @@ class Application:
                         counts = commit_rows(store, identity, draft, timezone_name=zone)
                 except RaceError as exc:
                     return 400, {'Content-Type': 'text/html'}, self.page(store, race_review_page(store, source, self.settings.nonce, draft=draft, timezone_name=zone or '', message=str(exc)))
-                summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}; skipped {counts['skipped']}."
+                summary = f"Added {counts['added']}; unchanged {counts['unchanged']}; replaced {counts['replaced']}."
                 html = shell('Race import complete', f'<h1>Import complete</h1><p>{escape(summary)}</p><p><a href="/race-results">View Race Results</a></p>', active='races')
                 return 200, {'Content-Type': 'text/html'}, self.page(store, html)
         except RaceError as exc:

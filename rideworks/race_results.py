@@ -84,7 +84,7 @@ def configuration(environ=None):
     selected = {key: env[key] for key in keys if key in env}
     _dotenv(repository_root(), selected, keys)
     key = selected.get('OPENAI_API_KEY', '').strip()
-    model = selected.get('RIDEWORKS_RACE_MODEL', 'gpt-4o-mini').strip()
+    model = selected.get('RIDEWORKS_RACE_MODEL', 'gpt-6-luna').strip()
     limit = selected.get('RIDEWORKS_RACE_MAX_BYTES', str(DEFAULT_LIMIT)).strip()
     if not model or len(model) > 100 or not re.fullmatch(r'[A-Za-z0-9._:-]+', model):
         raise RaceError('Invalid race extraction model configuration.')
@@ -191,7 +191,7 @@ def extract(payload, image_type, key, model, *, opener=None):
     if not key:
         raise RaceError('Configure OPENAI_API_KEY locally before extracting a screenshot.')
     request_data = {
-        'model': model, 'store': False,
+        'model': model, 'store': False, 'service_tier': 'default',
         'input': [{'role': 'user', 'content': [
             {'type': 'input_text', 'text': PROMPT},
             {'type': 'input_image', 'image_url': f'data:{image_type};base64,{base64.b64encode(payload).decode("ascii")}',
@@ -224,8 +224,16 @@ def extract(payload, image_type, key, model, *, opener=None):
         if not isinstance(usage, dict):
             usage = None
         else:
-            usage = {k: v for k, v in usage.items() if k in ('input_tokens', 'output_tokens', 'total_tokens', 'cost')
-                     and type(v) in (int, float) and v >= 0}
+            usage = {k: v for k, v in usage.items() if k in ('input_tokens', 'output_tokens', 'total_tokens')
+                     and type(v) is int and v >= 0} | {
+                name: {k: v for k, v in details.items() if k in allowed and type(v) is int and v >= 0}
+                for name, allowed in (
+                    ('input_tokens_details', {'cached_tokens', 'cache_write_tokens'}),
+                    ('output_tokens_details', {'reasoning_tokens'}),
+                )
+                if isinstance((details := data['usage'].get(name)), dict)
+            }
+            usage['service_tier'] = data.get('service_tier')
         return rows, usage
     except HTTPError as exc:
         raise RaceError(f'OpenAI extraction failed (HTTP {exc.code}). Check configuration and try again.') from exc
@@ -372,39 +380,110 @@ def revision(values_json, timezone_name=None):
     return hashlib.sha256(json.dumps([values_json, timezone_name]).encode('utf-8')).hexdigest() if values_json is not None else 'new'
 
 
+def result_state(store, activity_id):
+    current = store.connection.execute(
+        'SELECT * FROM race_results WHERE activity_id=?', (activity_id,)).fetchone()
+    removed = None if current else store.connection.execute(
+        'SELECT * FROM race_result_removals WHERE activity_id=? ORDER BY removed_at DESC, removal_id DESC LIMIT 1',
+        (activity_id,)).fetchone()
+    return current, removed
+
+
+def result_revision(current, removed):
+    if current:
+        return revision(json.dumps([current['import_id'], current['accepted_at'], current['values_json']]),
+                        current['display_timezone'])
+    if removed:
+        return revision('removed:' + removed['removal_id'])
+    return 'new'
+
+
+def remove_result(store, activity_id, shown_revision):
+    with store._transaction(write=True):
+        current, removed = result_state(store, activity_id)
+        if not current:
+            raise RaceError('The race result is no longer active. Reload Race Results.')
+        if result_revision(current, removed) != shown_revision:
+            raise RaceError('The race result changed. Review it again before removing it.')
+        store.connection.execute(
+            'INSERT INTO race_result_removals VALUES (?,?,?,?,?,?,?)',
+            (str(uuid4()), activity_id, current['import_id'], current['values_json'],
+             current['display_timezone'], current['accepted_at'], _now_iso()))
+        store.connection.execute('DELETE FROM race_results WHERE activity_id=?', (activity_id,))
+
+
+def _now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def other_result_conflicts(store, rows, decisions):
+    from .race_matching import distinctive_words
+
+    dates = sorted({row['date'] for row, decision in zip(rows, decisions)
+                    if decision['activity_id'] and row.get('date')})
+    if not dates:
+        return {}
+    placeholders = ','.join('?' for _ in dates)
+    existing = store.connection.execute(
+        f"SELECT activity_id, values_json FROM race_results WHERE json_extract(values_json, '$.date') IN ({placeholders})",
+        dates).fetchall()
+    conflicts = {}
+    for index, (row, decision) in enumerate(zip(rows, decisions)):
+        if not decision['activity_id']:
+            continue
+        words = distinctive_words(row['event'])
+        for saved in existing:
+            if saved['activity_id'] == decision['activity_id']:
+                continue
+            previous = json.loads(saved['values_json'])
+            if (previous.get('date') == row['date'] and previous.get('start_time') == row['start_time']
+                    and isinstance(previous.get('event'), str)
+                    and words & distinctive_words(previous['event'])):
+                conflicts[index] = saved['activity_id']
+                break
+    return conflicts
+
+
 _DEFAULT_ZONE = object()
 
 
 def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
+    from .race_matching import batch_matches
+
     source = load_import(store, import_id)
     if source is None:
         raise RaceError('Screenshot import was not found.')
     timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
     original_rows = json.loads(source['rows_json'])
-    if len(rows) != len(original_rows):
+    if not rows or len(rows) != len(original_rows):
         raise RaceError('The review no longer matches the extracted rows. Reload the review.')
     counts = {'added': 0, 'unchanged': 0, 'replaced': 0, 'skipped': 0}
-    selected_ids = set()
     with store._transaction(write=True):
         for item in rows:
-            if item['action'] == 'skip':
-                counts['skipped'] += 1
-                continue
             if item['action'] != 'confirm':
-                raise RaceError('Choose confirm or skip for every row.')
-            row, activity_id = item['values'], item['activity_id']
+                raise RaceError('Every row must be matched automatically; skipping is not permitted.')
+            row = item['values']
             errors = row_errors(row)
             if errors:
                 raise RaceError('Correct invalid rows before confirming: ' + ' '.join(errors))
             validate_shape({'races': [row]})
-            if not activity_id or not store.connection.execute('SELECT 1 FROM activities WHERE activity_id=?', (activity_id,)).fetchone():
-                raise RaceError('Every confirmed row must be linked to an existing activity.')
-            if activity_id in selected_ids:
-                raise RaceError('Two confirmed rows cannot use the same activity.')
-            selected_ids.add(activity_id)
+        decisions = batch_matches([item['values'] for item in rows], timezone_name, matching_activities(store))
+        failures = [f"Row {index + 1}: {decision['reason']}" for index, decision in enumerate(decisions)
+                    if not decision['activity_id']]
+        if failures:
+            raise RaceError('Batch blocked: ' + ' '.join(failures))
+        conflicts = other_result_conflicts(store, [item['values'] for item in rows], decisions)
+        if conflicts:
+            details = ' '.join(f'Row {index + 1} may already be linked to a different activity ({activity_id}).'
+                               for index, activity_id in conflicts.items())
+            raise RaceError('Batch blocked: ' + details + ' Review and remove any incorrect attachment on Race Results first.')
+        for item, decision in zip(rows, decisions):
+            row, activity_id = item['values'], decision['activity_id']
+            if item.get('activity_id') and item['activity_id'] != activity_id:
+                raise RaceError('Manual activity selection cannot override automatic matching.')
             encoded = json.dumps(row, sort_keys=True, ensure_ascii=False)
-            current = store.connection.execute('SELECT values_json, display_timezone FROM race_results WHERE activity_id=?', (activity_id,)).fetchone()
-            current_revision = revision(current['values_json'], current['display_timezone']) if current else 'new'
+            current, removed = result_state(store, activity_id)
+            current_revision = result_revision(current, removed)
             if item['shown_activity'] != activity_id or item['shown_revision'] != current_revision:
                 raise RaceError('Activity selection or saved result changed. Review changes before confirming.')
             if current and json.loads(current['values_json']) == row and current['display_timezone'] == timezone_name:
@@ -412,6 +491,8 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
                 continue
             if current and not item['replace']:
                 raise RaceError('A changed result needs explicit replacement approval.')
+            if removed and not item['replace']:
+                raise RaceError('A previously removed result needs explicit restoration approval.')
             now = datetime.now(timezone.utc).isoformat()
             store.connection.execute('INSERT INTO race_result_history VALUES (?,?,?,?,?,?)',
                                      (str(uuid4()), activity_id, import_id, encoded, timezone_name, now))

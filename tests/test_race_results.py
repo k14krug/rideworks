@@ -11,10 +11,13 @@ import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
+from uuid import uuid4
+import zipfile
 
 from PIL import Image, ImageDraw
 
 from fit_fixture import make_fit
+from test_rideworks_export import csv_bytes, row as export_row
 from rideworks import race_results as race
 from rideworks.store import Store
 from rideworks.web import Application, create_server
@@ -69,7 +72,7 @@ def synthetic_image():
 
 
 def result(**updates):
-    row = {'date': '2024-11-08', 'start_time': '12:00', 'event': 'Synthetic Stage Four',
+    row = {'date': '2024-11-08', 'start_time': '11:33', 'event': 'Synthetic Stage Four',
            'race_group': '0-210', 'finish': 9, 'avg_watts': 161, 'race_score': 184,
            'race_score_change': 1}
     row.update(updates)
@@ -109,10 +112,14 @@ class RaceTests(unittest.TestCase):
         self.image = synthetic_image()
         self.app = Application(self.root / 'store')
         self.app.settings.port = 8766
-        path = self.root / 'synthetic.fit'
-        path.write_bytes(make_fit(avg_power=233))
+        path = self.root / 'synthetic-export.zip'
+        with zipfile.ZipFile(path, 'w') as archive:
+            archive.writestr('activities.csv', csv_bytes([
+                export_row(filename='activities/synthetic.fit', title='Synthetic Stage Four')]))
+            archive.writestr('activities/synthetic.fit', make_fit(avg_power=233))
         with Store(self.app.data_dir) as store:
-            self.activity_id = store.import_fit(path)['activity_id']
+            self.assertEqual(store.import_strava_export(path)['failures'], [])
+            self.activity_id = store.connection.execute('SELECT activity_id FROM activities').fetchone()[0]
 
     def stage(self, rows=None, zone='UTC'):
         with Store(self.app.data_dir) as store:
@@ -130,20 +137,46 @@ class RaceTests(unittest.TestCase):
                 result(race_score_change=-5)]
         api = {'status': 'completed', 'output': [{'type': 'message', 'content': [
             {'type': 'output_text', 'text': json.dumps({'races': rows})}]}],
-            'usage': {'input_tokens': 123, 'output_tokens': 45, 'total_tokens': 168}}
+            'service_tier': 'default',
+            'usage': {'input_tokens': 123, 'output_tokens': 45, 'total_tokens': 168,
+                      'input_tokens_details': {'cached_tokens': 23, 'cache_write_tokens': 10},
+                      'output_tokens_details': {'reasoning_tokens': 20}}}
         opener = FakeOpener(api)
-        returned, usage = race.extract(self.image, 'image/png', 'synthetic-key', 'gpt-4o-mini', opener=opener)
+        returned, usage = race.extract(self.image, 'image/png', 'synthetic-key', 'gpt-6-luna', opener=opener)
         request = json.loads(opener.request.data)
         self.assertEqual(returned, rows)
+        self.assertEqual(request['model'], 'gpt-6-luna')
         self.assertEqual(usage['input_tokens'], 123)
+        self.assertEqual(usage['input_tokens_details'], {'cached_tokens': 23, 'cache_write_tokens': 10})
+        self.assertEqual(usage['output_tokens_details'], {'reasoning_tokens': 20})
+        self.assertEqual(usage['service_tier'], 'default')
         self.assertEqual(opener.timeout, 60)
         self.assertEqual(opener.request.full_url, 'https://api.openai.com/v1/responses')
         self.assertFalse(request['store'])
+        self.assertEqual(request['service_tier'], 'default')
         self.assertTrue(request['text']['format']['strict'])
         self.assertEqual(request['text']['format']['schema'], race.SCHEMA)
         self.assertEqual(request['input'][0]['content'][0]['text'], USER_PROMPT)
         self.assertIn('HH:MM', race.SCHEMA['properties']['races']['items']['properties']['start_time']['description'])
         self.assertIn('data:image/png;base64,', request['input'][0]['content'][1]['image_url'])
+
+    def test_default_model_and_explicit_override(self):
+        with patch('rideworks.race_results._dotenv'):
+            self.assertEqual(race.configuration({})[1], 'gpt-6-luna')
+            self.assertEqual(race.configuration({'RIDEWORKS_RACE_MODEL': 'diagnostic-model'})[1], 'diagnostic-model')
+
+    def test_review_displays_estimated_cost_and_unavailable_usage(self):
+        usage = {'input_tokens': 123, 'output_tokens': 45, 'service_tier': 'default',
+                 'input_tokens_details': {'cached_tokens': 23, 'cache_write_tokens': 10},
+                 'output_tokens_details': {'reasoning_tokens': 20}}
+        with Store(self.app.data_dir) as store:
+            identity = race.stage_import(store, self.image, 'UTC',
+                                         extractor=lambda *_: ([result()], usage))
+        page = self.app.get('/race-results/review/' + identity)[2]
+        self.assertIn(b'Estimated API cost: $0.00003298', page)
+        self.assertIn(b'not the amount billed', page)
+        page = self.app.get('/race-results/review/' + self.stage())[2]
+        self.assertIn(b'Estimated API cost: unavailable', page)
 
     def test_normalize_review_dates_and_times_without_changing_evidence(self):
         source = result(date='3/2/2024', start_time='1:07 PM')
@@ -171,7 +204,6 @@ class RaceTests(unittest.TestCase):
         raw = result()
         identity = self.stage([raw])
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
-                  '0.activity': '', '0.manual': '', '0.action': 'skip',
                   '0.shown_activity': '', '0.shown_revision': 'new'}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in raw.items()})
         fields['0.date'] = '11/8/2024'
@@ -239,7 +271,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(source['schema_version'], race.SCHEMA_VERSION)
         status, _, body = self.app.get('/race-results/review/' + identity)
         self.assertEqual(status, 200)
-        for text in ('Review Race Import', 'Confirm Import', 'Zwift avg watts', 'Screenshot display timezone'):
+        for text in ('Review Race Import', 'Confirm Batch', 'Zwift avg watts', 'Screenshot display timezone'):
             self.assertIn(text, body.decode())
 
     def test_api_failure_leaves_history_unchanged_and_sanitized(self):
@@ -272,7 +304,6 @@ class RaceTests(unittest.TestCase):
         route = response[1]['Location']
         identity = route.rsplit('/', 1)[-1]
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
-                  '0.activity': '', '0.manual': self.activity_id, '0.action': 'confirm',
                   '0.shown_activity': '', '0.shown_revision': 'new'}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in result().items()})
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
@@ -282,7 +313,7 @@ class RaceTests(unittest.TestCase):
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 400)
         self.assertIn(b'Review changes', page)
-        fields.update({'0.manual': '', '0.activity': self.activity_id, '0.shown_activity': self.activity_id})
+        fields['0.shown_activity'] = self.activity_id
         status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
         self.assertIn(b'Added 1', page)
@@ -292,9 +323,9 @@ class RaceTests(unittest.TestCase):
         with Store(self.app.data_dir) as store:
             self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_imports').fetchone()[0], 2)
             self.assertEqual(store.connection.execute('SELECT COUNT(DISTINCT image_path) FROM race_imports').fetchone()[0], 1)
-            previous = store.connection.execute('SELECT values_json FROM race_results').fetchone()[0]
+            previous = race.result_revision(*race.result_state(store, self.activity_id))
             self.assertEqual(race.commit_rows(store, again[1]['Location'].rsplit('/', 1)[-1],
-                                              [self.item(shown=race.revision(previous, 'UTC'))])['unchanged'], 1)
+                                              [self.item(shown=previous)])['unchanged'], 1)
             self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM activities').fetchone()[0], 1)
         self.assertEqual(self.app.get('/race-results/image/' + identity)[2], self.image)
 
@@ -320,10 +351,10 @@ class RaceTests(unittest.TestCase):
         with Store(self.app.data_dir) as store:
             before = store.get_activity(self.activity_id)
             self.assertEqual(race.commit_rows(store, identity, [self.item()])['added'], 1)
-            previous = store.connection.execute('SELECT values_json FROM race_results').fetchone()[0]
-            unchanged = self.item(shown=race.revision(previous, 'UTC'))
+            previous = race.result_revision(*race.result_state(store, self.activity_id))
+            unchanged = self.item(shown=previous)
             self.assertEqual(race.commit_rows(store, identity, [unchanged])['unchanged'], 1)
-            edited = self.item(result(avg_watts=199), shown=race.revision(previous, 'UTC'))
+            edited = self.item(result(avg_watts=199), shown=previous)
             with self.assertRaisesRegex(race.RaceError, 'replacement'):
                 race.commit_rows(store, identity, [edited])
             edited['replace'] = True
@@ -332,7 +363,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM activities').fetchone()[0], 1)
             self.assertEqual(store.get_activity(self.activity_id), before)
             invalid = self.item(activity='00000000-0000-0000-0000-000000000000')
-            with self.assertRaisesRegex(race.RaceError, 'existing activity'):
+            with self.assertRaisesRegex(race.RaceError, 'Manual activity selection'):
                 race.commit_rows(store, identity, [invalid])
         self.assertIn('Zwift-reported average: 199 W', self.app.get('/activities/' + self.activity_id)[2].decode())
         self.assertIn('/activities/' + self.activity_id, self.app.get('/race-results')[2].decode())
@@ -341,8 +372,7 @@ class RaceTests(unittest.TestCase):
         identity = self.stage()
         with Store(self.app.data_dir) as store:
             race.commit_rows(store, identity, [self.item()])
-            prior = store.connection.execute('SELECT * FROM race_results').fetchone()
-            changed = self.item(shown=race.revision(prior['values_json'], 'UTC'))
+            changed = self.item(result(start_time='03:33'), shown=race.result_revision(*race.result_state(store, self.activity_id)))
             with self.assertRaisesRegex(race.RaceError, 'replacement'):
                 race.commit_rows(store, identity, [changed], timezone_name='America/Los_Angeles')
             changed['replace'] = True
@@ -350,6 +380,58 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(store.connection.execute('SELECT display_timezone FROM race_imports').fetchone()[0], 'UTC')
             self.assertEqual([r[0] for r in store.connection.execute('SELECT display_timezone FROM race_result_history ORDER BY rowid')],
                              ['UTC', 'America/Los_Angeles'])
+
+    def test_removal_requires_confirmation_preserves_evidence_and_restoration_approval(self):
+        identity = self.stage([result(avg_watts=0, race_score=0)])
+        with Store(self.app.data_dir) as store:
+            before = store.get_activity(self.activity_id)
+            race.commit_rows(store, identity, [self.item(result(avg_watts=0, race_score=0))])
+        html = self.app.get('/activities')[2].decode()
+        self.assertIn('class="row-race-score">0</span>', html)
+        self.assertIn('class="row-race-power" title="Zwift screenshot race average">0 W</span>', html)
+        route = '/race-results/remove/' + self.activity_id
+        status, _, page = self.app.get(route)
+        self.assertEqual(status, 200)
+        self.assertIn(b'Synthetic Stage Four', page)
+        self.assertIn(b'The activity, FIT data, source screenshot and result history will be retained.', page)
+        with Store(self.app.data_dir) as store:
+            current, removed = race.result_state(store, self.activity_id)
+            shown = race.result_revision(current, removed)
+        form = urlencode({'nonce': self.app.settings.nonce, 'revision': shown}).encode()
+        self.assertEqual(self.app.post(route, form, 'http://untrusted.invalid')[0], 403)
+        self.assertEqual(self.app.post(route, form, 'http://localhost:8766')[0], 303)
+        self.assertEqual(self.app.get(route)[0], 404)
+        self.assertNotIn('Zwift-reported average', self.app.get('/activities/' + self.activity_id)[2].decode())
+        self.assertNotIn('/activities/' + self.activity_id, self.app.get('/race-results')[2].decode())
+        self.assertIn('class="row-race-score">—</span>', self.app.get('/activities')[2].decode())
+        self.assertEqual(self.app.get('/race-results/image/' + identity)[2], self.image)
+        with Store(self.app.data_dir) as store:
+            self.assertEqual(store.get_activity(self.activity_id), before)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_result_history').fetchone()[0], 1)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 1)
+            current, removed = race.result_state(store, self.activity_id)
+            item = self.item(result(avg_watts=0, race_score=0), shown=race.result_revision(current, removed))
+            with self.assertRaisesRegex(race.RaceError, 'restoration approval'):
+                race.commit_rows(store, identity, [item])
+            item['replace'] = True
+            self.assertEqual(race.commit_rows(store, identity, [item])['added'], 1)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 1)
+
+    def test_removal_rejects_stale_revision(self):
+        identity = self.stage()
+        with Store(self.app.data_dir) as store:
+            race.commit_rows(store, identity, [self.item()])
+            current, removed = race.result_state(store, self.activity_id)
+            stale = race.result_revision(current, removed)
+            updated = json.dumps(result(avg_watts=199))
+            store.connection.execute('UPDATE race_results SET values_json=? WHERE activity_id=?', (updated, self.activity_id))
+        form = urlencode({'nonce': self.app.settings.nonce, 'revision': stale}).encode()
+        status, _, page = self.app.post('/race-results/remove/' + self.activity_id, form, 'http://localhost:8766')
+        self.assertEqual(status, 400)
+        self.assertIn(b'The race result changed', page)
+        with Store(self.app.data_dir) as store:
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 0)
 
     def test_multiple_rows_are_atomic_and_revision_is_checked(self):
         identity = self.stage([result(), result(event='Another synthetic race')])
@@ -359,12 +441,75 @@ class RaceTests(unittest.TestCase):
             with self.assertRaises(race.RaceError):
                 race.commit_rows(store, identity, [first, invalid])
             self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
-            first['shown_activity'] = 'another'
-            with self.assertRaisesRegex(race.RaceError, 'Review changes'):
+            with self.assertRaisesRegex(race.RaceError, 'skipping is not permitted'):
                 race.commit_rows(store, identity, [first, {'action': 'skip'}])
 
+    def test_batch_is_revalidated_inside_transaction_without_partial_writes(self):
+        rows = [result(date=f'2024-11-{day:02d}') for day in range(1, 18)]
+        identity = self.stage(rows)
+        with Store(self.app.data_dir) as store:
+            activities = []
+            items = []
+            for index, row in enumerate(rows):
+                activity_id = str(uuid4())
+                store.connection.execute('INSERT INTO activities VALUES (?,?)', (activity_id, 'synthetic'))
+                activities.append({'activity_id': activity_id, 'start_time': f"{row['date']}T11:33:00+00:00",
+                                   'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
+                                   'title': 'Synthetic Stage Four', 'match_watts': None, 'match_watts_source': None})
+                items.append(self.item(row, activity=activity_id))
+            seen_transaction = []
+
+            def matching_in_transaction(current):
+                seen_transaction.append(current.connection.in_transaction)
+                return activities[:-1]
+
+            with patch('rideworks.race_results.matching_activities', side_effect=matching_in_transaction):
+                with self.assertRaisesRegex(race.RaceError, 'Row 17'):
+                    race.commit_rows(store, identity, items)
+            self.assertEqual(seen_transaction, [True])
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_result_history').fetchone()[0], 0)
+
+            with patch('rideworks.race_results.matching_activities', return_value=activities):
+                self.assertEqual(race.commit_rows(store, identity, items)['added'], 17)
+                self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 17)
+
+    def test_manual_id_and_skip_form_fields_are_rejected(self):
+        identity = self.stage()
+        fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'confirm',
+                  '0.shown_activity': self.activity_id, '0.shown_revision': 'new'}
+        fields.update({f'0.{key}': '' if value is None else str(value) for key, value in result().items()})
+        for field, value in (('0.manual', self.activity_id), ('0.activity', self.activity_id), ('0.action', 'skip')):
+            with self.subTest(field=field):
+                forged = dict(fields, **{field: value})
+                response = self.app.post('/race-results/review/' + identity, urlencode(forged).encode(), 'http://localhost:8766')
+                self.assertEqual(response[0], 400)
+        with Store(self.app.data_dir) as store:
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
+
+    def test_existing_wrong_attachment_blocks_batch_until_removed(self):
+        identity = self.stage()
+        wrong_id = str(uuid4())
+        with Store(self.app.data_dir) as store:
+            store.connection.execute('INSERT INTO activities VALUES (?,?)', (wrong_id, 'synthetic'))
+            previous = result(event='Synthetic Stage One')
+            store.connection.execute('INSERT INTO race_results VALUES (?,?,?,?,?)',
+                                     (wrong_id, identity, json.dumps(previous), 'UTC', 'synthetic'))
+        status, _, page = self.app.get('/race-results/review/' + identity)
+        self.assertEqual(status, 200)
+        self.assertIn(b'Possible existing attachment', page)
+        self.assertIn(wrong_id.encode(), page)
+        self.assertIn(b'value="confirm" disabled', page)
+        with Store(self.app.data_dir) as store:
+            with self.assertRaisesRegex(race.RaceError, 'different activity'):
+                race.commit_rows(store, identity, [self.item()])
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
+            race.remove_result(store, wrong_id, race.result_revision(*race.result_state(store, wrong_id)))
+            self.assertEqual(race.commit_rows(store, identity, [self.item()])['added'], 1)
+            self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_result_removals').fetchone()[0], 1)
+
     def test_safe_matching_requires_timezone_unique_virtual_and_title(self):
-        row = result()
+        row = result(start_time='12:00')
         choice = {'id': 'a', 'title': 'Synthetic Stage Four', 'date': '2024-11-08',
                   'time': '12:00', 'virtual': True, 'absolute': True}
         self.assertEqual(race.suggested_match(row, 'UTC', [choice]), 'a')
@@ -409,13 +554,13 @@ class RaceTests(unittest.TestCase):
             status, _, page = self.app.get('/race-results/review/' + identity)
         self.assertEqual(status, 200)
         self.assertIn(b'2024-11-08 11:33', page)
-        self.assertIn(f'<option value="{self.activity_id}" selected>'.encode(), page)
-        self.assertIn(b'name="0.action" value="confirm" checked', page)
+        self.assertIn(f'name="0.shown_activity" value="{self.activity_id}"'.encode(), page)
+        self.assertIn(b'Automatically matched:', page)
+        self.assertNotIn(b'Enter activity ID', page)
 
     def test_selected_activity_outside_race_date_still_shows_its_date(self):
         identity = self.stage()
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'preview',
-                  '0.activity': '', '0.manual': self.activity_id, '0.action': 'confirm',
                   '0.shown_activity': '', '0.shown_revision': 'new'}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in result().items()})
         activity = {'activity_id': self.activity_id, 'start_time': '2024-11-09T11:33:00+00:00',
@@ -425,7 +570,9 @@ class RaceTests(unittest.TestCase):
             status, _, page = self.app.post('/race-results/review/' + identity, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
         self.assertIn(b'2024-11-09 11:33', page)
-        self.assertIn(f'<option value="{self.activity_id}" selected>'.encode(), page)
+        self.assertIn(b'diagnostic only', page)
+        self.assertIn(b'Unresolved', page)
+        self.assertIn(b'name="0.shown_activity" value=""', page)
 
     def test_form_discloses_api_and_requires_origin(self):
         status, _, body = self.app.get('/race-results/import')
@@ -438,7 +585,6 @@ class RaceTests(unittest.TestCase):
     def test_invalid_integer_keeps_review_edits_for_correction(self):
         identity = self.stage()
         fields = {'nonce': self.app.settings.nonce, 'timezone': 'UTC', 'operation': 'confirm',
-                  '0.activity': self.activity_id, '0.manual': '', '0.action': 'confirm',
                   '0.shown_activity': self.activity_id, '0.shown_revision': 'new'}
         fields.update({f'0.{key}': '' if value is None else str(value) for key, value in result().items()})
         fields['0.event'] = 'Corrected synthetic event'
@@ -453,7 +599,7 @@ class RaceTests(unittest.TestCase):
 
     def test_migration_rollback(self):
         with Store(self.app.data_dir) as store:
-            store.connection.executescript('DROP TABLE race_result_history; DROP TABLE race_results; DROP TABLE race_imports; PRAGMA user_version=11;')
+            store.connection.executescript('DROP TABLE race_result_removals; DROP TABLE race_result_history; DROP TABLE race_results; DROP TABLE race_imports; PRAGMA user_version=11;')
         from rideworks import store as module
         with patch.object(module, 'MIGRATION_12', module.MIGRATION_12.replace('PRAGMA user_version = 12;', 'INSERT INTO missing VALUES(1);')):
             with self.assertRaises(sqlite3.Error):
@@ -462,7 +608,28 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(connection.execute('PRAGMA user_version').fetchone()[0], 11)
             self.assertIsNone(connection.execute("SELECT name FROM sqlite_master WHERE name='race_imports'").fetchone())
         with Store(self.app.data_dir) as store:
-            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 12)
+            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 13)
+
+    def test_removal_migration_rolls_back_without_losing_existing_evidence(self):
+        identity = self.stage()
+        with Store(self.app.data_dir) as store:
+            race.commit_rows(store, identity, [self.item()])
+            before = tuple(store.connection.execute('SELECT * FROM race_results').fetchone())
+            history = [tuple(row) for row in store.connection.execute('SELECT * FROM race_result_history')]
+            store.connection.executescript('DROP TABLE race_result_removals; PRAGMA user_version=12;')
+        from rideworks import store as module
+        broken = module.MIGRATION_13.replace('PRAGMA user_version = 13;', 'INSERT INTO missing VALUES(1);')
+        with patch.object(module, 'MIGRATION_13', broken), self.assertRaises(sqlite3.Error):
+            Store(self.app.data_dir)
+        with sqlite3.connect(self.app.data_dir / 'rideworks.sqlite3') as connection:
+            self.assertEqual(connection.execute('PRAGMA user_version').fetchone()[0], 12)
+            self.assertIsNone(connection.execute("SELECT name FROM sqlite_master WHERE name='race_result_removals'").fetchone())
+            self.assertEqual(connection.execute('SELECT * FROM race_results').fetchone(), before)
+            self.assertEqual(connection.execute('SELECT * FROM race_result_history').fetchall(), history)
+        with Store(self.app.data_dir) as store:
+            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 13)
+            self.assertEqual(tuple(store.connection.execute('SELECT * FROM race_results').fetchone()), before)
+            self.assertEqual(race.screenshot(store, identity)[1], self.image)
 
 
 if __name__ == '__main__':

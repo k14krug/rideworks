@@ -355,7 +355,7 @@ class PersistenceTests(unittest.TestCase):
         root=self.root/'schema5'
         with Store(root) as old:
             old.connection.execute("INSERT INTO activities VALUES('synthetic-activity','synthetic-created')")
-            for table in ('race_result_history','race_results','race_imports'):
+            for table in ('race_result_removals','race_result_history','race_results','race_imports'):
                 old.connection.execute('DROP TABLE '+table)
             for table in ('strava_stream_current','strava_stream_attempts','strava_stream_sources'):
                 old.connection.execute('DROP TABLE '+table)
@@ -369,5 +369,5 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(check.execute('PRAGMA user_version').fetchone()[0],5)
             self.assertEqual(check.execute("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'strava_stream_%'").fetchone()[0],0)
         with Store(root) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],12)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],13)
             self.assertEqual(tuple(migrated.connection.execute('SELECT * FROM activities').fetchone()),('synthetic-activity','synthetic-created'))

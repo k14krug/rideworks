@@ -45,6 +45,35 @@ The bullets below marked **Owner decision** are settled; details marked **implem
 7. **Commit gate:** the final reconciled distinct-race count must equal the Owner-confirmed visible-row count; each observation must belong to exactly one distinct reconciled race; no unresolved duplicate/conflicting observation; each distinct race must automatically match a unique Activity under section B; any uncertainty or section/API failure blocks **all** confirmed-result writes. Confirming a visible-row count does not establish model transcription accuracy; the owner still reviews all eight fields. The Owner may abandon/retry with a better image or shorter separate screenshots; a smaller screenshot is a **new separate batch** with the same strict matching gate.
 8. Avoid overengineering a general OCR/row-segmentation engine. Any apparent automatic duplicate grouping is only a **suggestion**, never a silently applied deletion. The interaction should be compact and make the rare ambiguity easy to resolve. Preserve upload resource bounds and no API calls before the Owner clicks Extract.
 
+### A.1. Exact section-specific prompt (Analyst approved, 2026-11-06)
+
+**Owner-directed fix for a real observed issue:** one internal crop started halfway through a wrapped "Loop de Loop" event title; the model emitted a false extra race with `event: "Loop"`, `date: null`, `finish: 4`. The original full-image prompt allows a partly cropped row, which is inappropriate at **artificial section boundaries**.
+
+Keep the common eight-field schema, normal numeric/date/title extraction rules and original-image/full-image behavior. For **each internally generated section**, replace the common prompt's permissive "Include a row when enough ... even if the row border is partially cropped" sentence with the section eligibility rules below, and supply actual boundary metadata. Do **not** append mutually contradictory instructions.
+
+**Exact section-eligibility text to send with each section image** (plain text; the boundary variables below are expanded from the server's actual crop plan):
+
+```text
+This image is one horizontal section of a larger Zwift Racing Profile RACE RESULTS screenshot. Neighboring sections overlap. Extract rows visible in THIS section only; do not infer or reconstruct missing pixels.
+
+SECTION BOUNDARIES
+- Top edge: {TOP_EDGE_TYPE}.
+- Bottom edge: {BOTTOM_EDGE_TYPE}.
+  TOP_EDGE_TYPE / BOTTOM_EDGE_TYPE must each be "original screenshot edge" or "internal crop boundary", determined from the section's original-image pixel coordinates (not by the model).
+
+WHICH ROWS TO EXTRACT
+- At an INTERNAL CROP BOUNDARY, do not extract a race row that is cut off by that edge. A row must be visibly complete within this section, including its row beginning, the FINISH cell, the DATE/Time cell area, and the beginning of its blue event title. The row's bottom/content must also be visible. Such cut rows should appear in another overlapping section.
+- A wrapped blue race title belongs to ONE physical table row. Join its visible lines into one event title. A continuation such as "Loop" at the top of a section is NOT a new race when the beginning of the title/row is outside this section. Do not make a row out of the smaller black route subtitle.
+- If an edge is an ORIGINAL SCREENSHOT EDGE (not an internal crop boundary), apply the original screenshot's policy for a partially visible but identifiable row; do not discard it solely because the uploaded image itself was cropped.
+- A complete interior row may have individual unreadable or dashed values. Extract the row and set only the unreadable fields to null. Do not treat null DATE or null watts alone as proof that a row is a crop fragment.
+- Do not turn headers, separators, continuation lines, other columns or duplicate renderings into additional races. Return rows in top-to-bottom order.
+- If no complete eligible race rows are visible in this section, return {"races": []} in the required schema. Do not guess missing rows.
+```
+
+**Implementation guidance:** Prefer a small helper that assembles the existing common field extraction prompt plus these section rules with true edge-type values. Version the prompt and retain the effective prompt version/section metadata in import provenance. Full-image mode should continue using its appropriate whole-image policy. The code should not trust model compliance: retain **every raw observation** and expose suspected crop fragments for explicit Owner source-reconciliation, rather than silently deleting `date:null` or `event:"Loop"` observations. Owner-confirmed visible-row count and whole-batch automatic Activity matching remain hard gates.
+
+**Required synthetic regression:** a 600-pixel section with a wrapped "Loop de Loop" row crossing the seam and only its ending "Loop" visible in the adjacent section. Assert that each section API request receives the appropriate prompt/edge flags; model-mock a bad `Loop` observation to verify it remains available for Owner review and blocks a batch if unresolved; test a complete interior row with unreadable DATE remains eligible. Real-model accuracy is unverified until the Owner-initiated live gate.
+
 **Boundary of the Owner decision:** the Owner's all-or-nothing requirement applies to **distinct races after transparent screenshot-observation reconciliation**, not every redundant model observation from an overlap. The ability to confirm two observations are one physical source row does not authorize skipping a real race, manually selecting a ride, or saving an incomplete batch.
 
 ### B. Whole-batch **automatic** activity matching

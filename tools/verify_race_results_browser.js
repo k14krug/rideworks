@@ -39,7 +39,12 @@ async page => {
   check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no mobile overflow');
   await page.getByRole('button', {name: 'Confirm Batch'}).click();
   check((await page.locator('main').innerText()).includes('Added 2'), 'whole reconciled batch saved');
-  await page.getByRole('link', {name: 'View Race Results'}).click();
+  await page.setViewportSize({width: 1440, height: 900});
+  await page.goto(base + '/activities');
+  const activities = await page.locator('main').innerText();
+  check(activities.includes('Racing Score') && activities.includes('Race avg W'), 'race columns displayed');
+  check(activities.includes('233 W') && activities.includes('161 W') && activities.includes('175 W'), 'activity and race watts remain distinct');
+  await page.goto(base + '/race-results');
   check((await page.locator('main').innerText()).includes('175 W'), 'reviewed race watts displayed');
   await page.getByRole('link', {name: 'Remove race result'}).first().click();
   check((await page.locator('main').innerText()).includes('The activity, FIT data, source screenshot and result history will be retained'), 'removal confirmation');

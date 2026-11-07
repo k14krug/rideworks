@@ -8,9 +8,37 @@ The subsequent cross-import identity blocker was addressed under the revised
 [JIT](../../docs/tasks/RACE-02.md), section B.9, and
 [issue #60](https://github.com/k14krug/rideworks/issues/60). Synthetic
 implementation and verification are complete. The Owner, acting as Analyst,
-approved Gate 1 in chat; Owner-operated local Gate 2 testing remains, and the
-task is not yet accepted. Do not merge or deploy. No production data was
-accessed or changed.
+approved the earlier Gate 1 in chat. Subsequent Owner testing exposed a
+wrapped-title crop fragment, and the Analyst revised the JIT. The revised
+implementation now stops for renewed HARD — Analyst Gate 1 review; the task is
+not yet accepted. Do not merge or deploy. No production data was accessed or
+changed during this implementation.
+
+## Section-specific prompt revision
+
+Sectioned extraction uses `zrp-races-section-v4` and the exact eligibility
+text in JIT section A.1, with each edge labeled from the actual original-image
+crop bounds. It no longer sends the full-image partial-row instruction. The
+common field/schema rules remain, and full-image mode retains its prior
+`zrp-races-v3` prompt. The import and each section retain the effective
+version and crop coordinates.
+
+Raw observations are never removed or automatically grouped. The review flags
+the first/last observation of a section where its corresponding edge is
+internal as a *possible* boundary fragment; order does not establish its pixel
+position, and a complete row can have unreadable fields. The Owner must still
+compare source crops, explicitly reconcile observations and correct
+conflicting values. Physical-row count, unique automatic matching and final
+transaction validation remain mandatory.
+
+The synthetic 768×939 seam regression draws a wrapped “Stage 4 Loop de Loop”
+across the boundary and mocks a separate “Loop” observation. It verifies
+request text and edge hints, retains the bad observation and a complete row
+with unreadable date, proves unresolved/missing-date batches write no
+results, and confirms only two races after explicit reconciliation and
+correction. Mocks test the safeguards, not model compliance or transcription
+accuracy. Real-model behavior and the full-image versus section comparison
+remain for a separately authorized Owner Gate 2.
 
 ## Corrected-date wrong-attachment regression
 
@@ -143,28 +171,37 @@ pixel-derived row ownership.
 
 ## Verification
 
-- `.venv/bin/python -m unittest discover -s tests` — **618 tests passed** using
+- `.venv/bin/python -m unittest discover -s tests` — **620 tests passed** using
   synthetic data, including migration, rollback, FIT/analytics and race tests.
-- Browser verification on two disposable mock-only stores: **18 checks** for
-  extraction/reconciliation, confirmation, removal and desktop/mobile
-  Activities; **10 checks** for same/different identity decisions, source
-  comparison, retained-result protection, separate removal and revalidation.
+- `PYTHONPATH=tests .venv/bin/python -m unittest test_race_sections
+  test_race_results test_race_matching test_race_cost test_race_identity` —
+  **60 tests passed**, including the B.9 identity regressions.
+- Browser verification on three disposable mock-only scenarios: **14 checks**
+  for extraction/reconciliation, matching, cost, Activities columns and
+  removal confirmation; **10 checks** for same/different identity decisions,
+  source comparison, retained-result protection, separate removal and
+  revalidation; **11 checks** for the seam fragment, missing-date block,
+  explicit reconciliation, correction and mobile layout.
   Start the fixtures with `.venv/bin/python tools/preview_race_results.py
-  --data-dir <new-empty-directory> --port <port>` and add `--identity-case`
-  for the latter. The corresponding Playwright workflows are
+  --data-dir <new-empty-directory> --port <port>` and add `--identity-case` or
+  `--seam-case` for the other scenarios. The corresponding Playwright workflows are
   `tools/verify_race_results_browser.js` and
-  `tools/verify_race_identity_browser.js`. No live extraction was used.
+  `tools/verify_race_identity_browser.js` and `tools/verify_race_seam_browser.js`.
+  Equivalent top-level snippets were executed in the integrated browser; no
+  live extraction was used.
 - A synthetic in-memory matching benchmark matched 17 rows against 10,000
   Activities in 0.047 seconds; it excludes database retrieval and is not a
   production performance guarantee.
 - `.venv/bin/python reports/RACE-02/row_probe.py` — produced the counts above.
 - `git diff --check` — passed.
-- Pylance syntax checks passed for the changed Python source and identity
-  tests; `node --check` passed for the review and synthetic browser scripts.
+- Pylance syntax checks passed for the revised Python source, section tests
+  and preview; the `extract` signature check found nine compatible call sites.
+  `node --check` passed for the synthetic browser scripts.
 - No live model call, real screenshot, production database or browser-based
-  Owner test was used. The checks do not establish extraction accuracy,
-  account/model availability, or Analyst acceptance. Owner Gate 2 remains
-  necessary for full-image versus sectioned per-field accuracy and actual cost.
+  Owner test was used in this verification. The checks do not establish extraction accuracy,
+  account/model availability, or renewed Analyst acceptance. Owner Gate 2
+  remains necessary for full-image versus sectioned per-field accuracy and
+  actual cost.
 
 The matching-only benchmark command was:
 

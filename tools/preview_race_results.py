@@ -25,7 +25,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', type=Path, required=True)
     parser.add_argument('--port', type=int, default=18893)
-    parser.add_argument('--identity-case', action='store_true')
+    cases = parser.add_mutually_exclusive_group()
+    cases.add_argument('--identity-case', action='store_true')
+    cases.add_argument('--seam-case', action='store_true')
     args = parser.parse_args()
     if (args.data_dir / 'rideworks.sqlite3').exists():
         parser.error('Synthetic preview requires a new empty store.')
@@ -35,6 +37,8 @@ def main():
         {'date': '2024-11-08', 'start_time': '11:38', 'event': 'Stage 2 Lakeview',
          'race_group': '160-270', 'finish': 5, 'avg_watts': 175, 'race_score': None, 'race_score_change': None},
     ]
+    if args.seam_case:
+        rows[0]['event'] = 'Stage 4 Loop de Loop'
     with tempfile.TemporaryDirectory() as temp:
         archive = Path(temp) / 'synthetic.zip'
         with zipfile.ZipFile(archive, 'w') as bundle:
@@ -67,7 +71,11 @@ def main():
     def fake_extract(*_):
         nonlocal calls
         calls += 1
-        output = rows if calls % 2 else [dict(rows[1], avg_watts=180)]
+        if args.seam_case:
+            output = ([rows[0], dict(rows[1], date=None)] if calls % 2 else
+                      [dict(rows[0], date=None, event='Loop', avg_watts=None, race_score=None)])
+        else:
+            output = rows if calls % 2 else [dict(rows[1], avg_watts=180)]
         return output, {'input_tokens': 1000, 'output_tokens': 100, 'service_tier': 'default',
                         'input_tokens_details': {'cached_tokens': 200, 'cache_write_tokens': 100},
                         'output_tokens_details': {'reasoning_tokens': 80}}

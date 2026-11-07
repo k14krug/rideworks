@@ -19,7 +19,23 @@ from rideworks.race_reconcile import observations, reconcile
 from rideworks.race_sections import crop_image, plan_sections
 from rideworks.store import Store
 from rideworks.web import Application
-from test_race_results import FakeOpener, result
+from test_race_results import FakeOpener, FakeResponse, USER_PROMPT, result
+
+
+SECTION_ELIGIBILITY = '''This image is one horizontal section of a larger Zwift Racing Profile RACE RESULTS screenshot. Neighboring sections overlap. Extract rows visible in THIS section only; do not infer or reconstruct missing pixels.
+
+SECTION BOUNDARIES
+- Top edge: {TOP_EDGE_TYPE}.
+- Bottom edge: {BOTTOM_EDGE_TYPE}.
+  TOP_EDGE_TYPE / BOTTOM_EDGE_TYPE must each be "original screenshot edge" or "internal crop boundary", determined from the section's original-image pixel coordinates (not by the model).
+
+WHICH ROWS TO EXTRACT
+- At an INTERNAL CROP BOUNDARY, do not extract a race row that is cut off by that edge. A row must be visibly complete within this section, including its row beginning, the FINISH cell, the DATE/Time cell area, and the beginning of its blue event title. The row's bottom/content must also be visible. Such cut rows should appear in another overlapping section.
+- A wrapped blue race title belongs to ONE physical table row. Join its visible lines into one event title. A continuation such as "Loop" at the top of a section is NOT a new race when the beginning of the title/row is outside this section. Do not make a row out of the smaller black route subtitle.
+- If an edge is an ORIGINAL SCREENSHOT EDGE (not an internal crop boundary), apply the original screenshot's policy for a partially visible but identifiable row; do not discard it solely because the uploaded image itself was cropped.
+- A complete interior row may have individual unreadable or dashed values. Extract the row and set only the unreadable fields to null. Do not treat null DATE or null watts alone as proof that a row is a crop fragment.
+- Do not turn headers, separators, continuation lines, other columns or duplicate renderings into additional races. Return rows in top-to-bottom order.
+- If no complete eligible race rows are visible in this section, return {"races": []} in the required schema. Do not guess missing rows.'''
 
 
 def image(width=768, height=939):
@@ -69,6 +85,101 @@ class SectionTests(unittest.TestCase):
         return {'activity_id': identity, 'start_time': row['date'] + 'T' + row['start_time'] + ':00+00:00',
                 'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
                 'title': row['event'], 'match_watts': None, 'match_watts_source': None}
+
+    def test_api_receives_exact_section_prompt_and_actual_boundary_metadata(self):
+        requests = []
+        api = {'status': 'completed', 'output': [{'type': 'message', 'content': [
+            {'type': 'output_text', 'text': '{"races": []}'}]}]}
+        opener = FakeOpener(api)
+
+        def capture(request, timeout):
+            requests.append(json.loads(request.data))
+            return FakeResponse(api)
+
+        with patch.object(opener, 'open', side_effect=capture), \
+                patch('rideworks.race_results.build_opener', return_value=opener), \
+                patch('rideworks.race_results.configuration', return_value=('synthetic-key', 'gpt-6-luna', 10_000_000)):
+            identity = race.stage_import(self.store, image(height=1800), 'UTC')
+            full = race.stage_import(self.store, image(height=400), 'UTC', mode='full')
+            single = race.stage_import(self.store, image(height=400), 'UTC')
+        bounds = plan_sections(768, 1800)
+        self.assertEqual(len(bounds), 4)
+        permissive = '- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.\n'
+        common = USER_PROMPT.replace(permissive, '')
+        for request, (top, bottom) in zip(requests[:4], bounds):
+            text = request['input'][0]['content'][0]['text']
+            expected = (common + '\n\n' + SECTION_ELIGIBILITY
+                        .replace('{TOP_EDGE_TYPE}', 'original screenshot edge' if top == 0 else 'internal crop boundary')
+                        .replace('{BOTTOM_EDGE_TYPE}', 'original screenshot edge' if bottom == 1800 else 'internal crop boundary'))
+            self.assertEqual(text, expected)
+            self.assertNotIn(permissive.strip(), text)
+            self.assertEqual(request['text']['format']['schema'], race.SCHEMA)
+        self.assertEqual(requests[4]['input'][0]['content'][0]['text'], USER_PROMPT)
+        single_text = requests[5]['input'][0]['content'][0]['text']
+        self.assertIn('Top edge: original screenshot edge.', single_text)
+        self.assertIn('Bottom edge: original screenshot edge.', single_text)
+        source = race.load_import(self.store, identity)
+        self.assertEqual(source['prompt_version'], race.SECTION_PROMPT_VERSION)
+        self.assertEqual(race.load_import(self.store, single)['prompt_version'], race.SECTION_PROMPT_VERSION)
+        self.assertEqual(race.load_import(self.store, full)['prompt_version'], race.PROMPT_VERSION)
+        sections = self.store.connection.execute(
+            'SELECT top,bottom,image_height,prompt_version FROM race_import_sections WHERE import_id=? ORDER BY section_index',
+            (identity,)).fetchall()
+        self.assertEqual([(row['top'], row['bottom']) for row in sections], bounds)
+        self.assertTrue(all(row['image_height'] == 1800 and row['prompt_version'] == race.SECTION_PROMPT_VERSION
+                            for row in sections))
+        page = self.app.get('/race-results/review/' + identity)[2]
+        self.assertNotIn(b'This earlier extraction may contain incorrect values', page)
+
+    def test_wrapped_title_fragment_is_retained_and_explicitly_reconciled(self):
+        screenshot = Image.new('RGB', (768, 939), 'white')
+        draw = ImageDraw.Draw(screenshot)
+        draw.text((10, 323), '4 2024-11-08 11:33', fill='black')
+        draw.text((250, 323), 'Stage 4 Loop de', fill='blue')
+        draw.text((250, 347), 'Loop', fill='blue')
+        draw.text((10, 410), 'complete row, unreadable date', fill='black')
+        output = io.BytesIO()
+        screenshot.save(output, format='PNG')
+        bounds = plan_sections(768, 939)
+        self.assertEqual(bounds[1][0], 339)
+        first_crop = Image.open(io.BytesIO(crop_image(output.getvalue(), *bounds[0])))
+        second_crop = Image.open(io.BytesIO(crop_image(output.getvalue(), *bounds[1])))
+        self.assertIsNotNone(ImageChops.difference(first_crop.crop((245, 320, 400, 339)),
+                                                  Image.new('RGB', (155, 19), 'white')).getbbox())
+        self.assertIsNotNone(ImageChops.difference(second_crop.crop((245, 0, 400, 28)),
+                                                  Image.new('RGB', (155, 28), 'white')).getbbox())
+        complete = result(event='Stage 4 Loop de Loop')
+        unreadable = result(date=None, event='Stage 5 Brickfield')
+        fragment = result(date=None, event='Loop', avg_watts=None, race_score=None)
+        identity = self.staged([[complete, unreadable], [fragment]], output.getvalue())
+        source = race.load_import(self.store, identity)
+        observed, sections, all_complete = observations(self.store, source)
+        self.assertTrue(all_complete)
+        self.assertEqual([item['row'] for item in observed], [complete, unreadable, fragment])
+        page = self.app.get('/race-results/review/' + identity)[2]
+        self.assertIn(b'Possible section-boundary fragment', page)
+        self.assertIn(b'Same screenshot race row as observation 1', page)
+        self.assertIn(b'Loop', page)
+        corrected = dict(unreadable, date='2024-11-09')
+        activities = [self.activity(complete), self.activity(corrected)]
+        draft = [self.item(complete, activities[0]['activity_id']),
+                 self.item(unreadable, activities[1]['activity_id']),
+                 self.item(fragment, '', group='')]
+        with patch('rideworks.race_results.matching_activities', return_value=activities):
+            with self.assertRaisesRegex(race.RaceError, 'explicitly mark'):
+                race.commit_rows(self.store, identity, draft, visible_count=2, visible_confirmed=True)
+            self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
+            draft[2]['group'] = '1'
+            draft[0]['corrected'] = True
+            with self.assertRaisesRegex(race.RaceError, 'valid date'):
+                race.commit_rows(self.store, identity, draft, visible_count=2, visible_confirmed=True)
+            self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
+            draft[1]['values'] = corrected
+            self.assertEqual(race.commit_rows(self.store, identity, draft, visible_count=2, visible_confirmed=True)['added'], 2)
+        self.assertEqual([item['row'] for item in observations(self.store, source)[0]], [complete, unreadable, fragment])
+        saved = self.store.connection.execute('SELECT decisions_json FROM race_import_reconciliations WHERE import_id=?',
+                                              (identity,)).fetchone()
+        self.assertEqual(json.loads(saved[0])['groups'][0]['observations'], [1, 3])
 
     def test_plan_covers_seams_and_crop_pixels_without_counting_rows(self):
         for width, height in ((768, 939), (1000, 1800), (40, 100)):

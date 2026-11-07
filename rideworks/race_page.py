@@ -10,7 +10,7 @@ from .race_cost import estimate_cost
 from .race_identity import identity_key, possible_associations, validate_identity_choices
 from .race_matching import batch_matches
 from .race_reconcile import adjacent, observations, reconcile
-from .race_results import FIELDS, PROMPT_VERSION, RaceError, activity_candidate, matching_activities, normalize_row, result_revision, result_state, row_errors, screenshot
+from .race_results import CURRENT_PROMPT_VERSIONS, FIELDS, RaceError, activity_candidate, matching_activities, normalize_row, result_revision, result_state, row_errors, screenshot
 from .web import shell
 
 
@@ -149,11 +149,25 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     activity_by_id = {activity['activity_id']: activity for activity in activities}
     decision_by_root = {group[0]: (i, decision) for i, (group, decision) in enumerate(zip(groups, decisions))}
     group_by_member = {member: group[0] for group in groups for member in group}
+    section_members = {}
+    for index, observation in enumerate(observed):
+        section_members.setdefault(observation['section'], []).append(index)
     cards = []
     approvals_pending = False
     for index, item in enumerate(draft):
         row = item['values']
         observation = observed[index]
+        boundary_edges = []
+        if not observation['legacy']:
+            section = sections[observation['section']]
+            if section['top'] > 0 and section_members[observation['section']][0] == index:
+                boundary_edges.append('first observation / internal top edge')
+            if section['bottom'] < section['image_height'] and section_members[observation['section']][-1] == index:
+                boundary_edges.append('last observation / internal bottom edge')
+        boundary_warning = (
+            f'<p class="race-error">Possible section-boundary fragment ({esc("; ".join(boundary_edges))}). '
+            'Observation order does not prove its position; compare the source crops. A complete row can also have unreadable fields.</p>'
+            if boundary_edges else '')
         group_index, decision = decision_by_root.get(index, (None, {'activity_id': None, 'reason': '', 'candidates': []}))
         choices = decision['candidates']
         selected = decision['activity_id']
@@ -262,6 +276,7 @@ import: {esc(candidate["import_id"])}</p>{integrity}
                       if needs_correction else '')
         cards.append(f'''<fieldset class="race-review-row"><legend>Observation {index + 1} — {esc(state)}</legend>
 <p>Section {observation["section"] + 1}; original model observation: {esc(json.dumps(observation["row"], ensure_ascii=False))}</p>
+{boundary_warning}
 <details><summary>View this section</summary><img class="race-image" src="{esc(image_path)}" alt="Source section for observation {index + 1}"></details>
 {compare}
 <label>Source observation <select name="{index}.group">{group_options}</select></label>
@@ -306,7 +321,7 @@ import: {esc(candidate["import_id"])}</p>{integrity}
                    f'({esc(estimate["pricing_version"])}; standard-tier estimate, not the amount billed).</p>')
     older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect values, including watts and scores. '
                     'Check every row against the screenshot or extract it again.</p>'
-                    if source['prompt_version'] != PROMPT_VERSION else '')
+                    if source['prompt_version'] not in CURRENT_PROMPT_VERSIONS else '')
     matched = bool(groups) and not identity_error and identity_ready and all(decision['activity_id'] for decision in decisions)
     disabled = ' disabled' if not matched or approvals_pending else ''
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>

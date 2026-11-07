@@ -24,17 +24,21 @@ from .store import artifact_integrity, _sync_directory
 FIELDS = ('date', 'start_time', 'event', 'race_group', 'finish', 'avg_watts', 'race_score', 'race_score_change')
 INTEGER_FIELDS = frozenset(('finish', 'avg_watts', 'race_score', 'race_score_change'))
 PROMPT_VERSION = 'zrp-races-v3'
+SECTION_PROMPT_VERSION = 'zrp-races-section-v4'
+CURRENT_PROMPT_VERSIONS = frozenset((PROMPT_VERSION, SECTION_PROMPT_VERSION))
 SCHEMA_VERSION = 'zrp-races-v2'
 SOURCE_TYPE = 'zwift_racing_profile_screenshot'
-PROMPT = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
+PROMPT_START = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
 
 **Row identification**
 
 - Extract each visible race-result row in top-to-bottom order.
 - Only extract rows from the RACE RESULTS table.
 - The number in the RACE RESULTS heading represents the total profile results, not necessarily the number visible in the screenshot.
-- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.
-- Never invent additional rows.
+"""
+WHOLE_IMAGE_ROW_POLICY = """- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.
+"""
+PROMPT_END = """- Never invent additional rows.
 **Field extraction**
 
 For each row, extract exactly these eight fields:
@@ -55,6 +59,31 @@ For each row, extract exactly these eight fields:
 - Keep values associated with their original row, even when event titles wrap across multiple lines.
 - Never guess, infer missing information, duplicate rows or combine results from different rows.
 - Return only the JSON object required by the supplied schema, without explanations, Markdown or extra fields."""
+PROMPT = PROMPT_START + WHOLE_IMAGE_ROW_POLICY + PROMPT_END
+
+SECTION_ELIGIBILITY = '''This image is one horizontal section of a larger Zwift Racing Profile RACE RESULTS screenshot. Neighboring sections overlap. Extract rows visible in THIS section only; do not infer or reconstruct missing pixels.
+
+SECTION BOUNDARIES
+- Top edge: {TOP_EDGE_TYPE}.
+- Bottom edge: {BOTTOM_EDGE_TYPE}.
+  TOP_EDGE_TYPE / BOTTOM_EDGE_TYPE must each be "original screenshot edge" or "internal crop boundary", determined from the section's original-image pixel coordinates (not by the model).
+
+WHICH ROWS TO EXTRACT
+- At an INTERNAL CROP BOUNDARY, do not extract a race row that is cut off by that edge. A row must be visibly complete within this section, including its row beginning, the FINISH cell, the DATE/Time cell area, and the beginning of its blue event title. The row's bottom/content must also be visible. Such cut rows should appear in another overlapping section.
+- A wrapped blue race title belongs to ONE physical table row. Join its visible lines into one event title. A continuation such as "Loop" at the top of a section is NOT a new race when the beginning of the title/row is outside this section. Do not make a row out of the smaller black route subtitle.
+- If an edge is an ORIGINAL SCREENSHOT EDGE (not an internal crop boundary), apply the original screenshot's policy for a partially visible but identifiable row; do not discard it solely because the uploaded image itself was cropped.
+- A complete interior row may have individual unreadable or dashed values. Extract the row and set only the unreadable fields to null. Do not treat null DATE or null watts alone as proof that a row is a crop fragment.
+- Do not turn headers, separators, continuation lines, other columns or duplicate renderings into additional races. Return rows in top-to-bottom order.
+- If no complete eligible race rows are visible in this section, return {"races": []} in the required schema. Do not guess missing rows.'''
+
+
+def section_prompt(top, bottom, image_height):
+    top_edge = 'original screenshot edge' if top == 0 else 'internal crop boundary'
+    bottom_edge = 'original screenshot edge' if bottom == image_height else 'internal crop boundary'
+    eligibility = SECTION_ELIGIBILITY.replace('{TOP_EDGE_TYPE}', top_edge).replace('{BOTTOM_EDGE_TYPE}', bottom_edge)
+    return PROMPT_START + PROMPT_END + '\n\n' + eligibility
+
+
 SCHEMA = {
     'type': 'object', 'additionalProperties': False, 'required': ['races'],
     'properties': {'races': {
@@ -208,13 +237,13 @@ def api_usage(data):
     return cleaned
 
 
-def extract(payload, image_type, key, model, *, opener=None):
+def extract(payload, image_type, key, model, prompt=PROMPT, *, opener=None):
     if not key:
         raise RaceError('Configure OPENAI_API_KEY locally before extracting a screenshot.')
     request_data = {
         'model': model, 'store': False, 'service_tier': 'default',
         'input': [{'role': 'user', 'content': [
-            {'type': 'input_text', 'text': PROMPT},
+            {'type': 'input_text', 'text': prompt},
             {'type': 'input_image', 'image_url': f'data:{image_type};base64,{base64.b64encode(payload).decode("ascii")}',
              'detail': 'high'},
         ]}],
@@ -316,17 +345,18 @@ def stage_import(store, payload, timezone_name, *, extractor=None, mode='section
         raise RaceError('Choose a valid screenshot extraction mode.')
     width, height = image_dimensions(payload)
     bounds = plan_sections(width, height) if mode == 'sectioned' else [(0, height)]
+    prompt_version = SECTION_PROMPT_VERSION if mode == 'sectioned' else PROMPT_VERSION
     digest, path = archive_image(store, payload, suffix)
     identity = str(uuid4())
     with store._transaction(write=True):
         store.connection.execute('INSERT INTO race_imports VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (identity, SOURCE_TYPE, digest, len(payload), image_type, path, datetime.now(timezone.utc).isoformat(),
-             timezone_name, model, PROMPT_VERSION, SCHEMA_VERSION, '[]', None))
+             timezone_name, model, prompt_version, SCHEMA_VERSION, '[]', None))
         for index, (top, bottom) in enumerate(bounds):
             store.connection.execute('''INSERT INTO race_import_sections
                 (import_id,section_index,top,bottom,width,image_height,status,model,prompt_version,schema_version)
                 VALUES (?,?,?,?,?,?,'planned',?,?,?)''',
-                (identity, index, top, bottom, width, height, model, PROMPT_VERSION, SCHEMA_VERSION))
+                (identity, index, top, bottom, width, height, model, prompt_version, SCHEMA_VERSION))
     all_rows = []
     for index, (top, bottom) in enumerate(bounds):
         with store._transaction(write=True):
@@ -334,7 +364,8 @@ def stage_import(store, payload, timezone_name, *, extractor=None, mode='section
                                      ('running', identity, index))
         try:
             crop = crop_image(payload, top, bottom)
-            rows, usage = (extractor or extract)(crop, 'image/png', key, model)
+            prompt = section_prompt(top, bottom, height) if mode == 'sectioned' else PROMPT
+            rows, usage = (extractor or extract)(crop, 'image/png', key, model, prompt)
             try:
                 validate_shape({'races': rows})
             except RaceError as exc:

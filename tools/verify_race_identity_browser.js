@@ -46,6 +46,7 @@ async page => {
   await reconcile();
   check(await page.locator('.race-identity-card').count() === 0, 'removed prior link no longer blocks');
   await page.locator('input[name="0.replace"]').check();
+  await page.locator('input[name="verify.1.2"]').check();
   await page.locator('input[name=list_acknowledged]').check();
   await page.locator('button[value=confirm]').click();
   check((await page.locator('main').innerText()).includes('Added 2'), 'freshly revalidated full batch saved');

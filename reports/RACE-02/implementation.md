@@ -197,19 +197,34 @@ pixel-derived row ownership.
 - Attempt-level usage and request IDs are retained where available; unknown
   usage yields a partial/unavailable estimate. The implementation is not
   approved for real screenshot imports.
+- Prior-association review no longer treats a shared image hash alone as
+  evidence of a shared race. Candidates require defensible same-source
+  provenance, matching retained source observations or unique source title and
+  time, or nearby date/time with distinctive event wording. A candidate is not
+  automatically identified as the same race merely by its image or matching
+  text; ambiguous candidates still require a decision. Evidence is bounded:
+  missing provenance and materially different OCR can conceal a relationship,
+  while recurring similar races can still need review.
+- For a same-race overlap with conflicting extracted fields, the exception card
+  displays both raw values, permits editing the final list row, and requires a
+  separate screenshot verification. The server binds that verification to the
+  source observations, pair, grouping choices, final values and timezone and
+  checks it again during the atomic commit. Raw source observations remain.
 
 ## Verification
 
-- `.venv/bin/python -m unittest discover -s tests` — **625 tests passed** using
+- `.venv/bin/python -m unittest discover -s tests -q` — **629 tests passed** using
   synthetic data, including migration, rollback, FIT/analytics and race tests.
-- `PYTHONPATH=tests .venv/bin/python -m unittest test_race_review_simplified
-  test_race_sections test_race_results test_race_matching test_race_cost
-  test_race_identity` — **65 tests passed**, including the B.9 identity regressions.
-- Browser verification on four disposable mock-only scenarios: **14 checks**
+- `PYTHONPATH=tests .venv/bin/python -m unittest -q test_race_identity
+  test_race_review_simplified test_race_sections test_race_results` — **61 tests
+  passed**. They include 17- and 33-race same-image reimports, corrected values,
+  a prior wrong Activity attachment, recurring races, and value-bound pair
+  verification for conflicting score, signed change, date and watts.
+- Browser verification on four disposable mock-only scenarios: **21 checks**
   for extraction/reconciliation, matching, cost, Activities columns and
   removal confirmation; **10 checks** for same/different identity decisions,
   source comparison, retained-result protection, separate removal and revalidation;
-  **9 checks** for the seam fragment and missing-date block; **15 checks** for
+  **10 checks** for the seam fragment and missing-date block; **15 checks** for
   the 17-race list, one overlap decision, acknowledgment, matching and mobile layout.
   Start the fixtures with `.venv/bin/python tools/preview_race_results.py
   --data-dir <new-empty-directory> --port <port>` and add `--identity-case` or

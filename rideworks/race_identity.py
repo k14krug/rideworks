@@ -1,11 +1,12 @@
 """Conservative, explicit cross-import source-race identity review."""
 
 from datetime import date, datetime, timedelta
+from collections import Counter
 import hashlib
 import json
 
 from .race_matching import distinctive_words
-from .race_results import RaceError, result_revision, screenshot
+from .race_results import RaceError, normalize_row, result_revision, screenshot
 
 
 MAX_IDENTITY_PAIRS = 400
@@ -56,6 +57,14 @@ def _nearby(row, previous):
             and bool(distinctive_words(row['event']) & distinctive_words(previous['event'])))
 
 
+def _source_signature(row):
+    row = normalize_row(row)
+    event, time = row.get('event'), row.get('start_time')
+    if not isinstance(event, str) or not time or not distinctive_words(event):
+        return None
+    return ' '.join(event.casefold().split()), time
+
+
 def possible_associations(store, source, groups, rows, decisions, timezone_name, visible_count):
     """Return possible prior links for each matched group, without asserting identity."""
     days = set()
@@ -80,6 +89,8 @@ def possible_associations(store, source, groups, rows, decisions, timezone_name,
         SELECT section_index, top, bottom, width, image_height, status, output_json
         FROM race_import_sections WHERE import_id=? ORDER BY section_index''', (source['import_id'],))]
     prior = {}
+    source_rows = json.loads(source['rows_json'])
+    source_signatures = Counter(_source_signature(item) for item in source_rows)
     result = [[] for _ in rows]
     for index, (group, row, decision) in enumerate(zip(groups, rows, decisions)):
         if not decision['activity_id']:
@@ -89,8 +100,6 @@ def possible_associations(store, source, groups, rows, decisions, timezone_name,
                 continue
             previous = json.loads(saved['values_json'])
             same_image = saved['image_sha256'] == source['image_sha256']
-            if not same_image and not _nearby(row, previous):
-                continue
             if saved['activity_id'] not in prior:
                 prior[saved['activity_id']] = _prior_groups(store, saved)
             old_groups, old_single = prior[saved['activity_id']]
@@ -100,6 +109,21 @@ def possible_associations(store, source, groups, rows, decisions, timezone_name,
                  and all(set(members) & set(old_group) for old_group in old_groups))
                 or (visible_count == 1 and old_single and len(old_groups) == 1)
             )
+            matching_source = False
+            if same_image and old_groups:
+                old_rows = json.loads(saved['source_rows_json'])
+                old_members = {member for old_group in old_groups for member in old_group}
+                if any(type(member) is not int or member < 1 or member > len(old_rows) for member in old_members):
+                    raise RaceError('Prior source-row provenance is inconsistent. Identity review is blocked.')
+                old_signatures = Counter(_source_signature(item) for item in old_rows)
+                matching_source = any(
+                    normalize_row(source_rows[current]) == normalize_row(old_rows[old - 1])
+                    or ((signature := _source_signature(source_rows[current])) is not None
+                        and signature == _source_signature(old_rows[old - 1])
+                        and source_signatures[signature] == old_signatures[signature] == 1)
+                    for current in group for old in old_members)
+            if not proven_same and not matching_source and not _nearby(row, previous):
+                continue
             if saved['import_id'] not in available:
                 available[saved['import_id']] = _source_available(store, saved['import_id'])
             old_revision = result_revision(saved, None)

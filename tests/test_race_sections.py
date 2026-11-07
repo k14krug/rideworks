@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -290,6 +291,8 @@ class SectionTests(unittest.TestCase):
         self.assertIn(b'The extractions disagree', page)
         self.assertIn(b'value="confirm" disabled', page)
         self.assertIn(b'I checked these races against my screenshot', page)
+        verification = re.search(rb'name="verify\.1\.2" value="([0-9a-f]{64})"', page)
+        self.assertIsNotNone(verification)
         fields['operation'] = 'confirm'
         for index, activity in zip((0, 1, 3), activities):
             fields[f'{index}.shown_activity'] = activity['activity_id']
@@ -297,6 +300,8 @@ class SectionTests(unittest.TestCase):
             self.assertEqual(self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
             self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
             fields['list_acknowledged'] = 'yes'
+            self.assertEqual(self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
+            fields['verify.1.2'] = verification.group(1).decode()
             status, _, page = self.app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
         self.assertEqual(status, 200)
         self.assertIn(b'Added 3', page)

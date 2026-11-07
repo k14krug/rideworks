@@ -525,10 +525,10 @@ _DEFAULT_ZONE = object()
 
 
 def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False,
-                overlap_choices=None, list_acknowledged=False):
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None):
     from .race_identity import possible_associations, validate_identity_choices
     from .race_matching import batch_matches
-    from .race_reconcile import apply_overlap_choices, observations, reconcile
+    from .race_reconcile import apply_overlap_choices, observations, overlap_conflicts, reconcile
 
     counts = {'added': 0, 'unchanged': 0, 'replaced': 0, 'skipped': 0}
     with store._transaction(write=True):
@@ -541,15 +541,27 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
             raise RaceError('Source screenshot is missing or failed integrity verification.') from exc
         timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
         source_rows, sections, complete = observations(store, source)
+        verified_conflicts = []
         if overlap_choices is not None:
             rows, planned_groups, _ = apply_overlap_choices(source_rows, sections, rows, overlap_choices)
             visible_count = len(planned_groups)
             visible_confirmed = list_acknowledged
             if not list_acknowledged:
                 raise RaceError('Check the race list against your screenshot before importing.')
-            for group in planned_groups:
-                if len(group) > 1:
-                    rows[group[0]]['corrected'] = list_acknowledged
+            conflicts = overlap_conflicts(source, source_rows, planned_groups, rows, overlap_choices, timezone_name)
+            submitted = conflict_verifications or {}
+            for item in rows:
+                item['corrected'] = False
+            if set(submitted) - {conflict['pair'] for conflict in conflicts}:
+                raise RaceError('Overlap verification changed. Review the conflicting values again.')
+            for conflict in conflicts:
+                if submitted.get(conflict['pair']) != conflict['token']:
+                    raise RaceError('Verify each conflicting overlap against the original screenshot.')
+                left, right = conflict['pair']
+                verified_conflicts.append({'observations': [left + 1, right + 1],
+                                           'fields': conflict['fields'], 'token': conflict['token']})
+            for conflict in conflicts:
+                rows[conflict['group'][0]]['corrected'] = True
         groups = reconcile(source_rows, sections, complete, rows, visible_count, visible_confirmed)
         for item in rows:
             if item['action'] != 'confirm':
@@ -605,6 +617,7 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
             provenance['overlap_decisions'] = [
                 {'observations': [left + 1, right + 1], 'decision': choice}
                 for (left, right), choice in sorted(overlap_choices.items())]
+            provenance['overlap_verifications'] = verified_conflicts
         store.connection.execute('INSERT INTO race_import_reconciliations VALUES (?,?,?,?,?)',
                                  (str(uuid4()), import_id, _now_iso(), visible_count,
                                   json.dumps(provenance, ensure_ascii=False)))

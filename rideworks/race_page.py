@@ -9,7 +9,7 @@ from .history import presentation
 from .race_cost import estimate_cost
 from .race_identity import identity_key, possible_associations, validate_identity_choices
 from .race_matching import batch_matches
-from .race_reconcile import apply_overlap_choices, observations, overlap_candidates
+from .race_reconcile import apply_overlap_choices, observations, overlap_candidates, overlap_conflicts
 from .race_results import CURRENT_PROMPT_VERSIONS, FIELDS, RaceError, activity_candidate, matching_activities, normalize_row, result_revision, result_state, row_errors, screenshot
 from .web import shell
 
@@ -121,11 +121,12 @@ No race results are saved until you review and confirm them.</p>
 
 
 def review_page(store, source, nonce, *, draft=None, timezone_name=None, message='',
-                overlap_choices=None, list_acknowledged=False):
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None):
     observed, sections, complete = observations(store, source)
     if draft is None:
         draft = [{'values': normalize_row(item['row']), 'replace': False} for item in observed]
     overlap_choices = overlap_choices or {}
+    conflict_verifications = conflict_verifications or {}
     timezone_name = source['display_timezone'] if timezone_name is None else timezone_name
     try:
         draft, groups, unresolved = apply_overlap_choices(observed, sections, draft, overlap_choices,
@@ -136,6 +137,9 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         pairs = []
         unresolved = []
         message = message or str(exc)
+        overlap_choices = {}
+    conflicts_by_pair = {conflict['pair']: conflict for conflict in
+                         overlap_conflicts(source, observed, groups, draft, overlap_choices, timezone_name)}
     final_rows = [draft[group[0]]['values'] for group in groups]
     activities = matching_activities(store)
     decisions = batch_matches(final_rows, timezone_name, activities)
@@ -175,6 +179,9 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             state = 'Needs correction'
         elif not selected:
             state = 'Needs correction'
+        elif any(index in conflict['group'] and conflict_verifications.get(pair) != conflict['token']
+                 for pair, conflict in conflicts_by_pair.items()):
+            state = 'Needs attention'
         elif group_index is not None and any(
                 candidate['proven_same'] or not candidate['source_available']
                 or item.get('identity', {}).get(identity_key(candidate['activity_id'])) != 'different:' + candidate['token']
@@ -293,6 +300,9 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
                  'sections': sections, 'original_observations': [item['row'] for item in observed],
                  'usage': usage}
     pair_cards = []
+    labels = {'date': 'Date', 'start_time': 'Start time', 'event': 'Event', 'race_group': 'Race group',
+              'finish': 'Finish', 'avg_watts': 'Race avg W', 'race_score': 'Racing Score',
+              'race_score_change': 'Score change'}
     for left, right in pairs:
         first, second = observed[left], observed[right]
         choice = overlap_choices.get((left, right), '')
@@ -300,12 +310,26 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             f'<div><p>{esc(value_text(item["row"].get("date")))} · {esc(value_text(item["row"].get("event")))}</p>'
             f'<img src="/race-results/section/{esc(source["import_id"])}/{item["section"]}" '
             f'alt="Screenshot crop for possible duplicate"></div>' for item in (first, second))
+        conflict = conflicts_by_pair.get((left, right))
+        verification = ''
+        if conflict:
+            differences = ''.join(
+                f'<li>{esc(labels[field])}: {esc(value_text(first["row"].get(field)))} / '
+                f'{esc(value_text(second["row"].get(field)))}</li>' for field in conflict['fields'])
+            checked = conflict_verifications.get((left, right)) == conflict['token']
+            if not checked:
+                approvals_pending = True
+            verification = (f'<div class="race-conflict"><p>These extractions disagree:</p><ul>{differences}</ul>'
+                            '<p>Edit the final race values in the list if needed, then review changes.</p>'
+                            f'<label><input type="checkbox" class="race-approval race-conflict-verification" '
+                            f'name="verify.{left}.{right}" value="{conflict["token"]}"{" checked" if checked else ""}> '
+                            'I checked these conflicting values against the original screenshot.</label></div>')
         pair_cards.append(f'''<div class="race-overlap">
 <p>These two extractions may be the same race: {esc(value_text(first["row"].get("date")))} · {esc(value_text(first["row"].get("event")))}
  / {esc(value_text(second["row"].get("date")))} · {esc(value_text(second["row"].get("event")))}.</p>
 <label><input type="radio" name="overlap.{left}.{right}" value="same"{" checked" if choice == "same" else ""}> Same race</label>
 <label><input type="radio" name="overlap.{left}.{right}" value="different"{" checked" if choice == "different" else ""}> Two races</label>
-<details><summary>Compare screenshot crops</summary><div class="race-crop-comparison">{comparison}</div></details></div>''')
+<details><summary>Compare screenshot crops</summary><div class="race-crop-comparison">{comparison}</div></details>{verification}</div>''')
     older_prompt = ('<p class="race-error">This earlier extraction may contain incorrect values, including watts and scores. '
                     'Check every row against the screenshot or extract it again.</p>'
                     if source['prompt_version'] not in CURRENT_PROMPT_VERSIONS else '')

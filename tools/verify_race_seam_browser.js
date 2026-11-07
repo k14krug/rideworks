@@ -33,6 +33,8 @@ async page => {
   await cards.nth(1).getByText('Edit', {exact: true}).click();
   await page.locator('input[name="1.date"]').fill('2024-11-08');
   await page.getByRole('button', {name: 'Review changes'}).click();
+  check((await page.locator('.race-conflict').innerText()).includes('Event:'), 'fragment title disagreement is visible');
+  await page.locator('input[name="verify.0.2"]').check();
   await page.locator('input[name=list_acknowledged]').check();
   check(await page.locator('button[value=confirm]').isEnabled(), 'explicit acknowledgment allows matched batch');
   await page.setViewportSize({width: 390, height: 900});

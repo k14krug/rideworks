@@ -1,6 +1,7 @@
 """Synthetic cross-import identity and atomic correction tests."""
 
 import json
+from datetime import date, timedelta
 from pathlib import Path
 import tempfile
 import unittest
@@ -62,6 +63,39 @@ class IdentityTests(unittest.TestCase):
     def commit(self, identity, items, activities):
         with patch('rideworks.race_results.matching_activities', return_value=activities):
             return race.commit_rows(self.store, identity, items, visible_count=len(items), visible_confirmed=True)
+
+    def test_large_same_image_reimport_and_wrong_old_attachment(self):
+        for size in (17, 33):
+            with self.subTest(size=size), tempfile.TemporaryDirectory() as temp, Store(Path(temp)) as store:
+                self.store = store
+                rows = [result(date=(date(2024, 1, 1) + timedelta(days=7 * i)).isoformat(),
+                               event=f'Route {i} mountain') for i in range(size)]
+                activities = [self.activity(row) for row in rows]
+                old_import = self.stage(rows)
+                self.assertEqual(self.commit(old_import, [self.item(row, activity)
+                                 for row, activity in zip(rows, activities)], activities)['added'], size)
+                new_import = self.stage(rows)
+                self.assertEqual(sum(map(len, self.candidates(new_import, rows, activities))), 0)
+                items = [self.item(row, activity, shown_revision=race.result_revision(
+                    *race.result_state(store, activity['activity_id'])))
+                    for row, activity in zip(rows, activities)]
+                self.assertEqual(self.commit(new_import, items, activities)['unchanged'], size)
+                changed = dict(rows[0], avg_watts=999)
+                items[0] = self.item(changed, activities[0], shown_revision=race.result_revision(
+                    *race.result_state(store, activities[0]['activity_id'])), replace=True)
+                self.assertEqual(self.commit(new_import, items, activities)['replaced'], 1)
+
+                wrong = dict(rows[1], date=(date.fromisoformat(rows[1]['date']) - timedelta(days=2)).isoformat())
+                wrong_activity = self.activity(wrong)
+                race.remove_result(store, activities[1]['activity_id'],
+                                   race.result_revision(*race.result_state(store, activities[1]['activity_id'])))
+                store.connection.execute('INSERT INTO race_results VALUES (?,?,?,?,?)',
+                    (wrong_activity['activity_id'], old_import, json.dumps(wrong), 'UTC', 'old-wrong'))
+                candidates = self.candidates(new_import, rows, activities)
+                self.assertEqual([candidate['activity_id'] for candidate in candidates[1]],
+                                 [wrong_activity['activity_id']])
+                with self.assertRaisesRegex(race.RaceError, 'unresolved'):
+                    self.commit(new_import, items, activities)
 
     def test_same_screenshot_single_reviewed_row_requires_separate_removal(self):
         old, corrected = result(date='2024-11-06'), result(date='2024-11-08')
@@ -129,7 +163,7 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(decision['new_observations'], [1])
         self.assertEqual(decision['decision'], 'different')
 
-    def test_candidate_window_and_same_image_ignore_ocr_date(self):
+    def test_candidate_window_filters_unrelated_same_image_rows(self):
         current = result(date='2024-11-08')
         new_import = self.stage([current], image(height=500))
         new_ride = self.activity(current)
@@ -142,8 +176,35 @@ class IdentityTests(unittest.TestCase):
             identity, activity = self.stage([row], payload), self.activity(row)
             self.prior(identity, row, activity)
         candidates = self.candidates(new_import, [current], [new_ride])[0]
-        self.assertEqual({candidate['values']['date'] for candidate in candidates}, {'2024-11-05', '2023-01-01'})
-        self.assertEqual(sum(candidate['same_image'] for candidate in candidates), 1)
+        self.assertEqual({candidate['values']['date'] for candidate in candidates}, {'2024-11-05'})
+
+    def test_same_image_matching_raw_source_keeps_distant_wrong_date_candidate(self):
+        raw = result(date='2024-11-08')
+        other = result(date='2024-12-01', event='Stage 3 Lakeview')
+        old_import, new_import = self.stage([raw, other]), self.stage([raw, other])
+        wrong = dict(raw, date='2023-01-01')
+        old_ride, new_ride, other_ride = self.activity(wrong), self.activity(raw), self.activity(other)
+        self.prior(old_import, wrong, old_ride, count=2, members=(1,))
+        candidate = self.candidates(new_import, [raw, other], [new_ride, other_ride])[0][0]
+        self.assertTrue(candidate['same_image'])
+        self.assertFalse(candidate['proven_same'])
+        with self.assertRaisesRegex(race.RaceError, 'unresolved'):
+            self.commit(new_import, [self.item(raw, new_ride), self.item(other, other_ride)],
+                        [new_ride, other_ride])
+
+    def test_same_image_unique_title_time_preserves_changed_ocr_date_candidate(self):
+        old = result(date='2023-01-01', race_score=123)
+        corrected = result(date='2024-11-08', race_score=456)
+        other = result(date='2024-12-01', event='Stage 3 Lakeview')
+        old_import, new_import = self.stage([old, other]), self.stage([corrected, other])
+        old_ride, new_ride, other_ride = self.activity(old), self.activity(corrected), self.activity(other)
+        self.prior(old_import, old, old_ride, count=2, members=(1,))
+        candidate = self.candidates(new_import, [corrected, other], [new_ride, other_ride])[0][0]
+        self.assertTrue(candidate['same_image'])
+        self.assertFalse(candidate['proven_same'])
+        with self.assertRaisesRegex(race.RaceError, 'unresolved'):
+            self.commit(new_import, [self.item(corrected, new_ride), self.item(other, other_ride)],
+                        [new_ride, other_ride])
 
     def test_same_hash_multiple_rows_and_legacy_provenance_are_not_assumed_same(self):
         old, new = result(date='2024-11-06'), result(date='2024-11-08')

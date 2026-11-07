@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import re
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -50,6 +51,57 @@ class OverlapReviewTests(unittest.TestCase):
 
 
 class RaceListIntegrationTests(unittest.TestCase):
+    def test_conflicting_overlap_needs_value_bound_pair_verification(self):
+        for field, changed in (('race_score', 199), ('race_score_change', -4),
+                               ('date', '2026-09-26'), ('avg_watts', 199)):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp, Store(Path(temp)) as store:
+                app = Application(Path(temp))
+                app.settings.port = 8766
+                first = result(date='2026-09-27', event='Stage 3 Electric Break',
+                               race_score=184, race_score_change=2, avg_watts=175)
+                second = dict(first, **{field: changed})
+                outputs = iter([[first], [second]])
+                with patch('rideworks.race_results.configuration', return_value=('', 'gpt-6-luna', 10_000_000)):
+                    identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: (next(outputs), None))
+                activity_id = str(uuid4())
+                store.connection.execute('INSERT INTO activities VALUES (?,?)', (activity_id, 'synthetic'))
+                activities = [{'activity_id': activity_id, 'start_time': first['date'] + 'T' + first['start_time'] + ':00+00:00',
+                               'absolute_time': True, 'activity_type': 'Virtual Ride', 'subtype': None,
+                               'title': first['event'], 'match_watts': None, 'match_watts_source': None}]
+                fields = {'nonce': app.settings.nonce, 'timezone': 'UTC', 'operation': 'confirm',
+                          'list_acknowledged': 'yes', 'overlap.0.1': 'same'}
+                for index, row in enumerate((first, second)):
+                    fields.update({f'{index}.{key}': '' if value is None else str(value) for key, value in row.items()})
+                    fields[f'{index}.shown_activity'] = activity_id if index == 0 else ''
+                    fields[f'{index}.shown_revision'] = 'new'
+                route = '/race-results/review/' + identity
+                with patch('rideworks.race_page.matching_activities', return_value=activities), \
+                        patch('rideworks.race_results.matching_activities', return_value=activities):
+                    status, _, page = app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
+                    self.assertEqual(status, 400)
+                    self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
+                    fields['operation'] = 'preview'
+                    status, _, page = app.post(route, urlencode(fields).encode(), 'http://localhost:8766')
+                    self.assertEqual(status, 200)
+                    self.assertIn(str(first[field]).encode(), page)
+                    self.assertIn(str(second[field]).encode(), page)
+                    token = re.search(rb'name="verify\.0\.1" value="([0-9a-f]{64})"', page)
+                    self.assertIsNotNone(token)
+                    fields['verify.0.1'] = token.group(1).decode()
+                    fields['operation'] = 'confirm'
+                    fields['overlap.0.1'] = 'different'
+                    self.assertEqual(app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
+                    fields['overlap.0.1'] = 'same'
+                    fields['0.avg_watts'] = '201'
+                    self.assertEqual(app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
+                    self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
+                    fields['0.avg_watts'] = str(first['avg_watts'])
+                    self.assertEqual(app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 200)
+                self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 1)
+                self.assertEqual(json.loads(race.load_import(store, identity)['rows_json']), [first, second])
+                record = store.connection.execute('SELECT decisions_json FROM race_import_reconciliations').fetchone()
+                self.assertEqual(json.loads(record[0])['overlap_verifications'][0]['observations'], [1, 2])
+
     def test_seventeen_races_one_overlap_acknowledgment_and_atomic_commit(self):
         with tempfile.TemporaryDirectory() as temp, Store(Path(temp)) as store:
             app = Application(Path(temp))

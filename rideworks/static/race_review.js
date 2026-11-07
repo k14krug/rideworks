@@ -13,6 +13,7 @@
     if (!event.target.classList.contains('race-approval')) {
       dirty = true;
       form.querySelector('input[name="list_acknowledged"]').checked = false;
+      form.querySelectorAll('.race-conflict-verification').forEach(input => { input.checked = false; });
     }
     update();
   });

@@ -1,9 +1,10 @@
 """Explicit source-observation reconciliation, independent of activity matching."""
 
 import json
+import hashlib
 import re
 
-from .race_results import RaceError, normalize_row, validate_shape
+from .race_results import FIELDS, RaceError, normalize_row, validate_shape
 
 
 def observations(store, source):
@@ -111,6 +112,27 @@ def apply_overlap_choices(source_observations, sections, draft, choices, *, requ
                 raise RaceError('Overlap decisions cannot be reconciled in screenshot order.')
             prepared[index]['group'] = str(targets[-1] + 1)
     return prepared, groups, unresolved
+
+
+def overlap_conflicts(source, source_observations, groups, draft, choices, timezone_name):
+    """Bind each conflicting same-race decision to its source, grouping and final values."""
+    roots = {member: group for group in groups for member in group}
+    conflicts = []
+    for (left, right), choice in sorted(choices.items()):
+        if choice != 'same':
+            continue
+        first, second = source_observations[left]['row'], source_observations[right]['row']
+        fields = [field for field in FIELDS if first.get(field) != second.get(field)]
+        if not fields:
+            continue
+        group = roots[left]
+        relevant_choices = [(a, b, value) for (a, b), value in sorted(choices.items())
+                            if a in group or b in group]
+        binding = [source['import_id'], source['image_sha256'], left, right, first, second,
+                   group, relevant_choices, draft[group[0]]['values'], timezone_name]
+        token = hashlib.sha256(json.dumps(binding, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        conflicts.append({'pair': (left, right), 'group': group, 'fields': fields, 'token': token})
+    return conflicts
 
 
 def reconcile(source_observations, sections, complete, draft, visible_count, confirmed, *, require_corrections=True):

@@ -29,7 +29,7 @@ def plan_sections(width, height):
             raise RaceError('The screenshot needs too many sections. Try a shorter screenshot.')
         if bottom == height:
             return result
-        top = min(bottom - SECTION_OVERLAP, height - SECTION_HEIGHT)
+        top = bottom - SECTION_OVERLAP
 
 
 def crop_image(payload, top, bottom):

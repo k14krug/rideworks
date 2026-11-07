@@ -2,6 +2,13 @@
 
 ## Status
 
+The current review package is [Full-image import and explicit review approvals](full-image-review.md).
+The Owner's live comparison established the full-image default and authorized a
+bounded review/matching correction. The implementation is awaiting renewed
+HARD — Analyst Gate 1; Owner Gate 2 remains outstanding. The investigation below
+records the earlier section-based design and evidence, superseded where the
+current package and newer Owner instructions say otherwise.
+
 The Analyst withdrew the source-pixel row-ownership requirement and authorized
 deterministic overlapping tiles and explicit Owner observation reconciliation.
 The subsequent cross-import identity blocker was addressed under the revised

@@ -74,7 +74,7 @@ class SectionTests(unittest.TestCase):
     def staged(self, outputs, payload=None):
         iterator = iter(outputs)
         return race.stage_import(self.store, payload or image(), 'UTC',
-                                 extractor=lambda *_: (next(iterator), usage()))
+                                 extractor=lambda *_: (next(iterator), usage()), mode='sectioned')
 
     def item(self, row, identity, *, group='different', corrected=False):
         return {'values': dict(row), 'group': group, 'corrected': corrected, 'action': 'confirm',
@@ -100,9 +100,9 @@ class SectionTests(unittest.TestCase):
         with patch.object(opener, 'open', side_effect=capture), \
                 patch('rideworks.race_results.build_opener', return_value=opener), \
                 patch('rideworks.race_results.configuration', return_value=('synthetic-key', 'gpt-6-luna', 10_000_000)):
-            identity = race.stage_import(self.store, image(height=1800), 'UTC')
+            identity = race.stage_import(self.store, image(height=1800), 'UTC', mode='sectioned')
             full = race.stage_import(self.store, image(height=400), 'UTC', mode='full')
-            single = race.stage_import(self.store, image(height=400), 'UTC')
+            single = race.stage_import(self.store, image(height=400), 'UTC', mode='sectioned')
         bounds = plan_sections(768, 1800)
         self.assertEqual(len(bounds), 4)
         permissive = '- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.\n'
@@ -135,17 +135,17 @@ class SectionTests(unittest.TestCase):
     def test_wrapped_title_fragment_is_retained_and_explicitly_reconciled(self):
         screenshot = Image.new('RGB', (768, 939), 'white')
         draw = ImageDraw.Draw(screenshot)
-        draw.text((10, 323), '4 2024-11-08 11:33', fill='black')
-        draw.text((250, 323), 'Stage 4 Loop de', fill='blue')
-        draw.text((250, 347), 'Loop', fill='blue')
-        draw.text((10, 410), 'complete row, unreadable date', fill='black')
+        draw.text((10, 404), '4 2024-11-08 11:33', fill='black')
+        draw.text((250, 404), 'Stage 4 Loop de', fill='blue')
+        draw.text((250, 428), 'Loop', fill='blue')
+        draw.text((10, 491), 'complete row, unreadable date', fill='black')
         output = io.BytesIO()
         screenshot.save(output, format='PNG')
         bounds = plan_sections(768, 939)
-        self.assertEqual(bounds[1][0], 339)
+        self.assertEqual(bounds[1][0], 420)
         first_crop = Image.open(io.BytesIO(crop_image(output.getvalue(), *bounds[0])))
         second_crop = Image.open(io.BytesIO(crop_image(output.getvalue(), *bounds[1])))
-        self.assertIsNotNone(ImageChops.difference(first_crop.crop((245, 320, 400, 339)),
+        self.assertIsNotNone(ImageChops.difference(first_crop.crop((245, 401, 400, 420)),
                                                   Image.new('RGB', (155, 19), 'white')).getbbox())
         self.assertIsNotNone(ImageChops.difference(second_crop.crop((245, 0, 400, 28)),
                                                   Image.new('RGB', (155, 28), 'white')).getbbox())
@@ -172,7 +172,7 @@ class SectionTests(unittest.TestCase):
             self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
             draft[2]['group'] = '1'
             draft[0]['corrected'] = True
-            with self.assertRaisesRegex(race.RaceError, 'valid date'):
+            with self.assertRaisesRegex(race.RaceError, 'Check the date'):
                 race.commit_rows(self.store, identity, draft, visible_count=2, visible_confirmed=True)
             self.assertEqual(self.store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)
             draft[1]['values'] = corrected
@@ -183,12 +183,12 @@ class SectionTests(unittest.TestCase):
         self.assertEqual(json.loads(saved[0])['groups'][0]['observations'], [1, 3])
 
     def test_plan_covers_seams_and_crop_pixels_without_counting_rows(self):
-        for width, height in ((768, 939), (1000, 1800), (40, 100)):
+        for width, height in ((768, 939), (1000, 1800), (40, 100), (1525, 1864), (768, 601), (768, 1021)):
             bounds = plan_sections(width, height)
             self.assertEqual(bounds[0][0], 0)
             self.assertEqual(bounds[-1][1], height)
             for left, right in zip(bounds, bounds[1:]):
-                self.assertGreaterEqual(left[1] - right[0], 180)
+                self.assertEqual(left[1] - right[0], 180)
                 self.assertLessEqual(left[1] - left[0], 600)
         payload = image()
         sections = plan_sections(768, 939)
@@ -338,7 +338,7 @@ class SectionTests(unittest.TestCase):
                 return [result()], usage()
             raise race.RaceError('Synthetic failed section.', request_id='request-123')
 
-        identity = race.stage_import(self.store, image(height=1800), 'UTC', extractor=extractor)
+        identity = race.stage_import(self.store, image(height=1800), 'UTC', extractor=extractor, mode='sectioned')
         observed, sections, complete = observations(self.store, race.load_import(self.store, identity))
         self.assertFalse(complete)
         self.assertEqual([s['status'] for s in sections], ['completed', 'failed', 'planned', 'planned'])

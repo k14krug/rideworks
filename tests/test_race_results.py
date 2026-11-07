@@ -37,7 +37,7 @@ USER_PROMPT = """Read the attached Zwift Racing Profile screenshot and extract r
 For each row, extract exactly these eight fields:
 
 - `date`: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
-- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH. Do not infer a timezone.
+- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH:MM. Do not infer a timezone.
 - `event`: Extract the blue event title, joining wrapped lines with spaces. Do not include the smaller route name below it. If the title is truncated with an ellipsis (...), preserve the visible text and ellipsis exactly. Never invent missing title text.
 - `race_group`: Extract the gray race-group badge, preserving the displayed range as a string (for example, "0-210", "160-270", or "0-275").
 - `finish`: Extract the integer finishing position from the FINISH column.
@@ -580,7 +580,7 @@ class RaceTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn(b'2024-11-09 11:33', page)
         self.assertIn(b'diagnostic only', page)
-        self.assertIn(b'Needs correction', page)
+        self.assertIn(b'Activity match unavailable', page)
         self.assertIn(b'name="0.shown_activity" value=""', page)
 
     def test_form_discloses_api_and_requires_origin(self):

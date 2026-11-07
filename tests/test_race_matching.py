@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta, timezone
 import unittest
 
-from rideworks.race_matching import batch_matches, stages
+from rideworks.race_matching import batch_matches, stages, titles_agree
 
 
 def row(**overrides):
@@ -59,6 +59,45 @@ class BatchMatchingTests(unittest.TestCase):
         self.assertEqual(stages('Stage IV and Stage Four'), {4})
         ride = activity(title='Zwift Electric Break')
         self.assertEqual(batch_matches([row()], 'America/Los_Angeles', [ride])[0]['activity_id'], 'a')
+
+    def test_noncycling_and_single_shared_word_are_rejected(self):
+        for kind in ('Virtual Run', 'Run', 'Walk', 'Rowing'):
+            with self.subTest(kind=kind):
+                result = batch_matches([row()], 'America/Los_Angeles', [activity(activity_type=kind)])[0]
+                self.assertIsNone(result['activity_id'])
+                self.assertEqual(result['issue'], 'type')
+        result = batch_matches([row()], 'America/Los_Angeles',
+                               [activity(title='Zwift Electric Coffee Social')])[0]
+        self.assertIsNone(result['activity_id'])
+        self.assertEqual(result['issue'], 'title')
+        self.assertTrue(titles_agree('Stage 4 Ocean Lava Clif...', 'Zwift Stage IV Ocean Lava Cliffside Loop'))
+        self.assertTrue(titles_agree('Stage 4 Croissant', 'Zwift Stage IV Croissant'))
+        self.assertFalse(titles_agree('Stage 4 Croissant', 'Zwift Croissant Coffee Social'))
+        typo = row(event='Stage 3 Amher Bridge')
+        ride = activity(title='Zwift Stage 3 Amber Bridge')
+        self.assertIsNone(batch_matches([typo], 'America/Los_Angeles', [ride])[0]['activity_id'])
+        self.assertEqual(batch_matches([dict(typo, event='Stage 3 Amber Bridge')],
+                                       'America/Los_Angeles', [ride])[0]['activity_id'], 'a')
+
+    def test_missing_time_title_and_ocr_have_different_explanations(self):
+        for race_row, rides, issue in (
+                (row(), [], 'missing'),
+                (row(), [activity(start_time='2024-09-27T18:00:00+00:00')], 'time'),
+                (row(), [activity(title='Zwift Coffee Social')], 'title'),
+                (row(avg_watts='unreadable'), [activity()], 'ocr')):
+            result = batch_matches([race_row], 'America/Los_Angeles', rides)[0]
+            self.assertEqual(result['issue'], issue)
+        result = batch_matches([row()], 'America/Los_Angeles', [
+            activity('far', start_time='2024-09-27T18:00:00+00:00'), activity('near')])[0]
+        self.assertEqual(result['candidates'][0]['id'], 'near')
+        self.assertIn('timestamp', batch_matches([row()], 'America/Los_Angeles',
+                      [activity(absolute_time=False)])[0]['reason'])
+
+    def test_ten_minute_window_is_unchanged(self):
+        for minute, expected in ((20, 'a'), (21, None)):
+            result = batch_matches([row()], 'America/Los_Angeles',
+                                   [activity(start_time=f'2024-09-27T16:{minute}:00+00:00')])[0]
+            self.assertEqual(result['activity_id'], expected)
 
     def test_seventeen_rows_one_unresolved(self):
         base = datetime(2024, 9, 1, 16, 10, tzinfo=timezone.utc)

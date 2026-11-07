@@ -18,6 +18,7 @@ async page => {
     files.items.add(new File([blob], 'synthetic.png', {type: 'image/png'}));
     document.querySelector('input[name=image]').files = files.files;
   });
+  await page.locator('select[name=mode]').selectOption('sectioned');
   await page.locator('input[name=timezone]').fill('UTC');
   await page.getByRole('button', {name: 'Extract screenshot'}).click();
   check(await page.locator('.race-candidate-row').count() === 3, 'all three observations retained');
@@ -29,7 +30,7 @@ async page => {
   await page.getByRole('button', {name: 'Review changes'}).click();
   check((await page.locator('main').innerText()).includes('2 automatically matched'), 'automatic matching shown');
   check((await page.locator('.race-conflict').innerText()).includes('Race avg W: 175 / 180'), 'both conflicting watts shown');
-  check((await page.locator('main').innerText()).includes('1 need attention'), 'conflict appears in status summary');
+  check((await page.locator('main').innerText()).includes('1 conflicting values to verify'), 'conflict appears in status summary');
   await page.locator('input[name=list_acknowledged]').check();
   check(await page.locator('button[value=confirm]').isDisabled(), 'general acknowledgment does not verify conflicting values');
   await page.locator('input[name="verify.1.2"]').check();

@@ -30,6 +30,7 @@ def main():
     cases.add_argument('--identity-case', action='store_true')
     cases.add_argument('--seam-case', action='store_true')
     cases.add_argument('--list-case', action='store_true')
+    cases.add_argument('--full-case', action='store_true')
     args = parser.parse_args()
     if (args.data_dir / 'rideworks.sqlite3').exists():
         parser.error('Synthetic preview requires a new empty store.')
@@ -46,21 +47,27 @@ def main():
         rows.append(dict(rows[0], date='2026-09-27', event='Stage 3 Electric Break'))
         rows.extend(dict(rows[0], date=f'2026-09-{day:02d}', event=f'Synthetic Route {day}')
                     for day in range(9, 17))
-    with tempfile.TemporaryDirectory() as temp:
-        archive = Path(temp) / 'synthetic.zip'
-        with zipfile.ZipFile(archive, 'w') as bundle:
-            bundle.writestr('activities.csv', csv_bytes([
-                export_row(str(index + 1), filename=f'activities/{index}.fit', title=row['event'])
-                for index, row in enumerate(rows)]))
-            for index, row in enumerate(rows):
-                stamp = datetime.fromisoformat(row['date'] + 'T' + row['start_time'] + ':00+00:00')
-                fit_time = int((stamp - datetime(1989, 12, 31, tzinfo=timezone.utc)).total_seconds())
-                bundle.writestr(f'activities/{index}.fit', make_fit(
-                    avg_power=233 + index, session_start_time=fit_time, session_timestamp=fit_time + 2))
+    if args.full_case:
+        from race_full_fixture import seed_history, seed_restorations
         with Store(args.data_dir) as store:
-            result = store.import_strava_export(archive)
-            if result['failures']:
-                raise RuntimeError('Synthetic activities could not be imported.')
+            rows = seed_history(store)
+            seed_restorations(store, rows)
+    else:
+        with tempfile.TemporaryDirectory() as temp:
+            archive = Path(temp) / 'synthetic.zip'
+            with zipfile.ZipFile(archive, 'w') as bundle:
+                bundle.writestr('activities.csv', csv_bytes([
+                    export_row(str(index + 1), filename=f'activities/{index}.fit', title=row['event'])
+                    for index, row in enumerate(rows)]))
+                for index, row in enumerate(rows):
+                    stamp = datetime.fromisoformat(row['date'] + 'T' + row['start_time'] + ':00+00:00')
+                    fit_time = int((stamp - datetime(1989, 12, 31, tzinfo=timezone.utc)).total_seconds())
+                    bundle.writestr(f'activities/{index}.fit', make_fit(
+                        avg_power=233 + index, session_start_time=fit_time, session_timestamp=fit_time + 2))
+            with Store(args.data_dir) as store:
+                result = store.import_strava_export(archive)
+                if result['failures']:
+                    raise RuntimeError('Synthetic activities could not be imported.')
     if args.identity_case:
         from test_race_sections import image
         old = dict(rows[1], date='2024-11-07')
@@ -80,7 +87,9 @@ def main():
     def fake_extract(*_):
         nonlocal calls
         calls += 1
-        if args.list_case:
+        if args.full_case:
+            output = rows
+        elif args.list_case:
             output = rows[:9] if calls % 2 else rows[8:]
         elif args.seam_case:
             output = ([rows[0], dict(rows[1], date=None)] if calls % 2 else

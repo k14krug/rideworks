@@ -11,13 +11,14 @@ async page => {
     const context = canvas.getContext('2d');
     context.fillStyle = 'white'; context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = 'blue'; context.font = '20px sans-serif';
-    context.fillText('Stage 4 Loop de', 250, 338);
-    context.fillText('Loop', 250, 358);
+    context.fillText('Stage 4 Loop de', 250, 404);
+    context.fillText('Loop', 250, 428);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     const files = new DataTransfer();
     files.items.add(new File([blob], 'synthetic-seam.png', {type: 'image/png'}));
     document.querySelector('input[name=image]').files = files.files;
   });
+  await page.locator('select[name=mode]').selectOption('sectioned');
   await page.locator('input[name=timezone]').fill('UTC');
   await page.getByRole('button', {name: 'Extract screenshot'}).click();
   const cards = page.locator('.race-candidate-row');

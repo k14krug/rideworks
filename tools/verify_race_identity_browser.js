@@ -15,6 +15,7 @@ async page => {
     files.items.add(new File([blob], 'synthetic.png', {type: 'image/png'}));
     document.querySelector('input[name=image]').files = files.files;
   });
+  await page.locator('select[name=mode]').selectOption('sectioned');
   await page.locator('input[name=timezone]').fill('UTC');
   await page.getByRole('button', {name: 'Extract screenshot'}).click();
   const reviewUrl = page.url();
@@ -30,7 +31,7 @@ async page => {
   check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no mobile overflow');
   const choice = page.locator('.race-identity-card select');
   await choice.selectOption({label: 'Different races — retain both'});
-  await page.locator('input[name="0.replace"]').check();
+  await page.locator('input[name="0.replace"], input[name=restore_displayed]').check();
   await page.getByRole('button', {name: 'Review changes'}).click();
   await page.locator('input[name=list_acknowledged]').check();
   check(await page.locator('button[value=confirm]').isDisabled(), 'a retained prior result cannot be replaced by another batch row');
@@ -45,7 +46,7 @@ async page => {
   await page.goto(reviewUrl);
   await reconcile();
   check(await page.locator('.race-identity-card').count() === 0, 'removed prior link no longer blocks');
-  await page.locator('input[name="0.replace"]').check();
+  await page.locator('input[name="0.replace"], input[name=restore_displayed]').check();
   await page.locator('input[name="verify.1.2"]').check();
   await page.locator('input[name=list_acknowledged]').check();
   await page.locator('button[value=confirm]').click();

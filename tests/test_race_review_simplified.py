@@ -62,7 +62,7 @@ class RaceListIntegrationTests(unittest.TestCase):
                 second = dict(first, **{field: changed})
                 outputs = iter([[first], [second]])
                 with patch('rideworks.race_results.configuration', return_value=('', 'gpt-6-luna', 10_000_000)):
-                    identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: (next(outputs), None))
+                    identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: (next(outputs), None), mode='sectioned')
                 activity_id = str(uuid4())
                 store.connection.execute('INSERT INTO activities VALUES (?,?)', (activity_id, 'synthetic'))
                 activities = [{'activity_id': activity_id, 'start_time': first['date'] + 'T' + first['start_time'] + ':00+00:00',
@@ -113,7 +113,7 @@ class RaceListIntegrationTests(unittest.TestCase):
                         for day in range(9, 17))
             outputs = iter([rows[:9], rows[8:]])
             with patch('rideworks.race_results.configuration', return_value=('', 'gpt-6-luna', 10_000_000)):
-                identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: (next(outputs), None))
+                identity = race.stage_import(store, image(), 'UTC', extractor=lambda *_: (next(outputs), None), mode='sectioned')
             activities = []
             for row in rows:
                 activity_id = str(uuid4())
@@ -138,6 +138,9 @@ class RaceListIntegrationTests(unittest.TestCase):
                 self.assertNotIn(b'Possible section-boundary fragment', page)
                 self.assertIn(b'Technical details', page)
                 self.assertEqual(page.count(b'class="race-candidate-row"'), 18)
+                self.assertIn(b'18 observations', page)
+                self.assertIn(b'1 overlaps to resolve', page)
+                self.assertIn(b'0 matching errors', page)
                 fields.update({'operation': 'confirm', 'list_acknowledged': 'yes'})
                 self.assertEqual(app.post(route, urlencode(fields).encode(), 'http://localhost:8766')[0], 400)
                 self.assertEqual(store.connection.execute('SELECT COUNT(*) FROM race_results').fetchone()[0], 0)

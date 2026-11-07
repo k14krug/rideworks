@@ -17,6 +17,7 @@ async page => {
     files.items.add(new File([blob], 'synthetic-list.png', {type: 'image/png'}));
     document.querySelector('input[name=image]').files = files.files;
   });
+  await page.locator('select[name=mode]').selectOption('sectioned');
   await page.locator('input[name=timezone]').fill('UTC');
   await page.getByRole('button', {name: 'Extract screenshot'}).click();
   check(await page.locator('.race-candidate-row').count() === 18, 'all source candidates shown before reconciliation');

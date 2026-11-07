@@ -23,9 +23,9 @@ from .store import artifact_integrity, _sync_directory
 
 FIELDS = ('date', 'start_time', 'event', 'race_group', 'finish', 'avg_watts', 'race_score', 'race_score_change')
 INTEGER_FIELDS = frozenset(('finish', 'avg_watts', 'race_score', 'race_score_change'))
-PROMPT_VERSION = 'zrp-races-v3'
-SECTION_PROMPT_VERSION = 'zrp-races-section-v4'
-CURRENT_PROMPT_VERSIONS = frozenset((PROMPT_VERSION, SECTION_PROMPT_VERSION))
+PROMPT_VERSION = 'zrp-races-v4'
+SECTION_PROMPT_VERSION = 'zrp-races-section-v5'
+CURRENT_PROMPT_VERSIONS = frozenset((PROMPT_VERSION, SECTION_PROMPT_VERSION, 'zrp-races-v3', 'zrp-races-section-v4'))
 SCHEMA_VERSION = 'zrp-races-v2'
 SOURCE_TYPE = 'zwift_racing_profile_screenshot'
 PROMPT_START = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
@@ -44,7 +44,7 @@ PROMPT_END = """- Never invent additional rows.
 For each row, extract exactly these eight fields:
 
 - `date`: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
-- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH. Do not infer a timezone.
+- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH:MM. Do not infer a timezone.
 - `event`: Extract the blue event title, joining wrapped lines with spaces. Do not include the smaller route name below it. If the title is truncated with an ellipsis (...), preserve the visible text and ellipsis exactly. Never invent missing title text.
 - `race_group`: Extract the gray race-group badge, preserving the displayed range as a string (for example, "0-210", "160-270", or "0-275").
 - `finish`: Extract the integer finishing position from the FINISH column.
@@ -333,7 +333,7 @@ def archive_image(store, payload, suffix):
     return digest, str(path.relative_to(store.data_dir))
 
 
-def stage_import(store, payload, timezone_name, *, extractor=None, mode='sectioned'):
+def stage_import(store, payload, timezone_name, *, extractor=None, mode='full'):
     from .race_sections import crop_image, image_dimensions, plan_sections
 
     key, model, limit = configuration()
@@ -430,11 +430,16 @@ def activity_candidate(activity, zone):
             return None
         parsed = parsed.astimezone(zone)
     kind = ' '.join(filter(None, (activity['activity_type'], activity['subtype']))).casefold()
-    virtual = 'virtual' in kind or 'zwift' in activity['title'].casefold()
+    cycling = activity['activity_type'].casefold() in ('virtual ride', 'virtualride', 'ride', 'cycling', 'biking')
+    virtual = cycling and ('virtual' in kind or 'zwift' in activity['title'].casefold())
     return {'id': activity['activity_id'], 'title': activity['title'],
             'date': parsed.date().isoformat(), 'time': parsed.strftime('%H:%M'), 'virtual': virtual,
             'type': activity['activity_type'], 'absolute': activity['absolute_time'],
-            'watts': activity['match_watts'], 'watts_source': activity['match_watts_source']}
+            'watts': activity['match_watts'], 'watts_source': activity['match_watts_source'],
+            'time_source': (activity.get('date_source') or {}).get('source', {}).get('content_format', 'Activity'),
+            'time_source_id': (activity.get('date_source') or {}).get('source', {}).get('source_id'),
+            'title_source': activity.get('title_origin', 'Activity title'),
+            'title_source_id': (activity.get('title_source') or {}).get('source', {}).get('source_id')}
 
 
 def candidates(store, row, timezone_name, *, activities=None):
@@ -521,13 +526,30 @@ def _now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
+def restoration_approval(store, source, groups, rows, decisions, timezone_name):
+    """Describe exactly the displayed restorations; never authorize replacements."""
+    restorations = []
+    for group, row, decision in zip(groups, rows, decisions):
+        activity_id = decision['activity_id']
+        if not activity_id:
+            continue
+        current, removed = result_state(store, activity_id)
+        if removed:
+            restorations.append({'row': group[0], 'activity_id': activity_id,
+                                 'revision': result_revision(current, removed), 'values': row})
+    binding = [source['import_id'], source['image_sha256'], source['rows_json'],
+               groups, rows, timezone_name, restorations]
+    token = hashlib.sha256(json.dumps(binding, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    return {'token': token if restorations else None, 'rows': restorations}
+
+
 _DEFAULT_ZONE = object()
 
 
 def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False,
-                overlap_choices=None, list_acknowledged=False, conflict_verifications=None):
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None, restoration_consent=None):
     from .race_identity import possible_associations, validate_identity_choices
-    from .race_matching import batch_matches
+    from .race_matching import MATCHING_VERSION, batch_matches
     from .race_reconcile import apply_overlap_choices, observations, overlap_conflicts, reconcile
 
     counts = {'added': 0, 'unchanged': 0, 'replaced': 0, 'skipped': 0}
@@ -581,6 +603,10 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
         candidates = possible_associations(store, source, groups, [item['values'] for item in final_rows],
                                            decisions, timezone_name, visible_count)
         identity_decisions = validate_identity_choices(candidates, final_rows, decisions, timezone_name)
+        restoration = restoration_approval(store, source, groups, [item['values'] for item in final_rows],
+                                          decisions, timezone_name)
+        if restoration_consent is not None and restoration_consent != restoration['token']:
+            raise RaceError('The displayed restorations changed. Review and approve them again.')
         for item, decision in zip(final_rows, decisions):
             row, activity_id = item['values'], decision['activity_id']
             if item.get('activity_id') and item['activity_id'] != activity_id:
@@ -595,7 +621,7 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
                 continue
             if current and not item['replace']:
                 raise RaceError('A changed result needs explicit replacement approval.')
-            if removed and not item['replace']:
+            if removed and not item['replace'] and restoration_consent is None:
                 raise RaceError('A previously removed result needs explicit restoration approval.')
             now = datetime.now(timezone.utc).isoformat()
             store.connection.execute('INSERT INTO race_result_history VALUES (?,?,?,?,?,?)',
@@ -606,11 +632,15 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_
                 accepted_at=excluded.accepted_at''',
                 (activity_id, import_id, encoded, timezone_name, now))
             counts['replaced' if current else 'added'] += 1
-        provenance = {'timezone': timezone_name, 'identity_decisions': identity_decisions, 'groups': [
+        provenance = {'timezone': timezone_name, 'matching_version': MATCHING_VERSION,
+                      'identity_decisions': identity_decisions, 'groups': [
             {'observations': [index + 1 for index in group], 'choices': [rows[index]['group'] for index in group],
              'values': rows[group[0]]['values'], 'activity_id': decision['activity_id'],
+             'match_evidence': next(choice for choice in decision['candidates'] if choice['id'] == decision['activity_id']),
              'corrected': bool(rows[group[0]].get('corrected'))}
             for group, decision in zip(groups, decisions)]}
+        if restoration_consent is not None:
+            provenance['restoration_approval'] = restoration
         if overlap_choices is not None:
             provenance['count_type'] = 'derived_distinct_races'
             provenance['list_acknowledged'] = True

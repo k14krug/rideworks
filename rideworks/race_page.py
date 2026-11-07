@@ -1,5 +1,6 @@
 """Server-rendered Race Results and explicit import review."""
 
+from collections import Counter
 from html import escape
 import json
 from urllib.parse import parse_qs
@@ -10,7 +11,7 @@ from .race_cost import estimate_cost
 from .race_identity import identity_key, possible_associations, validate_identity_choices
 from .race_matching import batch_matches
 from .race_reconcile import apply_overlap_choices, observations, overlap_candidates, overlap_conflicts
-from .race_results import CURRENT_PROMPT_VERSIONS, FIELDS, RaceError, activity_candidate, matching_activities, normalize_row, result_revision, result_state, row_errors, screenshot
+from .race_results import CURRENT_PROMPT_VERSIONS, FIELDS, RaceError, activity_candidate, matching_activities, normalize_row, restoration_approval, result_revision, result_state, row_errors, screenshot
 from .web import shell
 
 
@@ -113,15 +114,15 @@ No race results are saved until you review and confirm them.</p>
 <label>Screenshot display timezone (IANA, optional)
 <input name="timezone" maxlength="100" value="America/Los_Angeles"></label>
 <label>Extraction mode <select name="mode">
-<option value="sectioned">Overlapping sections</option>
-<option value="full">Full image (comparison)</option></select></label>
+<option value="full" selected>Full image</option>
+<option value="sectioned">Overlapping sections (fallback / diagnostic)</option></select></label>
 <p>Leave timezone blank if unknown. Unknown timezone prevents automatic matching.</p>
 <button type="submit">Extract screenshot</button></form></section>''',
                  active='races', page_class='race-page')
 
 
 def review_page(store, source, nonce, *, draft=None, timezone_name=None, message='',
-                overlap_choices=None, list_acknowledged=False, conflict_verifications=None):
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None, restoration_consent=None):
     observed, sections, complete = observations(store, source)
     if draft is None:
         draft = [{'values': normalize_row(item['row']), 'replace': False} for item in observed]
@@ -157,9 +158,12 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
     activity_by_id = {activity['activity_id']: activity for activity in activities}
     decision_by_root = {group[0]: (i, decision) for i, (group, decision) in enumerate(zip(groups, decisions))}
     group_by_member = {member: group[0] for group in groups for member in group}
+    unresolved_roots = {group_by_member[member] for pair in unresolved for member in pair}
     cards = []
     approvals_pending = False
-    attention = 0
+    status_counts = Counter()
+    restoration = restoration_approval(store, source, groups, final_rows, decisions, timezone_name)
+    restoration_checked = bool(restoration_consent and restoration_consent == restoration['token'])
     for index, item in enumerate(draft):
         row = item['values']
         observation = observed[index]
@@ -173,20 +177,20 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
         choices = decision['candidates']
         selected = decision['activity_id']
         existing, removed = result_state(store, selected) if selected else (None, None)
-        if any(group_by_member.get(member) == index for pair in unresolved for member in pair):
+        if index in unresolved_roots:
             state = 'Possible duplicate'
-        elif row_errors(row):
-            state = 'Needs correction'
+        elif decision.get('issue') == 'ocr':
+            state = 'OCR correction needed'
         elif not selected:
-            state = 'Needs correction'
+            state = 'Ambiguous activity' if decision.get('issue') == 'ambiguous' else 'Activity match unavailable'
         elif any(index in conflict['group'] and conflict_verifications.get(pair) != conflict['token']
                  for pair, conflict in conflicts_by_pair.items()):
-            state = 'Needs attention'
+            state = 'Conflicting values to verify'
         elif group_index is not None and any(
                 candidate['proven_same'] or not candidate['source_available']
                 or item.get('identity', {}).get(identity_key(candidate['activity_id'])) != 'different:' + candidate['token']
                 for candidate in conflicts[group_index]):
-            state = 'Needs attention'
+            state = 'Existing attachment to review'
         elif existing:
             state = ('Already imported' if json.loads(existing['values_json']) == row and existing['display_timezone'] == (timezone_name or None)
                      else 'Replacement approval required')
@@ -194,8 +198,7 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
             state = 'Restoration approval required'
         else:
             state = 'Matched'
-        if state not in ('Matched', 'Already imported'):
-            attention += 1
+        status_counts[state] += 1
         matched = next((choice for choice in choices if choice['id'] == selected), None)
         match_details = (f'<p>Automatically matched: {esc(candidate_label(matched))}</p>' if matched
                          else f'<p class="race-error">{esc(decision["reason"])}</p>' if decision['reason'] else '')
@@ -230,9 +233,10 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <label>Source race identity <select name="{index}.identity.{key}">{choice_options}</select></label>
 <p>For the same race, <a href="/race-results/remove/{esc(candidate["activity_id"])}" target="_blank" rel="noopener">remove the old race result</a> separately, then return and review changes.</p>
 </div>''')
-        nearby = ''.join(f'<li>{esc(candidate_label(choice))}</li>' for choice in choices[:20])
+        nearby = ''.join(f'<li>{esc(candidate_label(choice))} · {esc(choice["time_source"])} timestamp · '
+                         f'{esc(choice["title_source"])}<br>{esc(choice["reason"])}</li>' for choice in choices[:5])
         diagnostics = (f'<details><summary>Nearby activities (diagnostic only)</summary><ul>{nearby}</ul>'
-                       f'{"<p>Only the first 20 are shown.</p>" if len(choices) > 20 else ""}</details>'
+                       f'{"<p>The five closest activities are shown.</p>" if len(choices) > 5 else ""}</details>'
                        if choices and not selected else '')
         inputs = []
         labels = {'date': 'Date', 'start_time': 'Start time', 'event': 'Event', 'race_group': 'Race group',
@@ -251,10 +255,10 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
                            and item.get('shown_revision') == shown_revision else '')
         needs_approval = bool(removed or (existing and
                               (json.loads(existing['values_json']) != row or existing['display_timezone'] != (timezone_name or None))))
-        if needs_approval and not checked_replace:
+        if needs_approval and not (restoration_checked if removed else checked_replace):
             approvals_pending = True
         approval = (f'<label><input type="checkbox" class="race-approval" name="{index}.replace" value="yes"{checked_replace}> '
-                    'Approve replacement or restoration</label>' if needs_approval else '')
+                    'Approve replacement</label>' if needs_approval and existing else '')
         group = next((group for group in groups if group[0] == index), [])
         needs_correction = bool(group and any(observed[member]['row'] != observation['row'] for member in group[1:]))
         correction = ('<p class="race-error">The extractions disagree. Check and correct these values against the screenshot.</p>'
@@ -337,10 +341,34 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
                and all(decision['activity_id'] for decision in decisions))
     disabled = ' disabled' if not matched or approvals_pending or not list_acknowledged else ''
     matched_count = sum(bool(decision['activity_id']) for decision in decisions)
+    matching_errors = sum(not decision['activity_id'] and decision.get('issue') != 'ocr'
+                          and group[0] not in unresolved_roots for group, decision in zip(groups, decisions))
+    count_label = (f'{len(observed)} observations · {len(unresolved)} overlaps to resolve' if unresolved
+                   else f'{len(groups)} races identified')
+    match_label = 'matches before overlap review' if unresolved else 'automatically matched'
+    summary = f'{count_label} · {matched_count} {match_label} · {matching_errors} matching errors'
+    categories = [
+        ('OCR correction needed', 'OCR corrections'),
+        ('Restoration approval required', 'restorations to approve'),
+        ('Replacement approval required', 'replacements to approve'),
+        ('Conflicting values to verify', 'conflicting values to verify'),
+        ('Existing attachment to review', 'existing attachments to review'),
+    ]
+    action_summary = ' · '.join(f'{status_counts[state]} {label}' for state, label in categories if status_counts[state])
+    restore_control = ''
+    if restoration['rows']:
+        restore_items = ''.join(
+            f'<li>Race {item["row"] + 1}: {esc(item["values"]["date"])} · {esc(item["values"]["event"])}</li>'
+            for item in restoration['rows'])
+        restore_control = (f'<div class="race-restorations"><details><summary>Review the {len(restoration["rows"])} restorations</summary>'
+                           f'<ul>{restore_items}</ul></details><label><input type="checkbox" class="race-approval race-restoration-approval" '
+                           f'name="restore_displayed" value="{restoration["token"]}"{" checked" if restoration_checked else ""}> '
+                           f'I approve restoring these {len(restoration["rows"])} previously removed race results.</label></div>')
     return shell('Review Race Import', f'''<header class="race-header"><div><h1>Review Race Import</h1>
 <p><a href="/race-results">Back to Race Results</a></p></div></header>
 <section class="panel race-panel race-review-panel">{notice}{older_prompt}
-<p><strong>{len(groups)} races identified · {matched_count} automatically matched · {attention} need attention</strong></p>
+<p class="race-review-summary"><strong>{summary}</strong></p>
+{f'<p class="race-review-actions">{action_summary}</p>' if action_summary else ''}
 <p>Estimated API cost: {esc(cost_text)} (estimate, not the amount billed).</p>
 <details><summary>View original screenshot</summary><img class="race-image" src="/race-results/image/{esc(source['import_id'])}" alt="Uploaded race screenshot"></details>
 <details><summary>Technical details</summary><pre>{esc(json.dumps(technical, ensure_ascii=False, indent=2))}</pre></details>
@@ -353,9 +381,10 @@ def review_page(store, source, nonce, *, draft=None, timezone_name=None, message
 <th>Date</th><th>Time</th><th>Event</th><th>Group</th><th>Finish</th><th>Race avg W</th>
 <th>Racing Score</th><th>Change</th><th>Status</th></tr></thead><tbody>{''.join(cards)}</tbody></table></div>
 {'' if cards else '<p>No race rows were returned. Try another screenshot.</p>'}
+{restore_control}
 <label><input class="race-approval" name="list_acknowledged" type="checkbox" value="yes"{" checked" if list_acknowledged else ""}>
 I checked these races against my screenshot.</label>
-<p>Each race must match a different activity. If a race is missing, cancel and retry with a clearer or shorter screenshot.</p>
+<p>Each race must match a different activity before the whole batch can be imported. If an activity is missing, check your sync coverage; edit extracted values only when the screenshot differs.</p>
 <div class="race-actions"><button type="submit" name="operation" value="preview">Review changes</button>
 <button type="submit" name="operation" value="confirm"{disabled}>Import all {len(groups)} races</button></div>
 <p class="race-review-dirty" role="status" hidden>Fields changed. Select Review changes to recompute all matches.</p>

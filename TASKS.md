@@ -15,6 +15,20 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### HOME-UI-06 — Race Avg W on Home Recent Activities
+
+**Status:** pending — Owner-approved 2026-11-08. [Issue #62](https://github.com/k14krug/rideworks/issues/62) · [Analyst JIT](docs/tasks/HOME-UI-06.md).
+
+**Purpose:** Add a narrow **Race Avg W** column immediately after **Avg Pwr** in Home's Recent Activities card, without increasing the card size or reducing visible desktop row density.
+
+**Scope:** Reuse confirmed active race-result watt values associated by Activity ID; missing/removed values are neutral dashes and source watts remain distinct from Activity Avg Pwr. Reclaim table-column spacing, keep links and recent row selection, and preserve readable responsive behavior. No importer, data schema, calculations, or production changes.
+
+**Execution:** `/TASK or /AUTOTASK` only, after refreshed main, in the existing primary checkout with a normal task branch and draft PR (no separate worktree). HARD — Analyst technical review, then HARD — Owner running-UI acceptance. Separate Owner approval required for deployment.
+
+**Acceptance:** See [HOME-UI-06 JIT](docs/tasks/HOME-UI-06.md) for bounded source lookup, provenance/missing-data checks, responsive card dimensions and browser verification.
+
+---
+
 ### RE-03 — Fixed-color Strava Relative Effort numbers
 
 **Status:** done — Analyst technical acceptance and Owner UI and fixed-threshold approval on 2026-10-30. [PR #54](https://github.com/k14krug/rideworks/pull/54) merged to `main` as `9f2ad2ec78bcf729920c9be403b6422d20f744f8`. [Analyst JIT](docs/tasks/RE-03.md).

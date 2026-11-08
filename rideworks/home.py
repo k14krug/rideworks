@@ -63,6 +63,18 @@ def training_overview(data, training, current_ftp, bests):
     return f'<section class="panel home-summary" aria-labelledby="home-overview-title"><h2 id="home-overview-title">Training Overview</h2><div class="home-overview-grid"><section class="home-current-status" aria-labelledby="home-current-title"><h3 id="home-current-title">Current status</h3>{fitness_html}{ftp_html}{mileage_html}</section><section class="home-power-bests" aria-labelledby="home-power-bests-title"><h3 id="home-power-bests-title" title="Qualifying observed Virtual Ride power">90-day Power Bests{warning}</h3>{power_rows}</section></div></section>'
 
 
+def recent_race_watts(store, recent):
+    """Read current race evidence only for the bounded Home cohort."""
+    identities = [row['activity_id'] for row in recent]
+    if not identities:
+        return {}
+    placeholders = ','.join('?' for _ in identities)
+    return {row['activity_id']: json.loads(row['values_json']).get('avg_watts')
+            for row in store.connection.execute(
+                f'SELECT activity_id, values_json FROM race_results WHERE activity_id IN ({placeholders})',
+                identities)}
+
+
 def recent_ride_link(row):
     """Link the ride title to its activity review."""
     title = escape(row['title'])
@@ -318,10 +330,13 @@ def _home_page(store, query='', *, cache_writes):
     advisor = today_card(plan_data,compact=True,include_completed=False,home_visual=True)
     from .strava_effort import chip, for_store as relative_effort_ratings
     ratings = relative_effort_ratings(store) if data['recent'] else {}
+    race_watts = recent_race_watts(store, data['recent'])
     rows = []
     for row in data['recent']:
-        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td class="home-effort">{chip(ratings.get(row['activity_id']))}</td><td data-label="Ride">{recent_ride_link(row)}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td></tr>''')
-    recent = f'<div class="home-recent-list"><table class="home-recent-table"><thead><tr><th>Date</th><th><abbr title="Strava Relative Effort">Effort</abbr></th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>' if rows else '<p class="empty">No cycling Activities yet.</p>'
+        watts = race_watts.get(row['activity_id'])
+        race_power = '—' if watts is None else f'{watts} W'
+        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td class="home-effort">{chip(ratings.get(row['activity_id']))}</td><td data-label="Ride">{recent_ride_link(row)}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td><td data-label="Race Avg W" class="home-race-power" title="Zwift screenshot race average">{escape(race_power)}</td></tr>''')
+    recent = f'<div class="home-recent-list"><table class="home-recent-table"><thead><tr><th>Date</th><th><abbr title="Strava Relative Effort">Effort</abbr></th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th><th>Race Avg W</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>' if rows else '<p class="empty">No cycling Activities yet.</p>'
     week_rows = ''.join(f'<tr><td>{w["start"]}</td><td>{miles(w["miles"])}</td><td>{miles(g["needed_miles_per_week"])}</td><td>{w["file_count"]}</td><td>{w["api_count"]}</td><td>{w["distance_unavailable"]}</td></tr>' for w,g in zip(data['weeks'],data['weekly_goal']))
     details = [('Browser timezone',zone.key),('YTD start',ytd['start']),('As of',data['as_of']),
         ('YTD contributing Activities',ytd['contributing_activities']),('YTD file distance',miles(ytd['file_miles'])),

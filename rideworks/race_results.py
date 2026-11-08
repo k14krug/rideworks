@@ -23,24 +23,28 @@ from .store import artifact_integrity, _sync_directory
 
 FIELDS = ('date', 'start_time', 'event', 'race_group', 'finish', 'avg_watts', 'race_score', 'race_score_change')
 INTEGER_FIELDS = frozenset(('finish', 'avg_watts', 'race_score', 'race_score_change'))
-PROMPT_VERSION = 'zrp-races-v3'
+PROMPT_VERSION = 'zrp-races-v4'
+SECTION_PROMPT_VERSION = 'zrp-races-section-v5'
+CURRENT_PROMPT_VERSIONS = frozenset((PROMPT_VERSION, SECTION_PROMPT_VERSION, 'zrp-races-v3', 'zrp-races-section-v4'))
 SCHEMA_VERSION = 'zrp-races-v2'
 SOURCE_TYPE = 'zwift_racing_profile_screenshot'
-PROMPT = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
+PROMPT_START = """Read the attached Zwift Racing Profile screenshot and extract race results into the supplied JSON schema.
 
 **Row identification**
 
 - Extract each visible race-result row in top-to-bottom order.
 - Only extract rows from the RACE RESULTS table.
 - The number in the RACE RESULTS heading represents the total profile results, not necessarily the number visible in the screenshot.
-- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.
-- Never invent additional rows.
+"""
+WHOLE_IMAGE_ROW_POLICY = """- Include a row when enough of its information is readable to identify the race, even if the row border is partially cropped.
+"""
+PROMPT_END = """- Never invent additional rows.
 **Field extraction**
 
 For each row, extract exactly these eight fields:
 
 - `date`: Convert the displayed M/D/YYYY date to YYYY-MM-DD.
-- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH. Do not infer a timezone.
+- `start_time`: Convert the displayed 12-hour AM/PM time to 24-hour HH:MM. Do not infer a timezone.
 - `event`: Extract the blue event title, joining wrapped lines with spaces. Do not include the smaller route name below it. If the title is truncated with an ellipsis (...), preserve the visible text and ellipsis exactly. Never invent missing title text.
 - `race_group`: Extract the gray race-group badge, preserving the displayed range as a string (for example, "0-210", "160-270", or "0-275").
 - `finish`: Extract the integer finishing position from the FINISH column.
@@ -55,6 +59,31 @@ For each row, extract exactly these eight fields:
 - Keep values associated with their original row, even when event titles wrap across multiple lines.
 - Never guess, infer missing information, duplicate rows or combine results from different rows.
 - Return only the JSON object required by the supplied schema, without explanations, Markdown or extra fields."""
+PROMPT = PROMPT_START + WHOLE_IMAGE_ROW_POLICY + PROMPT_END
+
+SECTION_ELIGIBILITY = '''This image is one horizontal section of a larger Zwift Racing Profile RACE RESULTS screenshot. Neighboring sections overlap. Extract rows visible in THIS section only; do not infer or reconstruct missing pixels.
+
+SECTION BOUNDARIES
+- Top edge: {TOP_EDGE_TYPE}.
+- Bottom edge: {BOTTOM_EDGE_TYPE}.
+  TOP_EDGE_TYPE / BOTTOM_EDGE_TYPE must each be "original screenshot edge" or "internal crop boundary", determined from the section's original-image pixel coordinates (not by the model).
+
+WHICH ROWS TO EXTRACT
+- At an INTERNAL CROP BOUNDARY, do not extract a race row that is cut off by that edge. A row must be visibly complete within this section, including its row beginning, the FINISH cell, the DATE/Time cell area, and the beginning of its blue event title. The row's bottom/content must also be visible. Such cut rows should appear in another overlapping section.
+- A wrapped blue race title belongs to ONE physical table row. Join its visible lines into one event title. A continuation such as "Loop" at the top of a section is NOT a new race when the beginning of the title/row is outside this section. Do not make a row out of the smaller black route subtitle.
+- If an edge is an ORIGINAL SCREENSHOT EDGE (not an internal crop boundary), apply the original screenshot's policy for a partially visible but identifiable row; do not discard it solely because the uploaded image itself was cropped.
+- A complete interior row may have individual unreadable or dashed values. Extract the row and set only the unreadable fields to null. Do not treat null DATE or null watts alone as proof that a row is a crop fragment.
+- Do not turn headers, separators, continuation lines, other columns or duplicate renderings into additional races. Return rows in top-to-bottom order.
+- If no complete eligible race rows are visible in this section, return {"races": []} in the required schema. Do not guess missing rows.'''
+
+
+def section_prompt(top, bottom, image_height):
+    top_edge = 'original screenshot edge' if top == 0 else 'internal crop boundary'
+    bottom_edge = 'original screenshot edge' if bottom == image_height else 'internal crop boundary'
+    eligibility = SECTION_ELIGIBILITY.replace('{TOP_EDGE_TYPE}', top_edge).replace('{BOTTOM_EDGE_TYPE}', bottom_edge)
+    return PROMPT_START + PROMPT_END + '\n\n' + eligibility
+
+
 SCHEMA = {
     'type': 'object', 'additionalProperties': False, 'required': ['races'],
     'properties': {'races': {
@@ -77,6 +106,12 @@ MAX_ROWS = 100
 class RaceError(ValueError):
     """A recoverable race import error safe to display in the browser."""
 
+    def __init__(self, message, *, usage=None, request_id=None, output=None):
+        super().__init__(message)
+        self.usage = usage
+        self.request_id = request_id
+        self.output = output
+
 
 def configuration(environ=None):
     env = os.environ if environ is None else environ
@@ -84,7 +119,7 @@ def configuration(environ=None):
     selected = {key: env[key] for key in keys if key in env}
     _dotenv(repository_root(), selected, keys)
     key = selected.get('OPENAI_API_KEY', '').strip()
-    model = selected.get('RIDEWORKS_RACE_MODEL', 'gpt-4o-mini').strip()
+    model = selected.get('RIDEWORKS_RACE_MODEL', 'gpt-6-luna').strip()
     limit = selected.get('RIDEWORKS_RACE_MAX_BYTES', str(DEFAULT_LIMIT)).strip()
     if not model or len(model) > 100 or not re.fullmatch(r'[A-Za-z0-9._:-]+', model):
         raise RaceError('Invalid race extraction model configuration.')
@@ -187,13 +222,28 @@ class _NoRedirect(HTTPRedirectHandler):
         return None
 
 
-def extract(payload, image_type, key, model, *, opener=None):
+def api_usage(data):
+    if not isinstance(data, dict) or not isinstance(data.get('usage'), dict):
+        return None
+    usage = data['usage']
+    cleaned = {k: v for k, v in usage.items() if k in ('input_tokens', 'output_tokens', 'total_tokens')
+               and type(v) is int and v >= 0}
+    for name, allowed in (('input_tokens_details', {'cached_tokens', 'cache_write_tokens'}),
+                          ('output_tokens_details', {'reasoning_tokens'})):
+        details = usage.get(name)
+        if isinstance(details, dict):
+            cleaned[name] = {k: v for k, v in details.items() if k in allowed and type(v) is int and v >= 0}
+    cleaned['service_tier'] = data.get('service_tier')
+    return cleaned
+
+
+def extract(payload, image_type, key, model, prompt=PROMPT, *, opener=None):
     if not key:
         raise RaceError('Configure OPENAI_API_KEY locally before extracting a screenshot.')
     request_data = {
-        'model': model, 'store': False,
+        'model': model, 'store': False, 'service_tier': 'default',
         'input': [{'role': 'user', 'content': [
-            {'type': 'input_text', 'text': PROMPT},
+            {'type': 'input_text', 'text': prompt},
             {'type': 'input_image', 'image_url': f'data:{image_type};base64,{base64.b64encode(payload).decode("ascii")}',
              'detail': 'high'},
         ]}],
@@ -201,12 +251,21 @@ def extract(payload, image_type, key, model, *, opener=None):
     }
     request = Request('https://api.openai.com/v1/responses', data=json.dumps(request_data).encode(),
                       headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}, method='POST')
+    usage = None
+    request_id = None
+    output = None
     try:
         with (opener or build_opener(_NoRedirect())).open(request, timeout=60) as response:
+            candidate_id = getattr(response, 'headers', {}).get('x-request-id')
+            if isinstance(candidate_id, str) and re.fullmatch(r'[A-Za-z0-9._:-]{1,128}', candidate_id):
+                request_id = candidate_id
             response_body = response.read(2_000_001)
         if len(response_body) > 2_000_000:
             raise RaceError('The extraction response was too large.')
         data = json.loads(response_body)
+        usage = api_usage(data)
+        if isinstance(data, dict) and 'output' in data:
+            output = json.dumps(data['output'], ensure_ascii=False)
         if not isinstance(data, dict) or data.get('status') != 'completed':
             raise RaceError('Extraction was incomplete. Try again or use a smaller image.')
         texts = []
@@ -219,22 +278,31 @@ def extract(payload, image_type, key, model, *, opener=None):
                         texts.append(content.get('text'))
         if len(texts) != 1 or not isinstance(texts[0], str):
             raise RaceError('The extraction service returned no usable race data.')
-        rows = validate_shape(json.loads(texts[0]))
-        usage = data.get('usage')
-        if not isinstance(usage, dict):
-            usage = None
-        else:
-            usage = {k: v for k, v in usage.items() if k in ('input_tokens', 'output_tokens', 'total_tokens', 'cost')
-                     and type(v) in (int, float) and v >= 0}
+        output = texts[0]
+        rows = validate_shape(json.loads(output))
+        if request_id:
+            usage = usage if usage is not None else {}
+            usage['request_id'] = request_id
         return rows, usage
     except HTTPError as exc:
-        raise RaceError(f'OpenAI extraction failed (HTTP {exc.code}). Check configuration and try again.') from exc
+        candidate_id = exc.headers.get('x-request-id') if exc.headers else None
+        if isinstance(candidate_id, str) and re.fullmatch(r'[A-Za-z0-9._:-]{1,128}', candidate_id):
+            request_id = candidate_id
+        try:
+            error_body = exc.read(2_000_001)
+            if error_body and len(error_body) <= 2_000_000:
+                usage = api_usage(json.loads(error_body))
+        except (OSError, ValueError):
+            usage = None
+        raise RaceError(f'OpenAI extraction failed (HTTP {exc.code}). Check configuration and try again.',
+                        usage=usage, request_id=request_id) from exc
     except (URLError, TimeoutError, socket.timeout) as exc:
         raise RaceError('OpenAI extraction could not be reached or timed out. Try again.') from exc
     except (ValueError, TypeError, AttributeError, KeyError) as exc:
         if isinstance(exc, RaceError):
-            raise
-        raise RaceError('The extraction service returned invalid JSON or an invalid response.') from exc
+            raise RaceError(str(exc), usage=usage, request_id=request_id, output=output) from exc
+        raise RaceError('The extraction service returned invalid JSON or an invalid response.',
+                        usage=usage, request_id=request_id, output=output) from exc
 
 
 def archive_image(store, payload, suffix):
@@ -265,18 +333,63 @@ def archive_image(store, payload, suffix):
     return digest, str(path.relative_to(store.data_dir))
 
 
-def stage_import(store, payload, timezone_name, *, extractor=None):
+def stage_import(store, payload, timezone_name, *, extractor=None, mode='full'):
+    from .race_sections import crop_image, image_dimensions, plan_sections
+
     key, model, limit = configuration()
     image_type, suffix = validate_image(payload, limit)
     timezone_name = validate_timezone(timezone_name)
-    rows, usage = (extractor or extract)(payload, image_type, key, model)
-    validate_shape({'races': rows})
+    if not key and extractor is None:
+        raise RaceError('Configure OPENAI_API_KEY locally before extracting a screenshot.')
+    if mode not in ('sectioned', 'full'):
+        raise RaceError('Choose a valid screenshot extraction mode.')
+    width, height = image_dimensions(payload)
+    bounds = plan_sections(width, height) if mode == 'sectioned' else [(0, height)]
+    prompt_version = SECTION_PROMPT_VERSION if mode == 'sectioned' else PROMPT_VERSION
     digest, path = archive_image(store, payload, suffix)
     identity = str(uuid4())
     with store._transaction(write=True):
         store.connection.execute('INSERT INTO race_imports VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
             (identity, SOURCE_TYPE, digest, len(payload), image_type, path, datetime.now(timezone.utc).isoformat(),
-             timezone_name, model, PROMPT_VERSION, SCHEMA_VERSION, json.dumps(rows), json.dumps(usage) if usage else None))
+             timezone_name, model, prompt_version, SCHEMA_VERSION, '[]', None))
+        for index, (top, bottom) in enumerate(bounds):
+            store.connection.execute('''INSERT INTO race_import_sections
+                (import_id,section_index,top,bottom,width,image_height,status,model,prompt_version,schema_version)
+                VALUES (?,?,?,?,?,?,'planned',?,?,?)''',
+                (identity, index, top, bottom, width, height, model, prompt_version, SCHEMA_VERSION))
+    all_rows = []
+    for index, (top, bottom) in enumerate(bounds):
+        with store._transaction(write=True):
+            store.connection.execute('UPDATE race_import_sections SET status=? WHERE import_id=? AND section_index=?',
+                                     ('running', identity, index))
+        try:
+            crop = crop_image(payload, top, bottom)
+            prompt = section_prompt(top, bottom, height) if mode == 'sectioned' else PROMPT
+            rows, usage = (extractor or extract)(crop, 'image/png', key, model, prompt)
+            try:
+                validate_shape({'races': rows})
+            except RaceError as exc:
+                raise RaceError(str(exc), usage=usage, output=json.dumps({'races': rows})) from exc
+            if len(all_rows) + len(rows) > MAX_ROWS:
+                raise RaceError('The extraction returned too many observations. Try a shorter screenshot.',
+                                usage=usage, output=json.dumps(rows, ensure_ascii=False))
+        except RaceError as exc:
+            with store._transaction(write=True):
+                store.connection.execute('''UPDATE race_import_sections
+                    SET status='failed',output_json=?,usage_json=?,request_id=?,error=?
+                    WHERE import_id=? AND section_index=?''',
+                    (exc.output, json.dumps(exc.usage) if exc.usage is not None else None,
+                     exc.request_id, str(exc), identity, index))
+            break
+        all_rows.extend(rows)
+        request_id = usage.get('request_id') if isinstance(usage, dict) else None
+        with store._transaction(write=True):
+            store.connection.execute('''UPDATE race_import_sections SET status='completed',
+                output_json=?,usage_json=?,request_id=? WHERE import_id=? AND section_index=?''',
+                (json.dumps(rows, ensure_ascii=False), json.dumps(usage) if usage is not None else None,
+                 request_id, identity, index))
+            store.connection.execute('UPDATE race_imports SET rows_json=? WHERE import_id=?',
+                                     (json.dumps(all_rows, ensure_ascii=False), identity))
     return identity
 
 
@@ -317,11 +430,16 @@ def activity_candidate(activity, zone):
             return None
         parsed = parsed.astimezone(zone)
     kind = ' '.join(filter(None, (activity['activity_type'], activity['subtype']))).casefold()
-    virtual = 'virtual' in kind or 'zwift' in activity['title'].casefold()
+    cycling = activity['activity_type'].casefold() in ('virtual ride', 'virtualride', 'ride', 'cycling', 'biking')
+    virtual = cycling and ('virtual' in kind or 'zwift' in activity['title'].casefold())
     return {'id': activity['activity_id'], 'title': activity['title'],
             'date': parsed.date().isoformat(), 'time': parsed.strftime('%H:%M'), 'virtual': virtual,
             'type': activity['activity_type'], 'absolute': activity['absolute_time'],
-            'watts': activity['match_watts'], 'watts_source': activity['match_watts_source']}
+            'watts': activity['match_watts'], 'watts_source': activity['match_watts_source'],
+            'time_source': (activity.get('date_source') or {}).get('source', {}).get('content_format', 'Activity'),
+            'time_source_id': (activity.get('date_source') or {}).get('source', {}).get('source_id'),
+            'title_source': activity.get('title_origin', 'Activity title'),
+            'title_source_id': (activity.get('title_source') or {}).get('source', {}).get('source_id')}
 
 
 def candidates(store, row, timezone_name, *, activities=None):
@@ -372,39 +490,142 @@ def revision(values_json, timezone_name=None):
     return hashlib.sha256(json.dumps([values_json, timezone_name]).encode('utf-8')).hexdigest() if values_json is not None else 'new'
 
 
+def result_state(store, activity_id):
+    current = store.connection.execute(
+        'SELECT * FROM race_results WHERE activity_id=?', (activity_id,)).fetchone()
+    removed = None if current else store.connection.execute(
+        'SELECT * FROM race_result_removals WHERE activity_id=? ORDER BY removed_at DESC, removal_id DESC LIMIT 1',
+        (activity_id,)).fetchone()
+    return current, removed
+
+
+def result_revision(current, removed):
+    if current:
+        return revision(json.dumps([current['import_id'], current['accepted_at'], current['values_json']]),
+                        current['display_timezone'])
+    if removed:
+        return revision('removed:' + removed['removal_id'])
+    return 'new'
+
+
+def remove_result(store, activity_id, shown_revision):
+    with store._transaction(write=True):
+        current, removed = result_state(store, activity_id)
+        if not current:
+            raise RaceError('The race result is no longer active. Reload Race Results.')
+        if result_revision(current, removed) != shown_revision:
+            raise RaceError('The race result changed. Review it again before removing it.')
+        store.connection.execute(
+            'INSERT INTO race_result_removals VALUES (?,?,?,?,?,?,?)',
+            (str(uuid4()), activity_id, current['import_id'], current['values_json'],
+             current['display_timezone'], current['accepted_at'], _now_iso()))
+        store.connection.execute('DELETE FROM race_results WHERE activity_id=?', (activity_id,))
+
+
+def _now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def import_confirmation(store, source, groups, rows, decisions, timezone_name):
+    """Bind the final import action to all displayed assignments and saved history.
+
+    Restoration is part of this explicit action. Active replacements still need
+    their own approval. Recompute inside the write transaction before any writes.
+    """
+    restorations = []
+    assignments = []
+    for group, row, decision in zip(groups, rows, decisions):
+        activity_id = decision['activity_id']
+        if not activity_id:
+            continue
+        current, removed = result_state(store, activity_id)
+        history = [dict(item) for item in store.connection.execute(
+            'SELECT * FROM race_result_history WHERE activity_id=? ORDER BY revision_id', (activity_id,))]
+        removals = [dict(item) for item in store.connection.execute(
+            'SELECT * FROM race_result_removals WHERE activity_id=? ORDER BY removal_id', (activity_id,))]
+        assignments.append({'row': group[0], 'activity_id': activity_id,
+                            'current': dict(current) if current else None,
+                            'history': history, 'removals': removals})
+        if removed:
+            restorations.append({'row': group[0], 'activity_id': activity_id,
+                                 'revision': result_revision(current, removed), 'values': row})
+    binding = [source['import_id'], source['image_sha256'], source['rows_json'],
+               groups, rows, timezone_name, assignments]
+    token = hashlib.sha256(json.dumps(binding, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    return {'token': token, 'rows': restorations}
+
+
 _DEFAULT_ZONE = object()
 
 
-def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
-    source = load_import(store, import_id)
-    if source is None:
-        raise RaceError('Screenshot import was not found.')
-    timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
-    original_rows = json.loads(source['rows_json'])
-    if len(rows) != len(original_rows):
-        raise RaceError('The review no longer matches the extracted rows. Reload the review.')
+def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE, visible_count=None, visible_confirmed=False,
+                overlap_choices=None, list_acknowledged=False, conflict_verifications=None, confirmation_token=None):
+    from .race_identity import possible_associations, validate_identity_choices
+    from .race_matching import MATCHING_VERSION, batch_matches
+    from .race_reconcile import apply_overlap_choices, observations, overlap_conflicts, reconcile
+
     counts = {'added': 0, 'unchanged': 0, 'replaced': 0, 'skipped': 0}
-    selected_ids = set()
     with store._transaction(write=True):
+        source = load_import(store, import_id)
+        if source is None:
+            raise RaceError('Screenshot import was not found.')
+        try:
+            screenshot(store, import_id)
+        except OSError as exc:
+            raise RaceError('Source screenshot is missing or failed integrity verification.') from exc
+        timezone_name = source['display_timezone'] if timezone_name is _DEFAULT_ZONE else validate_timezone(timezone_name)
+        source_rows, sections, complete = observations(store, source)
+        verified_conflicts = []
+        if overlap_choices is not None:
+            rows, planned_groups, _ = apply_overlap_choices(source_rows, sections, rows, overlap_choices)
+            visible_count = len(planned_groups)
+            visible_confirmed = list_acknowledged
+            if not list_acknowledged:
+                raise RaceError('Check the race list against your screenshot before importing.')
+            conflicts = overlap_conflicts(source, source_rows, planned_groups, rows, overlap_choices, timezone_name)
+            submitted = conflict_verifications or {}
+            for item in rows:
+                item['corrected'] = False
+            if set(submitted) - {conflict['pair'] for conflict in conflicts}:
+                raise RaceError('Overlap verification changed. Review the conflicting values again.')
+            for conflict in conflicts:
+                if submitted.get(conflict['pair']) != conflict['token']:
+                    raise RaceError('Verify each conflicting overlap against the original screenshot.')
+                left, right = conflict['pair']
+                verified_conflicts.append({'observations': [left + 1, right + 1],
+                                           'fields': conflict['fields'], 'token': conflict['token']})
+            for conflict in conflicts:
+                rows[conflict['group'][0]]['corrected'] = True
+        groups = reconcile(source_rows, sections, complete, rows, visible_count, visible_confirmed)
         for item in rows:
-            if item['action'] == 'skip':
-                counts['skipped'] += 1
-                continue
             if item['action'] != 'confirm':
-                raise RaceError('Choose confirm or skip for every row.')
-            row, activity_id = item['values'], item['activity_id']
+                raise RaceError('Every row must be matched automatically; skipping is not permitted.')
+        final_rows = [rows[group[0]] for group in groups]
+        for item in final_rows:
+            row = item['values']
             errors = row_errors(row)
             if errors:
                 raise RaceError('Correct invalid rows before confirming: ' + ' '.join(errors))
             validate_shape({'races': [row]})
-            if not activity_id or not store.connection.execute('SELECT 1 FROM activities WHERE activity_id=?', (activity_id,)).fetchone():
-                raise RaceError('Every confirmed row must be linked to an existing activity.')
-            if activity_id in selected_ids:
-                raise RaceError('Two confirmed rows cannot use the same activity.')
-            selected_ids.add(activity_id)
+        decisions = batch_matches([item['values'] for item in final_rows], timezone_name, matching_activities(store))
+        failures = [f"Observation {groups[index][0] + 1}: {decision['reason']}" for index, decision in enumerate(decisions)
+                    if not decision['activity_id']]
+        if failures:
+            raise RaceError('Batch blocked: ' + ' '.join(failures))
+        candidates = possible_associations(store, source, groups, [item['values'] for item in final_rows],
+                                           decisions, timezone_name, visible_count)
+        identity_decisions = validate_identity_choices(candidates, final_rows, decisions, timezone_name)
+        confirmation = import_confirmation(store, source, groups, [item['values'] for item in final_rows],
+                                           decisions, timezone_name)
+        if confirmation_token is not None and confirmation_token != confirmation['token']:
+            raise RaceError('The displayed import or saved history changed. Review changes before importing.')
+        for item, decision in zip(final_rows, decisions):
+            row, activity_id = item['values'], decision['activity_id']
+            if item.get('activity_id') and item['activity_id'] != activity_id:
+                raise RaceError('Manual activity selection cannot override automatic matching.')
             encoded = json.dumps(row, sort_keys=True, ensure_ascii=False)
-            current = store.connection.execute('SELECT values_json, display_timezone FROM race_results WHERE activity_id=?', (activity_id,)).fetchone()
-            current_revision = revision(current['values_json'], current['display_timezone']) if current else 'new'
+            current, removed = result_state(store, activity_id)
+            current_revision = result_revision(current, removed)
             if item['shown_activity'] != activity_id or item['shown_revision'] != current_revision:
                 raise RaceError('Activity selection or saved result changed. Review changes before confirming.')
             if current and json.loads(current['values_json']) == row and current['display_timezone'] == timezone_name:
@@ -412,6 +633,8 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
                 continue
             if current and not item['replace']:
                 raise RaceError('A changed result needs explicit replacement approval.')
+            if removed and not item['replace'] and confirmation_token is None:
+                raise RaceError('A previously removed result needs explicit restoration approval.')
             now = datetime.now(timezone.utc).isoformat()
             store.connection.execute('INSERT INTO race_result_history VALUES (?,?,?,?,?,?)',
                                      (str(uuid4()), activity_id, import_id, encoded, timezone_name, now))
@@ -421,4 +644,25 @@ def commit_rows(store, import_id, rows, *, timezone_name=_DEFAULT_ZONE):
                 accepted_at=excluded.accepted_at''',
                 (activity_id, import_id, encoded, timezone_name, now))
             counts['replaced' if current else 'added'] += 1
+        provenance = {'timezone': timezone_name, 'matching_version': MATCHING_VERSION,
+                      'identity_decisions': identity_decisions, 'groups': [
+            {'observations': [index + 1 for index in group], 'choices': [rows[index]['group'] for index in group],
+             'values': rows[group[0]]['values'], 'activity_id': decision['activity_id'],
+             'match_evidence': next(choice for choice in decision['candidates'] if choice['id'] == decision['activity_id']),
+             'corrected': bool(rows[group[0]].get('corrected'))}
+            for group, decision in zip(groups, decisions)]}
+        if confirmation_token is not None:
+            provenance['import_confirmation'] = {'token': confirmation['token'],
+                                                'restorations': confirmation['rows'],
+                                                'action': 'confirm'}
+        if overlap_choices is not None:
+            provenance['count_type'] = 'derived_distinct_races'
+            provenance['list_acknowledged'] = True
+            provenance['overlap_decisions'] = [
+                {'observations': [left + 1, right + 1], 'decision': choice}
+                for (left, right), choice in sorted(overlap_choices.items())]
+            provenance['overlap_verifications'] = verified_conflicts
+        store.connection.execute('INSERT INTO race_import_reconciliations VALUES (?,?,?,?,?)',
+                                 (str(uuid4()), import_id, _now_iso(), visible_count,
+                                  json.dumps(provenance, ensure_ascii=False)))
     return counts

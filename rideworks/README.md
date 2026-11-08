@@ -54,14 +54,17 @@ attach confirmed race metadata to existing activities. The Extract action sends
 the image to OpenAI and incurs API charges; the screen asks for that action
 explicitly. Configure `OPENAI_API_KEY` in the server environment or ignored
 repository `.env`. `RIDEWORKS_RACE_MODEL` optionally selects an image-capable
-structured-output model (default `gpt-4o-mini`), and
+structured-output model (default `gpt-6-luna`), and
 `RIDEWORKS_RACE_MAX_BYTES` sets the upload limit (default 10 MiB, maximum
 12 MiB). Keys stay server-side; never commit them.
 
 An optional IANA display timezone applies to the screenshot's clock, not the
 activity's recording timezone. Unknown timezone prevents automatic matching.
-Review all extracted fields, update candidate matches, explicitly approve any
-replacement and confirm; unselected rows remain skipped. Zwift-reported watts
+Full-image extraction is the default; overlapping sections are an optional fallback
+for diagnostics. Review all extracted fields and automatic matches, acknowledge the
+screenshot list, and confirm the entire batch. The final import button states any
+restorations; changes to active results need separate replacement approval. Every race must match
+one distinct existing activity; unresolved rows block the whole import. Zwift-reported watts
 are separate from FIT power. Source images and race history are private data
 under the normal store (`originals/race-screenshots/` and SQLite); include
 them in the existing backup. Model accuracy and costs require Owner validation.

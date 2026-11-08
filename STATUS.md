@@ -1,9 +1,11 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Most recently completed task:** RACE-01 — Zwift Racing Profile screenshot import and linked Race Results. [PR #59](https://github.com/k14krug/rideworks/pull/59) merged, accepted as-is by Owner with documented recognition errors.
-**State:** `done` for RACE-01. No task currently `in_progress`.
-**Verification:** The RACE-01 report records 580 passing Python tests and live 11-row comparisons. Final live extraction matched 10/11 average-watt values but only 1/11 Racing Scores and 1/11 score changes; incorrect confirmed records may remain. See [report](reports/RACE-01/implementation.md). These are prior accepted findings, not a quality claim.
-**Production:** Owner reports RACE-01 is now in production (2026-11-06); the repository does not independently prove which production revision was deployed. No production action taken by RACE-02 authoring.
-**Next pending task:** RACE-02 — improve screenshot extraction, require automatic whole-batch matching, preserve safe correction/unlink and add Activities race fields. [Analyst JIT](docs/tasks/RACE-02.md) · [Issue #60](https://github.com/k14krug/rideworks/issues/60).
-**Next action:** Owner may explicitly invoke `/TASK RACE-02` or `/AUTOTASK RACE-02`. Dex must fetch/refesh `main`, use a clean task worktree, follow the JIT and stop for HARD — Analyst technical review. No automatic task start, no unapproved live API upload or deployment.
+**Current task:** RACE-02 — screenshot import reliability.
+**State:** `done` — both review gates accepted for application commit `74c53f6d1eb3fd3e4af3131e7a6146d42ae92186`.
+**Acceptance:** [Analyst Gate 1](https://github.com/k14krug/rideworks/pull/61#issuecomment-6714326111); [Owner Gate 2 and explicit merge/production release authorization](https://github.com/k14krug/rideworks/pull/61#issuecomment-6714437015); [closeout instructions](https://github.com/k14krug/rideworks/pull/61#issuecomment-6718219780).
+**PR / issue:** [#61](https://github.com/k14krug/rideworks/pull/61) / [#60](https://github.com/k14krug/rideworks/issues/60). Closeout changes are documentation only; accepted application code is unchanged.
+**Verification:** 641 Python tests, 81 focused race tests and 84 synthetic Chromium checks passed. Read-only dev replay and restarted real review each showed 17/17 matches, zero overlap questions, 11 prior removals, explicit final import/restore action and all eight editable fields. [Verification report](reports/RACE-02/owner-review-revision.md).
+**Release:** Owner authorized deployment to the existing production installation after verified complete backup and rollback preparation, preserving production data/configuration. Production discovery found `linuxprd`, `/srv/rideworks`, `rideworks.service`; protected configuration backup and service control require working administrative access. No production restart or deployment has occurred at this closeout commit.
+**Data:** Do not replace production with development data, automatically confirm the staged 17-race import, initiate paid extraction or repair old race records. No separate worktree or further Astra review.
+**Next action:** Complete the authorized operational release after establishing administrative access, verified backup and rollback; report production smoke tests. No repeated Owner gate or next task.

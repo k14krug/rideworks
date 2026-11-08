@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-06 — Race Avg W on Home Recent Activities
 
-**Status:** pending — Owner-approved 2026-11-08. [Issue #62](https://github.com/k14krug/rideworks/issues/62) · [Analyst JIT](docs/tasks/HOME-UI-06.md).
+**Status:** in_progress — Owner-approved 2026-11-08. [Issue #62](https://github.com/k14krug/rideworks/issues/62) · [Analyst JIT](docs/tasks/HOME-UI-06.md).
 
 **Purpose:** Add a narrow **Race Avg W** column immediately after **Avg Pwr** in Home's Recent Activities card, without increasing the card size or reducing visible desktop row density.
 

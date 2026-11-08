@@ -1,13 +1,11 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** RACE-02 — screenshot import reliability. [Analyst JIT](docs/tasks/RACE-02.md) · [Issue #60](https://github.com/k14krug/rideworks/issues/60).
-**State:** `ready_for_review` — renewed HARD — Analyst Gate 1 required after Owner Gate 2 rejected restoration clutter and the near-title abstention. Owner Gate 2 remains unaccepted.
-**Branch:** `task/race-02-screenshot-reliability` in the primary checkout.
-**PR:** [#61](https://github.com/k14krug/rideworks/pull/61) — draft.
-**Authority:** [Latest Analyst instructions](https://github.com/k14krug/rideworks/pull/61#issuecomment-6713802752) plus renewed Owner `/TASK RACE-02`. The Analyst-authored JIT is unchanged.
-**Changes:** Matched row labels; restoration intent in the final import button with one screenshot acknowledgment; full assignment/result/history binding and transactional validation; bounded one-character long-word title variation under independent evidence and unique matching. Active replacements remain separately approved.
-**Verification:** 641 Python tests, 81 focused race tests and 84 synthetic Chromium checks passed. Desktop/mobile screenshots inspected. Private read-only development replay: 17 rows, 17 unique automatic matches, zero matching failures, 11 restorations; database hash/size/mtime unchanged. [Review package](reports/RACE-02/owner-review-revision.md).
-**Development:** Real staged import remains unconfirmed. The real development service was not restarted for these new changes; browser verification used isolated synthetic stores. Do not treat an existing process as running this revision.
-**Restrictions:** No production access/writes, migration, paid extraction, worktree, Astra review, merge or deployment.
-**Next action:** Analyst reviews the new head and report at HARD — Analyst Gate 1. After acceptance, prepare the real dev app for Owner verification of all eight screenshot fields and final import UX. No further implementation until review.
+**Current task:** RACE-02 — screenshot import reliability.
+**State:** `done` — both review gates accepted for application commit `74c53f6d1eb3fd3e4af3131e7a6146d42ae92186`.
+**Acceptance:** [Analyst Gate 1](https://github.com/k14krug/rideworks/pull/61#issuecomment-6714326111); [Owner Gate 2 and explicit merge/production release authorization](https://github.com/k14krug/rideworks/pull/61#issuecomment-6714437015); [closeout instructions](https://github.com/k14krug/rideworks/pull/61#issuecomment-6718219780).
+**PR / issue:** [#61](https://github.com/k14krug/rideworks/pull/61) / [#60](https://github.com/k14krug/rideworks/issues/60). Closeout changes are documentation only; accepted application code is unchanged.
+**Verification:** 641 Python tests, 81 focused race tests and 84 synthetic Chromium checks passed. Read-only dev replay and restarted real review each showed 17/17 matches, zero overlap questions, 11 prior removals, explicit final import/restore action and all eight editable fields. [Verification report](reports/RACE-02/owner-review-revision.md).
+**Release:** Owner authorized deployment to the existing production installation after verified complete backup and rollback preparation, preserving production data/configuration. Production discovery found `linuxprd`, `/srv/rideworks`, `rideworks.service`; protected configuration backup and service control require working administrative access. No production restart or deployment has occurred at this closeout commit.
+**Data:** Do not replace production with development data, automatically confirm the staged 17-race import, initiate paid extraction or repair old race records. No separate worktree or further Astra review.
+**Next action:** Complete the authorized operational release after establishing administrative access, verified backup and rollback; report production smoke tests. No repeated Owner gate or next task.

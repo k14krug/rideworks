@@ -61,8 +61,9 @@ structured-output model (default `gpt-6-luna`), and
 An optional IANA display timezone applies to the screenshot's clock, not the
 activity's recording timezone. Unknown timezone prevents automatic matching.
 Full-image extraction is the default; overlapping sections are an optional fallback
-for diagnostics. Review all extracted fields and automatic matches, explicitly approve
-restorations or replacements, and confirm the entire batch. Every race must match
+for diagnostics. Review all extracted fields and automatic matches, acknowledge the
+screenshot list, and confirm the entire batch. The final import button states any
+restorations; changes to active results need separate replacement approval. Every race must match
 one distinct existing activity; unresolved rows block the whole import. Zwift-reported watts
 are separate from FIT power. Source images and race history are private data
 under the normal store (`originals/race-screenshots/` and SQLite); include

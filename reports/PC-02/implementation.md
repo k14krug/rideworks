@@ -114,3 +114,42 @@ source evidence, historical membership or rebuild path was changed.
 
 The revised presentation is submitted for HARD — Analyst Gate 1; Owner
 running-Dev review remains a separate subsequent gate.
+
+## 2026-11-16 inspector refinement
+
+The Activity Review inspector is 385 CSS px wide on desktop (previously 335),
+capped to the plot on narrow screens. Its header shows exact elapsed time and a
+signed displayed-watt difference only for two standard results. The current ride
+has no title or self-link; the winning comparison ride's title is its link.
+Standard assumptions appear only when nonzero; observed coverage and time are
+in a collapsed Recording details disclosure available while pinned. The separate
+minimum keeps coverage, unrecorded time and its explanation visible.
+
+### Refinement verification
+
+- `DEBUG=0 .venv/bin/python -m unittest discover -s tests` passed **657 tests**;
+  focused `test_rideworks_power_curve.py` passed **24 tests**. `node --check`
+  passed for the updated script. Synthetic Chromium verification through
+  `tools/verify_pc02_presentation_browser.js` passed **58 assertions**, covering
+  exact/fractional headers, positive/negative/zero and absent deltas, title
+  links, no self-link, conditional assumptions for both series, on-demand
+  evidence, disclosure reset, endpoint cases and retained axis behavior.
+- Chromium measured a **385 px** desktop inspector versus the prior **335 px**.
+  At 390 and 320 px viewports the actual inspector widths were **290 and 248 px**
+  within **328 and 258 px** plots. Long synthetic ride names and expanded
+  details wrapped without horizontal overflow; at least 119 px of plot height
+  remained available. Pinning survived resize. Mouse, keyboard Tab/Enter,
+  Escape and touch activated the comparison-title link and Recording details;
+  opening details did not unpin. Period and point changes reset stale details.
+- On the disposable retained-data copy, the affected full-duration result
+  remained the separate **91 W** minimum at **1:49:13**, with **94.26%**
+  observed coverage and **376 s** unrecorded, no standard endpoint or delta;
+  strict 20-minute Performance remained **109 W**. The entire Activity Review
+  curve payload matched the pre-refinement `6951793` payload; at a fixed clock,
+  the Performance Power Curve HTML matched as well. Existing Home and strict
+  Performance regressions passed. No schema/cache change, archive rebuild,
+  source change or API fetch was performed for this refinement. Private data
+  and browser captures remain local.
+
+The refinement returns to HARD — Analyst Gate 1. Owner running-Dev review is
+still required after Analyst clearance.

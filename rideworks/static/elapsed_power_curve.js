@@ -5,6 +5,7 @@
   const data=JSON.parse(payload.textContent), panel=document.getElementById('power-curve-panel');
   const svg=document.getElementById('power-curve-chart'), plot=document.getElementById('elapsed-plot');
   const box=document.getElementById('elapsed-inspector'), unpin=document.getElementById('elapsed-unpin');
+  const details=document.getElementById('elapsed-recording-details'), detailContent=document.getElementById('elapsed-recording-content');
   const announce=document.getElementById('elapsed-announcement'), selector=document.getElementById('curve-b');
   const names={ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',all:'All earlier history'};
   const ns='http://www.w3.org/2000/svg';
@@ -28,11 +29,12 @@
     if (value!==undefined) e.textContent=value;
     svg.append(e);return e;
   }
-  let keys=[], maps=[], durations=[], selection=null, pinned=false, scale=null, touchStart=null, lastTouch=0, pointer=null;
-  function reset() { pinned=false; box.hidden=true; unpin.hidden=true; svg.querySelectorAll('.curve-selected').forEach(e=>e.remove()); }
+  let keys=[], maps=[], durations=[], selection=null, pinned=false, scale=null, touchStart=null, lastTouch=0, pointer=null, detailsKey=null, detailsPinned=false;
+  function reset() { pinned=false; box.hidden=true; unpin.hidden=true; details.hidden=true; details.open=false; detailsKey=null; detailsPinned=false; svg.querySelectorAll('.curve-selected').forEach(e=>e.remove()); }
   function announceState() {
     if (box.hidden) {announce.textContent='Power curve inspection dismissed.';return;}
-    announce.textContent=`${document.getElementById('elapsed-duration').textContent}. ${document.getElementById('elapsed-series-a').innerText}. ${document.getElementById('elapsed-series-b').innerText}. ${document.getElementById('elapsed-delta').textContent}. ${pinned?'Pinned':'Preview'}.`;
+    const delta=document.getElementById('elapsed-delta');
+    announce.textContent=`${document.getElementById('elapsed-duration').textContent}. ${document.getElementById('elapsed-series-a').innerText}. ${document.getElementById('elapsed-series-b').innerText}. ${delta.hidden?'':delta.getAttribute('aria-label')}. ${pinned?'Pinned':'Preview'}.`;
   }
   function row(container,key,point,isMinimum) {
     container.replaceChildren();container.className='elapsed-inspector-row '+(key==='ride'?'elapsed-inspector-a':'elapsed-inspector-b');
@@ -44,20 +46,21 @@
       note.textContent=key!=='ride' && !data.series[key].points.length ? 'No qualifying comparison rides.' : 'No qualifying result at this duration.';
       container.append(note);return;
     }
-    const info=document.createElement('p');
-    const a=point.activity;
-    info.textContent=`${a.title} · ${a.absolute_time?date(a.start_time):(a.date_day || 'Date unavailable')}`;
-    container.append(info);
-    const link=document.createElement('a');link.href='/activities/'+encodeURIComponent(a.activity_id);link.textContent='Open activity';
-    container.append(link);
+    if (key!=='ride') {
+      const info=document.createElement('p'),a=point.activity,link=document.createElement('a');
+      link.href='/activities/'+encodeURIComponent(a.activity_id);link.textContent=a.title;
+      info.append(link,document.createTextNode(` · ${a.absolute_time?date(a.start_time):(a.date_day || 'Date unavailable')}`));
+      container.append(info);
+    }
     const evidence=document.createElement('p');
     if (isMinimum) {
       evidence.textContent=`${(point.coverage*100).toFixed(2)}% observed; ${point.unknown_seconds} s unrecorded. Only recorded work contributes; unrecorded power could raise the full-ride average.`;
     } else {
-      let parts=[`${(point.coverage*100).toFixed(2)}% observed`];
-      if (point.pause_seconds) parts.push(`${point.pause_seconds} s confirmed pause at zero`);
+      let parts=[];
+      if (point.pause_seconds) parts.push(`Paused ${point.pause_seconds} s at zero`);
       if (point.estimated_seconds) parts.push(`${point.estimated_seconds} s estimated`);
-      if (point.unknown_seconds) parts.push(`${point.unknown_seconds} s unknown assumed zero`);
+      if (point.unknown_seconds) parts.push(`${point.unknown_seconds} s unknown, assumed zero`);
+      if (!parts.length) return;
       evidence.textContent=parts.join(' · ')+'.';
     }
     container.append(evidence);
@@ -84,14 +87,28 @@
       if (!i && minimum) element('path',{d:`M${scale.x(d)} ${scale.y(p.average_watts)-6}l6 6 -6 6 -6 -6 Z`,class:'curve-selected curve-minimum-marker'});
       else element(i?'rect':'circle',i?{x:scale.x(d)-4,y:scale.y(p.average_watts)-4,width:8,height:8,class:'curve-selected curve-marker curve-marker-b'}:{cx:scale.x(d),cy:scale.y(p.average_watts),r:4,class:'curve-selected curve-marker curve-marker-a'});
     });
-    document.getElementById('elapsed-duration').textContent=`${duration(d)} (${d} s)`;
+    document.getElementById('elapsed-duration').textContent=duration(d);
     row(document.getElementById('elapsed-series-a'),'ride',current,!!minimum);
     row(document.getElementById('elapsed-series-b'),keys[1],prior,false);
     const diff=document.getElementById('elapsed-delta');
     if (current && prior && !minimum) {
       const v=current.rounded_watts-prior.rounded_watts;
-      diff.textContent=`This ride − comparison: ${v>0?'+':''}${v} W`;
-    } else diff.textContent='Comparison unavailable';
+      const signed=v<0?`−${Math.abs(v)}`:v>0?`+${v}`:'0';
+      diff.textContent=` · ${signed} W`;diff.setAttribute('aria-label',`This ride minus comparison: ${signed} watts`);diff.hidden=false;
+    } else {diff.textContent='';diff.removeAttribute('aria-label');diff.hidden=true;}
+    const currentKey=`${d}|${keys[1]}`;
+    if (!pinned || !detailsPinned || detailsKey!==currentKey) details.open=false;
+    detailsKey=currentKey;detailsPinned=pinned;
+    detailContent.replaceChildren();
+    [[names.ride,minimum?null:current],[names[keys[1]],prior]].forEach(([label,p])=>{
+      if (!p) return;
+      const item=document.createElement('p'), parts=[`${(p.coverage*100).toFixed(2)}% observed`,`${p.observed_seconds} s observed`];
+      if(p.pause_seconds)parts.push(`paused ${p.pause_seconds} s at zero`);
+      if(p.estimated_seconds)parts.push(`${p.estimated_seconds} s estimated`);
+      if(p.unknown_seconds)parts.push(`${p.unknown_seconds} s unknown, assumed zero`);
+      item.textContent=`${label}: ${parts.join(' · ')}.`;detailContent.append(item);
+    });
+    details.hidden=!pinned || !detailContent.childElementCount;
     position();if (keyboard) announceState();
   }
   function nearest(clientX) {
@@ -181,6 +198,7 @@
   box.addEventListener('keydown',e=>{if(e.key==='Escape'){reset();svg.focus();announceState();e.preventDefault();}});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!box.hidden){reset();announceState();e.preventDefault();}});
   unpin.addEventListener('click',()=>{reset();svg.focus();announceState();});
+  details.addEventListener('toggle',position);
   selector.addEventListener('change',()=>{reset();render();});
   new ResizeObserver(render).observe(svg);
   render();

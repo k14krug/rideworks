@@ -38,8 +38,9 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
         chart = '''<div class="elapsed-plot" id="elapsed-plot">
 <svg id="power-curve-chart" role="group" tabindex="0" aria-label="Elapsed power curve" aria-describedby="curve-help"></svg>
 <section id="elapsed-inspector" class="elapsed-inspector" aria-label="Selected power efforts" hidden>
-<div class="elapsed-inspector-heading"><strong id="elapsed-duration"></strong><button type="button" id="elapsed-unpin" hidden>Unpin</button></div>
-<div id="elapsed-series-a"></div><div id="elapsed-series-b"></div><p id="elapsed-delta"></p></section></div>
+<div class="elapsed-inspector-heading"><div><strong id="elapsed-duration"></strong><span id="elapsed-delta" hidden></span></div><button type="button" id="elapsed-unpin" hidden>Unpin</button></div>
+<div id="elapsed-series-a"></div><div id="elapsed-series-b"></div>
+<details id="elapsed-recording-details" hidden><summary>Recording details</summary><div id="elapsed-recording-content"></div></details></section></div>
 <p id="curve-empty" role="status"></p><p id="elapsed-endpoint-status"></p>
 <p id="curve-help">Move over the graph to preview; click to pin or unpin. On touch, tap to pin or unpin. Use arrow keys to inspect, Enter or Space to pin, Tab for links, and Escape to dismiss. Missing windows are unavailable, not zero.</p>
 <span id="elapsed-announcement" class="elapsed-sr-only" aria-live="polite"></span>'''

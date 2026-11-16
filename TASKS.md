@@ -15,6 +15,16 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### PC-02 — Full elapsed Power Curve in Activity Review
+
+**Status:** pending — queued behind any existing work in review; no implementation started.
+
+**Scope:** Compute the selected ride and historical overlays on the same elapsed-window method, with a real full-duration point when evidence permits and explicit coverage limitations otherwise. Preserve closed PC-01, both Performance views, strict 20-minute results and Home bests.
+
+**Execution and acceptance:** [PC-02 JIT](docs/tasks/PC-02.md); `/TASK only` after existing work is cleared and the Owner explicitly invokes it. HARD — Analyst technical review and HARD — Owner running-UI review. No deployment authorized.
+
+---
+
 ### HOME-UI-06 — Race Avg W on Home Recent Activities
 
 **Status:** done — HARD — Analyst Gate 1 accepted [on PR #63](https://github.com/k14krug/rideworks/pull/63#issuecomment-6728718848), and the Owner approved the real development UI and authorized merge/production release [on PR #63](https://github.com/k14krug/rideworks/pull/63#issuecomment-6728858759) on 2026-11-08. Application code accepted at `027e462`; production deployment is being handled separately by the Owner's production Dex.

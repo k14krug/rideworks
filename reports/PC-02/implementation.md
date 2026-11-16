@@ -55,3 +55,62 @@ and screenshots remain private.
 The 95% cutoff and 90% minimum floor are PC-02 policy, not claims of vendor
 parity. Missing work can raise the full-ride average. Analyst and Owner review
 remain required; this report is not task acceptance or deployment.
+
+## 2026-11-16 Activity Review presentation revision
+
+The Activity Review curve now has its own presentation script; the existing
+Performance curve script and markup remain in use for Performance. The selected
+ride and comparison use dark/heavier and lighter/thinner solid strokes. The
+Activity Review duration mapping is square-root; plotted paths, ticks, marker
+positions and nearest-anchor selection use that same mapping. The three lower
+cards and rider-facing provenance links were replaced by an in-plot inspector.
+It retains observed coverage, nonzero pause/estimate/unknown explanations and
+the distinct recorded-power minimum explanation. No calculation, cache version,
+source evidence, historical membership or rebuild path was changed.
+
+### Revision verification
+
+- `DEBUG=0 .venv/bin/python -m unittest discover -s tests` passed **657 tests**;
+  focused `test_rideworks_power_curve.py` passed **24 tests**, including the
+  new separate Activity Review/Performance markup and asset assertions.
+  The first full run had one unrelated flaky privacy-test failure: a randomly
+  generated test nonce happened to contain that test's short placeholder
+  `123`. A complete rerun passed. `node --check` and `git diff --check` passed.
+- Chromium synthetic checks, run with `playwright-cli run-code` and
+  `tools/verify_pc02_presentation_browser.js`, passed **26 assertions**:
+  sub-minute and single-point domains, fractional endpoint precision, a longer
+  comparison domain, square-root mapping, anchor-only selection, unsupported
+  breaks, positive/zero/negative deltas, attribution and links, the unconnected
+  minimum, unavailable endpoint, empty chart and pending state.
+- On a disposable copy of the retained store, the actual affected endpoint
+  remained 6,553 s, **91 W**, 94.26216999847398% coverage and 376 unrecorded
+  seconds. It remained a minimum with no standard endpoint or delta. The strict
+  20-minute result remained **109 W**. Activity Review's full JSON payload was
+  identical to the pre-revision payload. At a fixed clock, the Performance
+  Power Curve HTML matched the pre-revision rendering exactly. Cached elapsed
+  profiles, strict curve profiles and Performance history were byte-identical
+  to the source store; no archive rebuild or API fetch was performed.
+- Chromium desktop and 390/320 px mobile checks measured chart heights of
+  **510/430/430 px**, versus the prior **350/320/320 px**. On the affected
+  domain, 120 s maps to **13.53%** of plot width. Tick labels did not overlap,
+  the right-edge duration remained visible, inspector bounds stayed within the
+  plot, and the page had no horizontal overflow at either mobile width. The
+  current and comparison strokes were solid at 3.5 px and 2 px respectively;
+  the 320 px chart was visually inspected using a local-only private capture.
+- Mouse preview, moving into the unpinned box, pin/unpin, pinned movement and
+  leave, and opening the historical activity link worked. Keyboard Home/End,
+  arrows, Enter/Space, Tab/Shift+Tab, real link activation and Escape/focus
+  return worked. The chart had an accessible name and visible focus; keyboard
+  selection and pin state updated the live region while mouse movement did not.
+  Touch tap/pin, second-tap unpin, the unpin button, link navigation and a real
+  touch drag scrolling the page without selecting a point worked. Resizing kept
+  and repositioned the pin; changing the comparison cleared it. Empty/pending,
+  supported and coverage-limited endpoints were checked. Chromium reported no
+  console errors during the checks.
+- The separate Performance chart retained its logarithmic axis, dashed
+  comparison, three readout cards and keyboard behavior. Existing Home and
+  strict Performance regressions passed in the full suite. Private ride data,
+  captures and the disposable copy are not included in this branch.
+
+The revised presentation is submitted for HARD — Analyst Gate 1; Owner
+running-Dev review remains a separate subsequent gate.

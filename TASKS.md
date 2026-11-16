@@ -15,6 +15,16 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### PC-03 — Apply the Activity Review chart presentation to Power Curve
+
+**Status:** pending — after PC-02 acceptance and integration on main. No implementation started.
+
+**Scope:** Carry the PC-02 chart and pinned inspector to Power → Power Curve. Keep the existing two-period comparisons and strict PC-01 data/results; do not introduce elapsed windows or a recorded-power minimum on this page.
+
+**Execution and acceptance:** [PC-03 JIT](docs/tasks/PC-03.md); explicit `/TASK PC-03` only after dependencies clear. HARD — Analyst technical review, then HARD — Owner running-Dev review. No deployment authorized.
+
+---
+
 ### PC-02 — Full elapsed Power Curve in Activity Review
 
 **Status:** pending — queued behind any existing work in review; no implementation started.

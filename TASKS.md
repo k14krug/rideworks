@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-02 — Full elapsed Power Curve in Activity Review
 
-**Status:** pending — queued behind any existing work in review; no implementation started.
+**Status:** in_progress — elapsed curve implementation and verification underway.
 
 **Scope:** Compute the selected ride and historical overlays on the same elapsed-window method, with a real full-duration point when evidence permits and explicit coverage limitations otherwise. Preserve closed PC-01, both Performance views, strict 20-minute results and Home bests.
 

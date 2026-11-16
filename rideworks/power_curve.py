@@ -267,10 +267,14 @@ def rebuild_curves(store, *, force=False):
                 (identity,METHOD,sig,calculated_at,payload))
             counts['computed'] += 1
             counts['with_power'] += has_power
-    return dict(status='incomplete' if counts['changed_during_build'] else 'completed',method=METHOD,grid=GRID,
+    publication_seconds = round(perf_counter()-publish_started,3)
+    from .elapsed_curve import rebuild as rebuild_elapsed
+    elapsed = rebuild_elapsed(store, force=force)
+    return dict(status='incomplete' if counts['changed_during_build'] or elapsed['status'] == 'incomplete' else 'completed',method=METHOD,grid=GRID,
                 computed=counts['computed'],reused=counts['reused'],with_power=counts['with_power'],
+                elapsed_curve=elapsed,
                 changed_during_build=counts['changed_during_build'],
-                publication_seconds=round(perf_counter()-publish_started,3),
+                publication_seconds=publication_seconds,
                 elapsed_seconds=round(perf_counter()-started,3))
 
 
@@ -361,7 +365,7 @@ def converge_curves(store):
     from .errors import RideWorksError
     try:
         report = rebuild_curves(store)
-        return dict(power_curve_update='incomplete' if report['status']=='incomplete' else 'updated' if report['computed'] else 'current')
+        return dict(power_curve_update='incomplete' if report['status']=='incomplete' else 'updated' if report['computed'] or report['elapsed_curve']['computed'] else 'current')
     except (RideWorksError, OSError, sqlite3.Error):
         return dict(power_curve_update='incomplete')
 

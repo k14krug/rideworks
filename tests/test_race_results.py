@@ -613,7 +613,7 @@ class RaceTests(unittest.TestCase):
 
     def test_migration_rollback(self):
         with Store(self.app.data_dir) as store:
-            store.connection.executescript('DROP TABLE race_import_reconciliations; DROP TABLE race_import_sections; DROP TABLE race_result_removals; DROP TABLE race_result_history; DROP TABLE race_results; DROP TABLE race_imports; PRAGMA user_version=11;')
+            store.connection.executescript('DROP TABLE elapsed_power_curve_profiles; DROP TABLE race_import_reconciliations; DROP TABLE race_import_sections; DROP TABLE race_result_removals; DROP TABLE race_result_history; DROP TABLE race_results; DROP TABLE race_imports; PRAGMA user_version=11;')
         from rideworks import store as module
         with patch.object(module, 'MIGRATION_12', module.MIGRATION_12.replace('PRAGMA user_version = 12;', 'INSERT INTO missing VALUES(1);')):
             with self.assertRaises(sqlite3.Error):
@@ -622,7 +622,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(connection.execute('PRAGMA user_version').fetchone()[0], 11)
             self.assertIsNone(connection.execute("SELECT name FROM sqlite_master WHERE name='race_imports'").fetchone())
         with Store(self.app.data_dir) as store:
-            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 14)
+            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 15)
 
     def test_removal_migration_rolls_back_without_losing_existing_evidence(self):
         identity = self.stage()
@@ -630,7 +630,7 @@ class RaceTests(unittest.TestCase):
             self.commit_rows(store, identity, [self.item()])
             before = tuple(store.connection.execute('SELECT * FROM race_results').fetchone())
             history = [tuple(row) for row in store.connection.execute('SELECT * FROM race_result_history')]
-            store.connection.executescript('DROP TABLE race_import_reconciliations; DROP TABLE race_import_sections; DROP TABLE race_result_removals; PRAGMA user_version=12;')
+            store.connection.executescript('DROP TABLE elapsed_power_curve_profiles; DROP TABLE race_import_reconciliations; DROP TABLE race_import_sections; DROP TABLE race_result_removals; PRAGMA user_version=12;')
         from rideworks import store as module
         broken = module.MIGRATION_13.replace('PRAGMA user_version = 13;', 'INSERT INTO missing VALUES(1);')
         with patch.object(module, 'MIGRATION_13', broken), self.assertRaises(sqlite3.Error):
@@ -641,7 +641,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(connection.execute('SELECT * FROM race_results').fetchone(), before)
             self.assertEqual(connection.execute('SELECT * FROM race_result_history').fetchall(), history)
         with Store(self.app.data_dir) as store:
-            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 14)
+            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 15)
             self.assertEqual(tuple(store.connection.execute('SELECT * FROM race_results').fetchone()), before)
             self.assertEqual(race.screenshot(store, identity)[1], self.image)
 

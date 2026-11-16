@@ -6,6 +6,7 @@
 [hidden] { display: none !important; }
 .power-curve-panel { padding: 22px; min-width: 0; }
 .curve-heading { display: flex; justify-content: space-between; gap: 16px; }
+.curve-minimum-marker { fill: white; stroke: #2563eb; stroke-width: 2; }
 .curve-jump { display: inline-block; margin-top: 8px; font-size: 12px; }
 .curve-heading h2 { font-size: 19px; margin-bottom: 5px; }
 .curve-heading p, .curve-heading > span { font-size: 12px; }

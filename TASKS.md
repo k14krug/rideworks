@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-04 — One power-curve calculation across RideWorks
 
-**Status:** in_progress — Analyst authorized the scoped FIT boundary guard and §3 changes.
+**Status:** done — Analyst Gate 1 cleared at `54c29cd` and Owner approved closeout after Dev review. [PR #66](https://github.com/k14krug/rideworks/pull/66) remains unmerged. No deployment authorized.
 
 **Scope:** Use the shared 90%-coverage elapsed method on both Power Curve views; preserve strict 20-Minute History and Home.
 

@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-03 — Apply the Activity Review chart presentation to Power Curve
 
-**Status:** in_progress — Performance Power Curve presentation implementation and verification underway.
+**Status:** done — Analyst and Owner gates cleared; [final acceptance](https://github.com/k14krug/rideworks/pull/65#issuecomment-6936272214). [PR #65](https://github.com/k14krug/rideworks/pull/65) merged to `main` as `c0f5e70`. Owner authorized production rollout of PC-02 and PC-03; deployment not verified.
 
 **Scope:** Carry the PC-02 chart and pinned inspector to Power → Power Curve. Keep the existing two-period comparisons and strict PC-01 data/results; do not introduce elapsed windows or a recorded-power minimum on this page.
 
@@ -27,7 +27,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-02 — Full elapsed Power Curve in Activity Review
 
-**Status:** done — Analyst and Owner gates cleared; [final acceptance](https://github.com/k14krug/rideworks/pull/64#issuecomment-6935369213). [PR #64](https://github.com/k14krug/rideworks/pull/64) merged to `main` as `96c94ac`. No production deployment authorized.
+**Status:** done — Analyst and Owner gates cleared; [final acceptance](https://github.com/k14krug/rideworks/pull/64#issuecomment-6935369213). [PR #64](https://github.com/k14krug/rideworks/pull/64) merged to `main` as `96c94ac`. Owner subsequently authorized production rollout with PC-03; deployment not verified.
 
 **Scope:** Compute the selected ride and historical overlays on the same elapsed-window method, with a real full-duration point when evidence permits and explicit coverage limitations otherwise. Preserve closed PC-01, both Performance views, strict 20-minute results and Home bests.
 

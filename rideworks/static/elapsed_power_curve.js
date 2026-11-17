@@ -7,7 +7,7 @@
   const box=document.getElementById('elapsed-inspector'), unpin=document.getElementById('elapsed-unpin');
   const details=document.getElementById('elapsed-recording-details'), detailContent=document.getElementById('elapsed-recording-content');
   const announce=document.getElementById('elapsed-announcement'), selector=document.getElementById('curve-b');
-  const names={ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',all:'All earlier history'};
+  const names={ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',two_year:'Prior 2 years',five_year:'Prior 5 years',all:'All earlier history'};
   const ns='http://www.w3.org/2000/svg';
   const timezone=data.calendar_timezone || 'America/Los_Angeles';
   const date=value=>value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:timezone}) : 'All earlier supported history';
@@ -100,6 +100,7 @@
       if(p.pause_seconds)parts.push(`paused ${p.pause_seconds} s at zero`);
       if(p.estimated_seconds)parts.push(`${p.estimated_seconds} s estimated`);
       if(p.unknown_seconds)parts.push(`${p.unknown_seconds} s unknown, assumed zero work`);
+      if(p.source?.scope_reason)parts.push("file elapsed bounds not fully supported; recorded-power scope used");
       item.textContent=`${label}: ${parts.join(' · ')}.`;detailContent.append(item);
     });
     details.hidden=!pinned || !detailContent.childElementCount;
@@ -112,7 +113,8 @@
   function render() {
     if (panel.hidden || !svg.clientWidth) return;
     keys=['ride',selector.value]; maps=keys.map(k=>new Map(data.series[k].points.map(p=>[p.duration_seconds,p])));
-    durations=[...new Set([...keys.flatMap(k=>data.series[k].anchors || []),...maps.flatMap(m=>[...m.keys()]),...(data.elapsed_duration>0?[data.elapsed_duration]:[])])].filter(d=>d>0).sort((a,b)=>a-b);
+    const maxD=Math.max(0,...maps.flatMap(m=>[...m.keys()]),data.elapsed_duration || 0);
+    durations=[...new Set([...keys.flatMap(k=>data.series[k].anchors || []),...maps.flatMap(m=>[...m.keys()]),...(data.elapsed_duration>0?[data.elapsed_duration]:[])])].filter(d=>d>0 && d<=maxD).sort((a,b)=>a-b);
     keys.forEach((k,i)=>{const s=data.series[k];document.getElementById(i?'curve-b-bounds':'curve-a-bounds').textContent=`${s.count} qualifying ${s.count===1?'ride':'rides'}`+(i?` · ${date(s.start)} → ${date(s.end_exclusive)} (end excluded)`:'');});
     let messages=[];
     if (!maps[0].size) messages.push(data.current_reason==='profile_update_required'?'This activity needs a Power Curve update.':'No qualifying power data for this ride.');
@@ -120,7 +122,9 @@
     if (data.ambiguous_durations?.length) messages.push('Some durations have competing file sources and remain unavailable.');
     document.getElementById('curve-empty').textContent=messages.join(' ');
     const endpoint=document.getElementById('elapsed-endpoint-status');
-    if (data.elapsed_duration && !maps[0].has(data.elapsed_duration)) {
+    if (data.scope_reason) {
+      endpoint.textContent="Full ride unavailable: the file's elapsed bounds are not supported by recorded power or verified timer boundaries.";
+    } else if (data.elapsed_duration && !maps[0].has(data.elapsed_duration)) {
       endpoint.textContent=`Full ride ${duration(data.elapsed_duration)}: unavailable${data.endpoint_coverage!=null?` (${(data.endpoint_coverage*100).toFixed(2)}% observed coverage)`:''}.`;
     } else endpoint.textContent='';
     svg.replaceChildren();panel.dataset.curveEmpty=String(!durations.length);
@@ -129,7 +133,7 @@
     if (!durations.includes(selection)) selection=durations.reduce((best,d)=>Math.abs(d-1200)<Math.abs(best-1200)?d:best,durations[0]);
     const width=Math.max(220,svg.clientWidth),height=svg.clientHeight;
     svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
-    const left=48,right=width-16,top=22,bottom=height-52,maxD=durations.at(-1);
+    const left=48,right=width-16,top=22,bottom=height-52;
     const maximum=Math.max(1,...maps.flatMap(m=>[...m.values()].map(p=>p.average_watts)));
     const step=Math.max(1,Math.ceil(maximum/5/25)*25),maxY=Math.ceil(maximum/step)*step;
     const x=d=>left+Math.sqrt(d/maxD)*(right-left),y=w=>bottom-w/maxY*(bottom-top);

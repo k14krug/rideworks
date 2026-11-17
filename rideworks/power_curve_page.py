@@ -20,8 +20,8 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
     heading = 'Elapsed power curve' if activity else 'Elapsed power-duration comparison'
     caption = ('This ride compared with prior performance. Baseline ends at this ride’s start, excluding this ride and every later activity.' if activity else
                'Strongest calculated elapsed average power at each supported duration.')
-    choices = [('six','Previous 6 weeks'),('year','Prior 12 months'),('all','All earlier history')] if activity else [
-        ('six','Last 6 weeks'),('previous','Previous 6 weeks'),('ytd','Year to date'),('last_year','Previous calendar year'),('all','All time')]
+    choices = [('six','Previous 6 weeks'),('year','Prior 12 months'),('two_year','Prior 2 years'),('five_year','Prior 5 years'),('all','All earlier history')] if activity else [
+        ('six','Last 6 weeks'),('previous','Previous 6 weeks'),('two_year','Last 2 years'),('five_year','Last 5 years'),('ytd','Year to date'),('last_year','Previous calendar year'),('all','All time')]
     def selector(name, selected):
         return f'<select id="curve-{name}" aria-label="Compare {name.upper()}">' + ''.join(
             f'<option value="{key}"{" selected" if key == selected else ""}>{label}</option>' for key,label in choices) + '</select>'
@@ -61,7 +61,7 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
 <div class="curve-series"><div><i class="curve-swatch curve-b-swatch" aria-hidden="true"></i>{right}</div><p id="curve-b-bounds"></p></div></div>
 {chart}
 <details class="curve-method"><summary>Power Curve method &amp; coverage</summary><p>{method_text} Outdoor power, CSV/summary watts and estimated stress do not create curves. File watt evidence takes precedence over validated high-resolution, full-length API fallback. Competing supported file sources are ambiguous at that duration.</p>
-<p>{anchors_text} Ties use the earliest source window, then earliest contributing activity start and Activity ID. Period membership is [start, end), in absolute time; calendar-year bounds use the selected timezone. Activity prior 12 months uses calendar subtraction in UTC. Undated/unknown-zone activities cannot establish period membership.</p>
+<p>{anchors_text} Ties use the earliest source window, then earliest contributing activity start and Activity ID. Period membership is [start, end), in absolute time; Performance calendar bounds use the selected timezone. Activity rolling periods use calendar subtraction in UTC. Undated/unknown-zone activities cannot establish period membership.</p>
 <p>Method: {data['method']} · Grid: {data['grid']}. Profiles use retained source observations and update through normal sync or the explicit update above. No raw source calculation occurs when inspecting or changing periods.</p></details>
 <noscript>Enable JavaScript to inspect the Power Curve. Stored source evidence and the existing 20-minute results remain available.</noscript>
 <script type="application/json" id="power-curve-data">{payload}</script><script src="/static/{script}" defer></script></section>'''

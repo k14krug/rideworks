@@ -121,3 +121,52 @@ source whose recorded timestamps and elapsed summary support its duration; it
 has complete observed coverage. Per the explicit stop condition, the requested
 axis and period-option changes have not been implemented pending review. Exact
 personal timings and measurements were reported privately to the Owner.
+
+## Sections 3–4 resolution
+
+The elapsed method/policy identity now invalidates earlier derived profiles.
+Native FIT windows are restricted to the observed power span at any boundary
+that is not independently corroborated by the verified timer scope. The original
+elapsed summary, records and strict results are untouched. Clipped rides expose
+the scope reason, have no invented full-ride endpoint, and retain eligible
+common-grid efforts. API source admission is unchanged.
+
+On the disposable retained-data copy, all 1,463 old profiles became pending;
+the derived-only rebuild completed with zero pending. Among 748 FIT profiles
+with supported points, 399 were clipped. Of those, 220 lost at most one second
+of reported scope; 14 lost more than five minutes. The latter were investigated:
+their removed trailing bounds lacked matching verified final timer boundaries;
+one had an otherwise verified timer that stopped before the summary end. No
+clipped profile lost all supported points. Longest supported duration decreased
+for 376 clipped profiles and stayed the same for 23, including cases where the
+previous off-grid full endpoint no longer qualified. Hash comparisons of
+retained records, sources, extractions, strict power profiles and performance
+history matched before and after the rebuild.
+
+The previously padded winner no longer comes from the suspect FIT profile; a
+different ride now supplies the period result at that duration. Shorter
+common-grid efforts from the suspect file remain eligible. The selected API
+ride's full endpoint and Last 6 weeks winner are unchanged. The All earlier
+history chart now ends at the independently supported comparison point instead
+of the unsupported far-tail anchor, without imposing a maximum duration.
+Exact private measurements were reported to the Owner, not added to Git.
+
+Activity Review now offers prior two- and five-year calendar lookbacks; both
+Performance selectors offer last two and five years. They retain their
+respective UTC/selected-timezone, half-open and self-exclusion conventions.
+The chart domain retains the validated selected-ride endpoint and evaluated
+gaps inside the supported domain, while dropping unsupported far-tail anchors.
+
+`env -u DEBUG .venv/bin/python -m unittest discover -s tests` passed **667**
+tests; focused elapsed tests passed **25**. Synthetic Chromium passed **63**
+Activity Review and **41** Performance checks, including unsupported far tails,
+interior gaps, an unsupported selected endpoint, an empty chart, and a
+legitimate duration longer than eight hours. Fifteen retained-data Chromium
+checks covered the actual All earlier history axis, endpoint, winner links,
+new controls, selector reset, clipped-file explanation and desktop/390/320 px
+layouts. Tests also cover timer corroboration, invalid timing, measured zeros,
+interior gaps, leap day, month end and timezone boundaries. No production
+rebuild, source modification or Strava fetch was performed.
+
+Return to HARD — Analyst Gate 1; Owner running-Dev review follows. No merge or
+deployment is authorized.

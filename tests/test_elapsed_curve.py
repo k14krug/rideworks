@@ -123,6 +123,62 @@ class ElapsedSourceAndCache(unittest.TestCase):
         persist(self.store,identity,dict(time=stream(offsets),watts=stream([power[i] for i in offsets])))
         return self.store.connection.execute('SELECT activity_id FROM strava_api_activities WHERE external_id=?',(str(identity),)).fetchone()[0]
 
+    def test_fit_boundary_guard_validates_scope_and_preserves_offsets(self):
+        from datetime import timedelta
+        from unittest.mock import Mock
+        from rideworks.elapsed_curve import native_candidate
+        def run(offsets,duration,stop,timer, *, zero=False):
+            def stamp(x):return (START+timedelta(seconds=x)).isoformat()
+            records=[dict(timestamp=stamp(i),power=0 if zero and i==offsets[0] else 100) for i in offsets]
+            native=dict(records=records,summary=dict(start_time=stamp(0),timestamp=stamp(duration),total_elapsed_time=duration,total_timer_time=timer),
+                        events=[dict(event='timer',event_type='start',timestamp=stamp(0)),dict(event='timer',event_type='stop',timestamp=stamp(stop))])
+            store=Mock();store.connection.execute.return_value.fetchone.return_value=(len(records),len(records));store.get_source.return_value=native
+            meta=dict(source=dict(source_id='s',content_format='FIT'),extraction=dict(extraction_id='e',record_count=len(records),power_present=len(records)))
+            return native_candidate(store,meta)
+        clipped=run([i for i in range(10,110) if i!=50],1000,110,100,zero=True)
+        self.assertEqual(clipped['scope_reason'],'fit_elapsed_bounds_not_supported')
+        self.assertIsNone(clipped['duration_seconds'])
+        self.assertEqual(clipped['grid_duration'],100)
+        self.assertNotIn(100,clipped['anchors'])
+        p=next(p for p in clipped['points'] if p['duration_seconds']==90)
+        self.assertGreaterEqual(p['start_offset'],10)
+        self.assertLessEqual(p['end_exclusive_offset'],110)
+        self.assertEqual(p['source']['supported_end_offset'],110)
+        full=run(list(range(10,190)),200,200,200)
+        self.assertIsNone(full.get('scope_reason'))
+        self.assertTrue(any(p['duration_seconds']==200 for p in full['points']))
+        # A paired, verified timer that stops early does not corroborate the summary end.
+        trailing=run(list(range(0,190)),200,190,190)
+        self.assertEqual(trailing['scope_reason'],'fit_elapsed_bounds_not_supported')
+        self.assertEqual(trailing['grid_duration'],190)
+        self.assertEqual(run([0,1,1,2],1000,3,3)['reason'],'invalid_elapsed_timing')
+
+    def test_rolling_calendar_periods_leap_and_winners(self):
+        from datetime import timedelta
+        from zoneinfo import ZoneInfo
+        from rideworks.elapsed_curve import comparison,rebuild
+        end=datetime(2024,2,29,12,tzinfo=timezone.utc)
+        outside=self.api(71,datetime(2019,2,27,12,tzinfo=timezone.utc),[500]*60)
+        five=self.api(72,datetime(2019,2,28,12,tzinfo=timezone.utc),[250]*60)
+        two=self.api(73,datetime(2022,2,28,12,tzinfo=timezone.utc),[200]*60)
+        current=self.api(74,end,[300]*60)
+        rebuild(self.store)
+        review=comparison(self.store,current)
+        self.assertEqual(review['series']['two_year']['start'],'2022-02-28T12:00:00+00:00')
+        self.assertEqual(review['series']['five_year']['start'],'2019-02-28T12:00:00+00:00')
+        self.assertEqual(review['series']['two_year']['points'][0]['activity']['activity_id'],two)
+        self.assertEqual(review['series']['five_year']['points'][0]['activity']['activity_id'],five)
+        p=comparison(self.store,as_of=end,zone=ZoneInfo('UTC'))
+        self.assertEqual(p['series']['five_year']['start'],'2019-02-28T12:00:00+00:00')
+        self.assertEqual(p['series']['two_year']['points'][0]['activity']['activity_id'],two)
+        self.assertEqual(p['series']['five_year']['points'][0]['activity']['activity_id'],five)
+        self.assertEqual(p['series']['all']['points'][0]['activity']['activity_id'],outside)
+        self.assertNotEqual(five,current)
+        month_end=comparison(self.store,as_of=datetime(2024,3,31,12,tzinfo=timezone.utc))
+        self.assertEqual(month_end['series']['two_year']['start'],'2022-03-31T12:00:00+00:00')
+        west=comparison(self.store,as_of=datetime(2024,3,12,12,tzinfo=timezone.utc),zone=ZoneInfo('America/Los_Angeles'))
+        self.assertEqual(west['series']['two_year']['start'],'2022-03-12T05:00:00-08:00')
+
     def test_cache_is_separate_and_excludes_off_grid_endpoint_from_history(self):
         from datetime import timedelta
         from rideworks.power_curve import rebuild_curves,curve_history

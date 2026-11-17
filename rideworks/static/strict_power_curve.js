@@ -7,7 +7,7 @@
   const box=document.getElementById('elapsed-inspector'), unpin=document.getElementById('elapsed-unpin');
   const details=document.getElementById('elapsed-recording-details'), detailContent=document.getElementById('elapsed-recording-content');
   const announce=document.getElementById('elapsed-announcement'), selectorA=document.getElementById('curve-a'), selectorB=document.getElementById('curve-b');
-  const names={six:'Last 6 weeks',previous:'Previous 6 weeks',ytd:'Year to date',last_year:'Previous calendar year',all:'All time'};
+  const names={six:'Last 6 weeks',previous:'Previous 6 weeks',two_year:'Last 2 years',five_year:'Last 5 years',ytd:'Year to date',last_year:'Previous calendar year',all:'All time'};
   const ns='http://www.w3.org/2000/svg';
   const timezone=data.calendar_timezone || 'America/Los_Angeles';
   const date=value=>value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:timezone}) : 'All earlier supported history';
@@ -102,6 +102,8 @@
         ['Window start',p.start_timestamp],['Window end (exclusive)',p.end_exclusive_timestamp],['Source ID',source.source_id],
         ['Extraction ID',source.extraction_id],['API summary Source ID',source.summary_source_id],
         ['API observation digest',source.observation_sha256],['Timer quality',source.timer_quality],['Timer limitation',p.timer_problem],
+        ['Bounded scope reason',source.scope_reason],['Reported elapsed seconds',source.reported_elapsed_seconds],
+        ['Supported start offset',source.supported_start_offset],['Supported end offset',source.supported_end_offset],
         ['Timer conflicts',p.timer_conflicts?.length?p.timer_conflicts.join(', '):'None']];
       for(const [name,value] of entries){const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=name;dd.textContent=value==null?'Unavailable':String(value);row.append(dt,dd);dl.append(row);}
       item.append(dl);detailContent.append(item);
@@ -116,7 +118,8 @@
   function render() {
     if (panel.hidden || !svg.clientWidth) return;
     keys=[selectorA.value,selectorB.value]; maps=keys.map(k=>new Map(data.series[k].points.map(p=>[p.duration_seconds,p])));
-    const evaluated=maps.map((m,i)=>new Set((data.series[keys[i]].anchors||[]).filter(d=>d<=Math.max(0,...m.keys()))));
+    const maxSupported=Math.max(0,...maps.flatMap(m=>[...m.keys()]));
+    const evaluated=maps.map((m,i)=>new Set((data.series[keys[i]].anchors||[]).filter(d=>d<=maxSupported)));
     durations=[...new Set([...evaluated.flatMap(v=>[...v]),...maps.flatMap(m=>[...m.keys()])])].filter(d=>d>0).sort((a,b)=>a-b);
     keys.forEach((k,i)=>{const s=data.series[k];document.getElementById(i?'curve-b-bounds':'curve-a-bounds').textContent=`${s.count} qualifying ${s.count===1?'ride':'rides'} · ${date(s.start)} → ${date(s.end_exclusive)} (end excluded)`;});
     let messages=[];

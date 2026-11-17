@@ -45,13 +45,16 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
 <p id="curve-help">Move over the graph to preview; click to pin or unpin. On touch, tap to pin or unpin. Use arrow keys to inspect, Enter or Space to pin, Tab for links, and Escape to dismiss. Missing windows are unavailable, not zero.</p>
 <span id="elapsed-announcement" class="elapsed-sr-only" aria-live="polite"></span>'''
     else:
-        chart = '''<svg id="power-curve-chart" role="img" tabindex="0" aria-label="Power-duration comparison: logarithmic duration axis, watts. Arrow keys inspect exact calculated durations; Enter opens the first available contributing activity." aria-describedby="curve-help"></svg>
+        chart = '''<div class="elapsed-plot" id="elapsed-plot">
+<svg id="power-curve-chart" role="group" tabindex="0" aria-label="Power curve comparison" aria-describedby="curve-help"></svg>
+<section id="elapsed-inspector" class="elapsed-inspector" aria-label="Selected power efforts" hidden>
+<div class="elapsed-inspector-heading"><div><strong id="elapsed-duration"></strong><span id="elapsed-delta" hidden></span></div><button type="button" id="elapsed-unpin" hidden>Unpin</button></div>
+<div id="elapsed-series-a"></div><div id="elapsed-series-b"></div>
+<details id="elapsed-recording-details" hidden><summary>Effort details</summary><div id="elapsed-recording-content"></div></details></section></div>
 <p id="curve-empty" role="status"></p>
-<div class="curve-inspection" aria-live="polite"><article><h3 id="curve-a-label"></h3><strong id="curve-a-watts"></strong><p id="curve-a-ride"></p><a id="curve-a-link">Open contributing activity →</a><details><summary>Effort provenance</summary><dl id="curve-a-source"></dl></details></article>
-<article><h3 id="curve-b-label"></h3><strong id="curve-b-watts"></strong><p id="curve-b-ride"></p><a id="curve-b-link">Open contributing activity →</a><details><summary>Effort provenance</summary><dl id="curve-b-source"></dl></details></article>
-<article><h3 id="curve-duration"></h3><strong id="curve-difference"></strong><p>Calculated at the selected duration. Lines connect evaluated anchors; intervening durations are not exact results.</p></article></div>
-<p id="curve-help">Hover, touch or use arrow keys to inspect. Each period point may come from a different qualifying Virtual Ride. Missing windows are unavailable, not zero. Comparisons describe recorded efforts, not FTP or readiness.</p>'''
-    script = 'elapsed_power_curve.js' if activity else 'power_curve.js'
+<p id="curve-help">Move over the graph to preview; click to pin or unpin. On touch, tap to pin or unpin. Use arrow keys to inspect, Enter or Space to pin, Tab for links, and Escape to dismiss. Missing windows are unavailable, not zero.</p>
+<span id="elapsed-announcement" class="elapsed-sr-only" aria-live="polite"></span>'''
+    script = 'elapsed_power_curve.js' if activity else 'strict_power_curve.js'
     return f'''<section class="panel power-curve-panel" id="power-curve-panel" aria-labelledby="power-curve-heading" data-curve-activity="{'true' if activity else 'false'}"{' hidden' if not activity and not visible else ''}>
 <div class="curve-heading"><div><h2 id="power-curve-heading">{heading}</h2><p>{caption}</p></div><span>Watts</span></div>
 {pending}<div class="curve-series-controls">

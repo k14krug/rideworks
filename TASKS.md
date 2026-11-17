@@ -27,7 +27,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-07 — Solid prior-year mileage lines
 
-**Status:** in_progress — solid prior-year line styling and Dev verification.
+**Status:** done — [Analyst and Owner acceptance](https://github.com/k14krug/rideworks/pull/67#issuecomment-6960780339). [PR #67](https://github.com/k14krug/rideworks/pull/67) merged to `main` as `388e578`. Owner authorized production rollout; deployment not verified.
 
 **Scope:** Home → Mileage by Year only. Make both prior-year strokes solid; leave mileage data, totals, goal and other charts unchanged.
 

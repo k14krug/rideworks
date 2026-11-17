@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-03 — Apply the Activity Review chart presentation to Power Curve
 
-**Status:** pending — after PC-02 acceptance and integration on main. No implementation started.
+**Status:** in_progress — Performance Power Curve presentation implementation and verification underway.
 
 **Scope:** Carry the PC-02 chart and pinned inspector to Power → Power Curve. Keep the existing two-period comparisons and strict PC-01 data/results; do not introduce elapsed windows or a recorded-power minimum on this page.
 

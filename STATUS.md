@@ -1,8 +1,8 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** PC-02 — Full elapsed Power Curve in Activity Review.
-**State:** `done` — Analyst and Owner gates cleared; [PR #64](https://github.com/k14krug/rideworks/pull/64) merged to `main` as `96c94ac`.
-**Scope:** Elapsed Activity Review curves, recorded-power minimum, and Owner-directed in-chart inspector/axis revision; strict Performance and Home metrics remain unchanged.
-**Verification:** 657 Python tests, 24 focused tests, 58 synthetic Chromium checks, retained-data desktop/390/320 mouse/keyboard/touch checks, and payload comparisons. See [implementation report](reports/PC-02/implementation.md).
-**Next action:** No active task. PC-03 is pending explicit Owner invocation; no production deployment authorized.
+**Current task:** PC-03 — Apply the Activity Review chart presentation to Power Curve.
+**State:** `ready_for_review` on `pc-03-performance-power-curve`; HARD — Analyst Gate 1.
+**Scope:** Performance Power Curve presentation only; strict calculations, period results, Activity Review and Home remain unchanged.
+**Verification:** 657 Python tests, 24 focused tests, 35 synthetic Chromium checks, 58 Activity Review regression checks and desktop/390/320 mouse/keyboard/touch checks. See [implementation report](reports/PC-03/implementation.md).
+**Next action:** Analyst technical and visual review; Owner running-Dev review follows Analyst clearance.

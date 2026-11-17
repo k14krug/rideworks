@@ -1064,3 +1064,23 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
   .activity-review-redesign [data-curve-activity="true"] #power-curve-chart { height: 430px; }
   .elapsed-inspector { width: min(290px, calc(100% - 10px)); }
 }
+
+/* Performance Power Curve presentation; Activity Review has its own styles. */
+[data-curve-activity="false"] .elapsed-plot { position: relative; min-width: 0; }
+.performance-redesign [data-curve-activity="false"] #power-curve-chart { height: 510px; }
+[data-curve-activity="false"] .curve-a-swatch { border-color: #153e83; border-width: 4px; }
+[data-curve-activity="false"] .curve-b-swatch { border-color: #5b8592; border-top-style: solid; border-width: 2px; }
+[data-curve-activity="false"] .curve-line-a { stroke: #153e83; stroke-width: 3.5; }
+[data-curve-activity="false"] .curve-line-b { stroke: #5b8592; stroke-width: 2; stroke-dasharray: none; }
+[data-curve-activity="false"] .curve-anchor-a { fill: #153e83; }
+[data-curve-activity="false"] .curve-anchor-b { fill: #5b8592; }
+[data-curve-activity="false"] .curve-marker-a { stroke: #153e83; }
+[data-curve-activity="false"] .curve-marker-b { stroke: #527e8b; }
+.performance-redesign [data-curve-activity="false"][data-curve-empty="true"] #power-curve-chart { height: 0; min-height: 0; overflow: hidden; }
+@media (max-width: 740px) {
+  .performance-redesign [data-curve-activity="false"] #power-curve-chart { height: 430px; }
+}
+[data-curve-activity="false"] #elapsed-recording-content dl { margin: 4px 0 10px; }
+[data-curve-activity="false"] #elapsed-recording-content dl div { display: block; padding: 3px 0; overflow-wrap: anywhere; }
+[data-curve-activity="false"] #elapsed-recording-content dt { font-weight: 600; }
+[data-curve-activity="false"] #elapsed-recording-content dd { margin: 0; }

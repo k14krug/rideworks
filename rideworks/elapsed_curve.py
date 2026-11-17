@@ -1,4 +1,4 @@
-"""Activity Review elapsed power: source-backed windows and a distinct minimum."""
+"""Source-backed elapsed power windows shared by both Power Curve views."""
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
@@ -13,9 +13,9 @@ from .performance_view import months_before
 from .power_curve import duration_grid, signature
 from .training_state import timer_scope
 
-METHOD = 'elapsed-power-v1'
+METHOD = 'elapsed-power-v2'
 GRID = 'seconds-1-30-plus-7-percent-endpoint-v1'
-POLICY = 'elapsed-observed95-minimum90-v1'
+POLICY = 'elapsed-observed90-v2'
 
 
 def elapsed_signature(store, snapshot):
@@ -80,12 +80,10 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
     def window(a,b):
         return {k:prefixes[k][b]-prefixes[k][a] for k in prefixes}
 
-    def point(d, a, evidence, *, minimum=False):
+    def point(d, a, evidence):
         seconds = evidence['observed'] + evidence['estimated'] + evidence['unknown']
         coverage = evidence['observed']/seconds if seconds else 0
-        work = evidence['observed_work'] if minimum else evidence['work']
-        if minimum:
-            evidence = dict(evidence, unknown=evidence['unknown']+evidence['estimated'], estimated=0)
+        work = evidence['work']
         end = duration if d == duration and a == 0 else a+d
         return dict(duration_seconds=d, average_watts=work/d, rounded_watts=math.floor(work/d+0.5),
                     sum_watts=work, observed_watt_seconds=evidence['observed_work'],
@@ -95,7 +93,7 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
                     start_timestamp=(start+timedelta(seconds=a)).isoformat(),
                     end_exclusive_timestamp=(start+timedelta(seconds=end)).isoformat(),
                     source=source or {}, timer_problem=timer_problem, timer_conflicts=conflicts,
-                    result_kind='recorded_power_minimum' if minimum else 'elapsed_power')
+                    result_kind='elapsed_power')
 
     anchors = sorted(set(list(duration_grid(math.floor(duration)) if durations is None else durations) + [duration]))
     result['anchors'] = anchors
@@ -114,7 +112,7 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
                 b=a+d
                 observed=observed_prefix[b]-observed_prefix[a]
                 nonpause=d-(pause_prefix[b]-pause_prefix[a])
-                if observed <= 0 or nonpause <= 0 or observed*100 < 95*nonpause:
+                if observed <= 0 or nonpause <= 0 or observed*100 < 90*nonpause:
                     continue
                 work=work_prefix[b]-work_prefix[a]
                 if best_work is None or work > best_work:
@@ -125,14 +123,12 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
         best = None
         for a,ev in candidates:
             nonpause = d-ev['pause']
-            if ev['observed'] <= 0 or nonpause <= 0 or ev['observed']*100 < 95*nonpause:
+            if ev['observed'] <= 0 or nonpause <= 0 or ev['observed']*100 < 90*nonpause:
                 continue
             if best is None or ev['work'] > best[1]['work']:
                 best = (a,ev)
         if best:
             result['points'].append(point(d,*best))
-        elif d == duration and full['observed'] > 0 and .90 <= result['endpoint_coverage'] < .95:
-            result['minimum'] = point(d,0,full,minimum=True)
     if not result['points']:
         result['reason'] = 'insufficient_recorded_power'
     return result
@@ -207,10 +203,6 @@ def evaluate(store,snapshot):
             by_duration.setdefault(p['duration_seconds'],[]).append(p)
     result['ambiguous_durations']=[d for d,ps in by_duration.items() if len(ps)>1]
     result['points']=[ps[0] for d,ps in sorted(by_duration.items()) if len(ps)==1]
-    minima=[c['minimum'] for c in candidates if c.get('minimum')]
-    # Any competing supported candidate at that exact endpoint makes the minimum ambiguous.
-    if len(minima)==1 and len(by_duration.get(minima[0]['duration_seconds'],[]))==0:
-        result['minimum']=minima[0]
     if not result['points']:
         result['reason']='competing_native_sources' if by_duration else (candidates[0]['reason'] if len(candidates)==1 else 'no_supported_native_window')
     return result
@@ -289,8 +281,6 @@ def comparison(store,activity_id=None, *, as_of=None, zone=timezone.utc):
         if result:
             data['elapsed_duration']=result.get('duration_seconds')
             data['endpoint_coverage']=result.get('endpoint_coverage')
-        if result and result.get('minimum'):
-            data['minimum']=result['minimum'] | dict(activity=result['activity'])
         data['series']['ride']=dict(points=points,anchors=result.get('anchors',[]) if result else [],count=int(bool(points)),start=None,end_exclusive=None)
         if not current or not current['absolute_time']:
             data['baseline_reason']='activity_absolute_start_unavailable'

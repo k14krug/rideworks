@@ -39,31 +39,25 @@ class ElapsedMath(unittest.TestCase):
         for observed in (89,90,94,95):
             r=self.calc(100,[(i,100) for i in range(observed)])
             endpoint=next((p for p in r['points'] if p['duration_seconds']==100),None)
-            self.assertEqual(bool(endpoint),observed>=95)
-            self.assertEqual(bool(r['minimum']),90<=observed<95)
-            if r['minimum']:
-                self.assertEqual(r['minimum']['average_watts'],observed)
-                self.assertEqual(r['minimum']['estimated_seconds'],0)
-        for observed,standard,minimum in ((899,False,False),(900,False,True),(949,False,True),(950,True,False)):
+            self.assertEqual(bool(endpoint),observed>=90)
+            self.assertIsNone(r['minimum'])
+        for observed,standard in ((899,False),(900,True),(949,True),(950,True)):
             r=self.calc(1000,[(i,100) for i in range(observed)])
             self.assertEqual(bool(r['points']),standard)
-            self.assertEqual(bool(r['minimum']),minimum)
+            self.assertIsNone(r['minimum'])
 
     def test_one_second_repair_and_no_fallback_interpolation(self):
         for n in (19,20):
             samples=[(i,100 if i<10 else 200) for i in range(n) if i!=10]
             r=self.calc(n,samples)
-            if n==20:
-                p=r['points'][-1];self.assertEqual((p['estimated_seconds'],p['coverage']),(1,.95));self.assertEqual(p['sum_watts'],2950)
-            else:
-                p=r['minimum']; self.assertEqual((p['estimated_seconds'],p['unknown_seconds']),(0,1))
+            p=r['points'][-1];self.assertEqual((p['estimated_seconds'],p['unknown_seconds']),(1,0))
+            if n==20:self.assertEqual(p['sum_watts'],2950)
 
     def test_large_api_example(self):
         missing=set(range(1480,1801)) | set(range(1827,1881)) | {5055}
         r=self.calc(6553,[(i,100) for i in range(6553) if i not in missing])
-        self.assertEqual(len(r['points']),0)
-        p=r['minimum'];self.assertEqual((p['observed_seconds'],p['unknown_seconds'],p['estimated_seconds'],p['pause_seconds']),(6177,376,0,0))
-        self.assertAlmostEqual(p['average_watts'],617700/6553)
+        p=r['points'][-1];self.assertEqual((p['observed_seconds'],p['unknown_seconds'],p['estimated_seconds'],p['pause_seconds']),(6177,375,1,0))
+        self.assertAlmostEqual(p['average_watts'],617800/6553)
 
     def test_boundary_and_interior_conflict(self):
         r=self.calc(5,[(0,100),(1,100),(2,200),(4,200)],[(2,4)])
@@ -89,6 +83,11 @@ class ElapsedMath(unittest.TestCase):
         for samples in ([(0,1),(0,2)],[(1,1),(0,2)],[(0.5,1)],[(3,1)],[(0,-1)]):
             self.assertIsNotNone(self.calc(2,samples)['reason'])
 
+    def test_measured_zero_and_unknown_are_distinct(self):
+        p=self.calc(100,[(i,0 if i==0 else 100) for i in range(100) if i not in range(50,60)])['points'][-1]
+        self.assertEqual((p['observed_seconds'],p['unknown_seconds'],p['estimated_seconds'],p['sum_watts']),(90,10,0,8900))
+        self.assertEqual(p['coverage'],.9)
+
     def test_small_independent_oracle(self):
         data=[100,None,300,50,None,None,120,90,80,40,80,60,20,30,40,0,10,50,60,70,80]
         samples=[(i,p) for i,p in enumerate(data) if p is not None]
@@ -100,7 +99,7 @@ class ElapsedMath(unittest.TestCase):
                 for j in range(start,start+d):
                     if data[j] is not None:obs+=1;total+=data[j]
                     elif j>0 and j+1<len(data) and data[j-1] is not None and data[j+1] is not None:total+=(data[j-1]+data[j+1])/2
-                if obs and obs/d>=.95:candidates.append((total,start))
+                if obs and obs/d>=.90:candidates.append((total,start))
             actual=next((p for p in result['points'] if p['duration_seconds']==d),None)
             if not candidates:self.assertIsNone(actual)
             else:
@@ -124,7 +123,7 @@ class ElapsedSourceAndCache(unittest.TestCase):
         persist(self.store,identity,dict(time=stream(offsets),watts=stream([power[i] for i in offsets])))
         return self.store.connection.execute('SELECT activity_id FROM strava_api_activities WHERE external_id=?',(str(identity),)).fetchone()[0]
 
-    def test_cache_is_separate_and_excludes_minimum_from_history(self):
+    def test_cache_is_separate_and_excludes_off_grid_endpoint_from_history(self):
         from datetime import timedelta
         from rideworks.power_curve import rebuild_curves,curve_history
         from rideworks.elapsed_curve import comparison
@@ -135,7 +134,7 @@ class ElapsedSourceAndCache(unittest.TestCase):
         data=comparison(self.store,new)
         self.assertTrue(data['series']['ride']['points'])
         self.assertNotIn(100,[p['duration_seconds'] for p in data['series']['six']['points']])
-        self.assertIsNotNone(comparison(self.store,old)['minimum'])
+        self.assertTrue(any(p['duration_seconds']==100 for p in comparison(self.store,old)['series']['ride']['points']))
         rebuild_curves(self.store,force=True)
         self.assertEqual(strict,curve_history(self.store))
         self.assertEqual(self.store.connection.execute('SELECT count(*) FROM elapsed_power_curve_profiles').fetchone()[0],2)
@@ -148,6 +147,19 @@ class ElapsedSourceAndCache(unittest.TestCase):
         p=comparison(self.store,old)
         self.assertEqual((p['pending'],p['current_reason']),(1,'profile_update_required'))
         self.assertFalse(p['series']['ride']['points'])
+
+    def test_old_policy_cache_requires_rebuild(self):
+        from rideworks.elapsed_curve import comparison,rebuild
+        ride=self.api(8,START,[100]*100)
+        rebuild(self.store)
+        self.store.connection.execute("UPDATE elapsed_power_curve_profiles SET method='elapsed-power-v1'")
+        before=comparison(self.store,ride)
+        self.assertEqual(before['pending'],1)
+        self.assertFalse(before['series']['ride']['points'])
+        self.assertEqual(rebuild(self.store)['computed'],1)
+        after=comparison(self.store,ride)
+        self.assertEqual(after['pending'],0)
+        self.assertTrue(after['series']['ride']['points'])
 
     def test_failed_rebuild_keeps_previous_and_retry_succeeds(self):
         from unittest.mock import patch
@@ -195,7 +207,7 @@ class ElapsedSourceAndCache(unittest.TestCase):
         self.assertEqual(history_before,curve_history(self.store))
         self.assertEqual(review_before,comparison(self.store,later))
 
-    def test_elapsed_period_excludes_minimum_and_off_grid_and_stale(self):
+    def test_elapsed_period_excludes_off_grid_and_stale(self):
         from datetime import timedelta
         from rideworks.elapsed_curve import comparison,rebuild
         old=self.api(41,START,[300]*100,set(range(40,46)))
@@ -241,6 +253,15 @@ class ElapsedSourceAndCache(unittest.TestCase):
         end=START+timedelta(days=1)
         self.assertEqual(envelope(profiles,start=None,end=end)['points'][0]['activity']['activity_id'],'later')
         self.assertEqual(envelope(profiles[:2],start=None,end=end)['points'][0]['activity']['activity_id'],'a')
+
+    def test_former_minimum_now_competes_at_common_anchor(self):
+        from datetime import timedelta
+        from rideworks.elapsed_curve import comparison,rebuild
+        ride=self.api(61,START,[100]*120,set(range(50,62)))
+        rebuild(self.store)
+        p=next(p for p in comparison(self.store,as_of=START+timedelta(days=1))['series']['six']['points'] if p['duration_seconds']==120)
+        self.assertEqual((p['activity']['activity_id'],p['rounded_watts'],p['coverage'],p['unknown_seconds']),(ride,90,.9,12))
+        self.assertEqual(p['result_kind'],'elapsed_power')
 
     def test_competing_native_sources_fail_closed_and_block_api_fallback(self):
         from pathlib import Path

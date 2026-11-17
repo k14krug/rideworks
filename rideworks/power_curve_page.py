@@ -3,7 +3,7 @@ from html import escape
 import json
 
 from .goals import query_zone
-from .power_curve import comparison
+from .elapsed_curve import comparison
 
 
 def panel(store, nonce, *, activity_id=None, query='', visible=False):
@@ -11,18 +11,17 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
     if zone is None:
         return '<section class="panel"><h2>Power curve</h2><p>Invalid timezone. Supply one valid curve_tz timezone or omit it to use America/Los_Angeles.</p></section>'
     if activity_id is not None:
-        from .elapsed_curve import comparison as elapsed_comparison
-        data = elapsed_comparison(store, activity_id)
+        data = comparison(store, activity_id)
         data['calendar_timezone'] = str(zone)
     else:
         data = comparison(store,activity_id=activity_id,zone=zone)
     payload = json.dumps(data, ensure_ascii=True, allow_nan=False).replace('<','\\u003c').replace('&','\\u0026')
     activity = activity_id is not None
-    heading = 'Elapsed power curve' if activity else 'Power-duration comparison'
+    heading = 'Elapsed power curve' if activity else 'Elapsed power-duration comparison'
     caption = ('This ride compared with prior performance. Baseline ends at this ride’s start, excluding this ride and every later activity.' if activity else
-               'Strongest calculated average observed power at each supported duration.')
-    choices = [('six','Previous 6 weeks'),('year','Prior 12 months'),('all','All earlier history')] if activity else [
-        ('six','Last 6 weeks'),('previous','Previous 6 weeks'),('ytd','Year to date'),('last_year','Previous calendar year'),('all','All time')]
+               'Strongest calculated elapsed average power at each supported duration.')
+    choices = [('six','Previous 6 weeks'),('year','Prior 12 months'),('two_year','Prior 2 years'),('five_year','Prior 5 years'),('all','All earlier history')] if activity else [
+        ('six','Last 6 weeks'),('previous','Previous 6 weeks'),('two_year','Last 2 years'),('five_year','Last 5 years'),('ytd','Year to date'),('last_year','Previous calendar year'),('all','All time')]
     def selector(name, selected):
         return f'<select id="curve-{name}" aria-label="Compare {name.upper()}">' + ''.join(
             f'<option value="{key}"{" selected" if key == selected else ""}>{label}</option>' for key,label in choices) + '</select>'
@@ -32,8 +31,8 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
     if data['pending']:
         pending = f'''<div class="curve-pending" role="status"><p>{data['pending']:,} new or changed activities await Power Curve update. Outdated profiles are unavailable.</p>
 <form method="post" data-settings-action action="/settings/power-curves/rebuild"><input type="hidden" name="nonce" value="{escape(nonce,quote=True)}"><button type="submit">Update power curves</button></form></div>'''
-    method_text = ('Elapsed windows include confirmed pauses at zero. Single missing seconds may be interpolated; other unknown seconds contribute no work and may understate power. Standard windows require 95% observed non-pause coverage. The separate full-ride recorded-power minimum uses only observed work; unrecorded power could raise the average. Performance 20-Minute History instead requires a continuous recorded window.' if activity else 'Highest arithmetic mean over exactly d observed nonnegative watt samples at consecutive one-second timestamps. Missing samples, gaps, duplicate/backwards times and verified distinct active intervals split windows. Terminal stop observations may be valid endpoints; unverified timers cannot clip recorded samples.')
-    anchors_text = ('Exact anchors include every second through 30, the common approximately 7% duration grid, and the full elapsed ride duration. The full-ride minimum is not part of the standard line or historical comparisons.' if activity else 'Exact anchors: every second through 30, then a common grid with approximately 7% duration spacing (rounded up to integer seconds) plus familiar durations including 5 and 20 minutes and hour-plus efforts. No fixed long-duration cap; curves end at supported anchors. Raw averages and integer sums are inspectable.')
+    method_text = 'Elapsed windows require 90% observed non-pause coverage. Confirmed pauses contribute zero work; isolated missing seconds may be interpolated. Other unknown seconds contribute no work and may understate power. Performance 20-Minute History instead requires a continuous recorded window.'
+    anchors_text = ('Exact anchors include every second through 30, the common approximately 7% duration grid, and the full elapsed ride duration. Off-grid ride endpoints are excluded from historical comparisons.' if activity else 'Period bests use exact common-grid anchors: every second through 30, then approximately 7% duration spacing plus familiar durations. Individual ride endpoints outside that grid are excluded. Curves end at supported anchors; recorded work and elapsed coverage are inspectable.')
     if activity:
         chart = '''<div class="elapsed-plot" id="elapsed-plot">
 <svg id="power-curve-chart" role="group" tabindex="0" aria-label="Elapsed power curve" aria-describedby="curve-help"></svg>
@@ -62,7 +61,7 @@ def panel(store, nonce, *, activity_id=None, query='', visible=False):
 <div class="curve-series"><div><i class="curve-swatch curve-b-swatch" aria-hidden="true"></i>{right}</div><p id="curve-b-bounds"></p></div></div>
 {chart}
 <details class="curve-method"><summary>Power Curve method &amp; coverage</summary><p>{method_text} Outdoor power, CSV/summary watts and estimated stress do not create curves. File watt evidence takes precedence over validated high-resolution, full-length API fallback. Competing supported file sources are ambiguous at that duration.</p>
-<p>{anchors_text} Ties use the earliest source window, then earliest contributing activity start and Activity ID. Period membership is [start, end), in absolute time; calendar-year bounds use the selected timezone. Activity prior 12 months uses calendar subtraction in UTC. Undated/unknown-zone activities cannot establish period membership.</p>
+<p>{anchors_text} Ties use the earliest source window, then earliest contributing activity start and Activity ID. Period membership is [start, end), in absolute time; Performance calendar bounds use the selected timezone. Activity rolling periods use calendar subtraction in UTC. Undated/unknown-zone activities cannot establish period membership.</p>
 <p>Method: {data['method']} · Grid: {data['grid']}. Profiles use retained source observations and update through normal sync or the explicit update above. No raw source calculation occurs when inspecting or changing periods.</p></details>
 <noscript>Enable JavaScript to inspect the Power Curve. Stored source evidence and the existing 20-minute results remain available.</noscript>
 <script type="application/json" id="power-curve-data">{payload}</script><script src="/static/{script}" defer></script></section>'''

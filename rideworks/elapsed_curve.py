@@ -1,4 +1,4 @@
-"""Activity Review elapsed power: source-backed windows and a distinct minimum."""
+"""Source-backed elapsed power windows shared by both Power Curve views."""
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
@@ -13,9 +13,9 @@ from .performance_view import months_before
 from .power_curve import duration_grid, signature
 from .training_state import timer_scope
 
-METHOD = 'elapsed-power-v1'
+METHOD = 'elapsed-power-v3'
 GRID = 'seconds-1-30-plus-7-percent-endpoint-v1'
-POLICY = 'elapsed-observed95-minimum90-v1'
+POLICY = 'elapsed-observed90-fit-boundary-v3'
 
 
 def elapsed_signature(store, snapshot):
@@ -80,12 +80,10 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
     def window(a,b):
         return {k:prefixes[k][b]-prefixes[k][a] for k in prefixes}
 
-    def point(d, a, evidence, *, minimum=False):
+    def point(d, a, evidence):
         seconds = evidence['observed'] + evidence['estimated'] + evidence['unknown']
         coverage = evidence['observed']/seconds if seconds else 0
-        work = evidence['observed_work'] if minimum else evidence['work']
-        if minimum:
-            evidence = dict(evidence, unknown=evidence['unknown']+evidence['estimated'], estimated=0)
+        work = evidence['work']
         end = duration if d == duration and a == 0 else a+d
         return dict(duration_seconds=d, average_watts=work/d, rounded_watts=math.floor(work/d+0.5),
                     sum_watts=work, observed_watt_seconds=evidence['observed_work'],
@@ -95,7 +93,7 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
                     start_timestamp=(start+timedelta(seconds=a)).isoformat(),
                     end_exclusive_timestamp=(start+timedelta(seconds=end)).isoformat(),
                     source=source or {}, timer_problem=timer_problem, timer_conflicts=conflicts,
-                    result_kind='recorded_power_minimum' if minimum else 'elapsed_power')
+                    result_kind='elapsed_power')
 
     anchors = sorted(set(list(duration_grid(math.floor(duration)) if durations is None else durations) + [duration]))
     result['anchors'] = anchors
@@ -114,7 +112,7 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
                 b=a+d
                 observed=observed_prefix[b]-observed_prefix[a]
                 nonpause=d-(pause_prefix[b]-pause_prefix[a])
-                if observed <= 0 or nonpause <= 0 or observed*100 < 95*nonpause:
+                if observed <= 0 or nonpause <= 0 or observed*100 < 90*nonpause:
                     continue
                 work=work_prefix[b]-work_prefix[a]
                 if best_work is None or work > best_work:
@@ -125,14 +123,12 @@ def calculate(duration, samples, *, start, pauses=(), source=None, timer_problem
         best = None
         for a,ev in candidates:
             nonpause = d-ev['pause']
-            if ev['observed'] <= 0 or nonpause <= 0 or ev['observed']*100 < 95*nonpause:
+            if ev['observed'] <= 0 or nonpause <= 0 or ev['observed']*100 < 90*nonpause:
                 continue
             if best is None or ev['work'] > best[1]['work']:
                 best = (a,ev)
         if best:
             result['points'].append(point(d,*best))
-        elif d == duration and full['observed'] > 0 and .90 <= result['endpoint_coverage'] < .95:
-            result['minimum'] = point(d,0,full,minimum=True)
     if not result['points']:
         result['reason'] = 'insufficient_recorded_power'
     return result
@@ -187,7 +183,46 @@ def native_candidate(store, metadata):
     pauses=[(a-start.timestamp(),b-start.timestamp()) for (_,a),(b,_) in zip(intervals,intervals[1:])] if verified else []
     ref=dict(source_id=source['source_id'],extraction_id=extraction['extraction_id'],content_format=source['content_format'],
              origin='elapsed recorded power',timer_quality='session_verified' if verified else 'unverified')
-    return calculate(summary.get('total_elapsed_time'),samples,start=start,pauses=pauses,source=ref,timer_problem=problem)
+    duration=summary.get('total_elapsed_time')
+    if source['content_format'].upper()!='FIT':
+        return calculate(duration,samples,start=start,pauses=pauses,source=ref,timer_problem=problem)
+    if isinstance(duration,bool) or not isinstance(duration,(int,float)) or not math.isfinite(duration) or duration<=0:
+        return dict(points=[],minimum=None,reason='elapsed_clock_unavailable')
+    # Validate every record before using observations to establish either boundary.
+    previous=-1; observed=[]
+    for offset,power in samples:
+        if (not math.isfinite(offset) or offset<0 or offset>duration or offset<=previous or
+                (offset!=duration and offset%1)):
+            return dict(points=[],minimum=None,reason='invalid_elapsed_timing')
+        if power is not None and (type(power) is not int or power<0):
+            return dict(points=[],minimum=None,reason='invalid_power')
+        previous=offset
+        if power is not None and offset<duration:observed.append(offset)
+    if not observed:return dict(points=[],minimum=None,reason='insufficient_recorded_power')
+    first,last=observed[0],min(duration,observed[-1]+1)
+    first_verified=verified and abs(intervals[0][0]-start.timestamp())<1
+    last_verified=verified and abs(intervals[-1][1]-(start.timestamp()+duration))<1
+    lower=0 if first_verified else first
+    upper=duration if last_verified else last
+    clipped=lower>0 or upper<duration
+    if not clipped:
+        return calculate(duration,samples,start=start,pauses=pauses,source=ref,timer_problem=problem)
+    scope=upper-lower
+    ref.update(scope_reason='fit_elapsed_bounds_not_supported',reported_elapsed_seconds=duration,
+               supported_start_offset=lower,supported_end_offset=upper)
+    scoped_samples=[(offset-lower,power) for offset,power in samples if lower<=offset<=upper]
+    scoped_pauses=[(max(a,lower)-lower,min(b,upper)-lower) for a,b in pauses if max(a,lower)<min(b,upper)]
+    grid=duration_grid(math.floor(scope))
+    result=calculate(scope,scoped_samples,start=start+timedelta(seconds=lower),pauses=scoped_pauses,
+                     source=ref,timer_problem=problem,durations=grid)
+    # A clipped boundary is not a full-ride endpoint, but may coincide with the common grid.
+    common=set(grid)
+    result['points']=[p for p in result['points'] if p['duration_seconds'] in common]
+    result['anchors']=[d for d in result.get('anchors',[]) if d in common]
+    for point in result['points']:
+        point['start_offset']+=lower;point['end_exclusive_offset']+=lower
+    result.update(duration_seconds=None,grid_duration=scope,scope_reason=ref['scope_reason'],endpoint_coverage=None)
+    return result
 
 
 def evaluate(store,snapshot):
@@ -199,7 +234,7 @@ def evaluate(store,snapshot):
         return result | api_candidate(store,snapshot)
     candidates=[native_candidate(store,e) for e in snapshot['sources'] if e['source']['kind'] not in ('strava_export','strava_api')]
     if len(candidates)==1:
-        for key in ('duration_seconds','anchors','endpoint_coverage'):
+        for key in ('duration_seconds','grid_duration','scope_reason','anchors','endpoint_coverage'):
             if key in candidates[0]:result[key]=candidates[0][key]
     by_duration={}
     for c in candidates:
@@ -207,10 +242,6 @@ def evaluate(store,snapshot):
             by_duration.setdefault(p['duration_seconds'],[]).append(p)
     result['ambiguous_durations']=[d for d,ps in by_duration.items() if len(ps)>1]
     result['points']=[ps[0] for d,ps in sorted(by_duration.items()) if len(ps)==1]
-    minima=[c['minimum'] for c in candidates if c.get('minimum')]
-    # Any competing supported candidate at that exact endpoint makes the minimum ambiguous.
-    if len(minima)==1 and len(by_duration.get(minima[0]['duration_seconds'],[]))==0:
-        result['minimum']=minima[0]
     if not result['points']:
         result['reason']='competing_native_sources' if by_duration else (candidates[0]['reason'] if len(candidates)==1 else 'no_supported_native_window')
     return result
@@ -240,7 +271,27 @@ def rebuild(store, *, force=False):
     return dict(status='incomplete' if counts['changed_during_build'] else 'completed',computed=counts['computed'],reused=counts['reused'],changed_during_build=counts['changed_during_build'],elapsed_seconds=round(perf_counter()-started,3))
 
 
-def comparison(store,activity_id):
+def envelope(profiles, *, start, end, exclude=None):
+    """Select standard common-grid elapsed results for a half-open period."""
+    winners={}; selected=[]; anchors=set()
+    for p in profiles:
+        a=p['activity']
+        if a['activity_id']==exclude or not a['absolute_time']:continue
+        stamp=datetime.fromisoformat(a['start_time']).astimezone(timezone.utc)
+        if stamp>=end or start is not None and stamp<start:continue
+        selected.append((stamp,a['activity_id'],p))
+    for _,_,p in sorted(selected,key=lambda x:x[:2]):
+        common=set(duration_grid(math.floor(p.get('grid_duration') or p.get('duration_seconds') or 0)))
+        anchors.update(common)
+        for pt in p['points']:
+            d=pt['duration_seconds']
+            if d not in common:continue
+            if d not in winners or pt['average_watts']>winners[d]['average_watts']:
+                winners[d]=pt | dict(activity=p['activity'])
+    return dict(points=[p for _,p in sorted(winners.items())],anchors=sorted(anchors),count=len(selected),start=start.isoformat() if start else None,end_exclusive=end.isoformat())
+
+
+def comparison(store,activity_id=None, *, as_of=None, zone=timezone.utc):
     with store._transaction():
         snapshots=store.activity_history(); saved={r['activity_id']:r for r in store.connection.execute('SELECT * FROM elapsed_power_curve_profiles WHERE method=?',(METHOD,))}
         profiles=[];results={};pending=0
@@ -254,35 +305,28 @@ def comparison(store,activity_id):
             a=presentation(s);p['activity']={k:a[k] for k in ('activity_id','title','start_time','absolute_time','date_day')}
             results[identity]=p
             if p['points']:profiles.append(p)
+        if activity_id is None:
+            end=as_of or datetime.now(timezone.utc)
+            if end.tzinfo is None:raise ValueError('Power Curve as-of timezone is required')
+            local=end.astimezone(zone)
+            year=local.replace(month=1,day=1,hour=0,minute=0,second=0,microsecond=0)
+            data=dict(method=METHOD,grid=GRID,pending=pending,mode='performance',series={},as_of=end.isoformat(),calendar_timezone=str(zone))
+            for key,start,stop in [('six',end-timedelta(days=42),end),('previous',end-timedelta(days=84),end-timedelta(days=42)),('two_year',months_before(local,24),end),('five_year',months_before(local,60),end),('ytd',year,end),('last_year',year.replace(year=year.year-1),year),('all',None,end)]:
+                data['series'][key]=envelope(profiles,start=start,end=stop)
+            return data
         result=results.get(activity_id);current=next((presentation(s) for s in snapshots if s['activity']['activity_id']==activity_id),None)
         points=[p | dict(activity=result['activity']) for p in result['points']] if result else []
         data=dict(method=METHOD,grid=GRID,pending=pending,mode='activity',series={},current_reason=result['reason'] if result else 'profile_update_required',ambiguous_durations=result.get('ambiguous_durations',[]) if result else [],minimum=None)
         if result:
             data['elapsed_duration']=result.get('duration_seconds')
             data['endpoint_coverage']=result.get('endpoint_coverage')
-        if result and result.get('minimum'):
-            data['minimum']=result['minimum'] | dict(activity=result['activity'])
+            data['scope_reason']=result.get('scope_reason')
         data['series']['ride']=dict(points=points,anchors=result.get('anchors',[]) if result else [],count=int(bool(points)),start=None,end_exclusive=None)
         if not current or not current['absolute_time']:
             data['baseline_reason']='activity_absolute_start_unavailable'
-            for key in ('six','year','all'):data['series'][key]=dict(points=[],count=0,start=None,end_exclusive=None)
+            for key in ('six','year','two_year','five_year','all'):data['series'][key]=dict(points=[],count=0,start=None,end_exclusive=None)
             return data
         end=datetime.fromisoformat(current['start_time']).astimezone(timezone.utc)
-        for key,start in [('six',end-timedelta(days=42)),('year',months_before(end,12)),('all',None)]:
-            winners={}; selected=[]; anchors=set()
-            for p in profiles:
-                a=p['activity']
-                if a['activity_id']==activity_id or not a['absolute_time']:continue
-                stamp=datetime.fromisoformat(a['start_time']).astimezone(timezone.utc)
-                if stamp>=end or start is not None and stamp<start:continue
-                selected.append((stamp,a['activity_id'],p))
-            for _,_,p in sorted(selected,key=lambda x:x[:2]):
-                common=set(duration_grid(math.floor(p.get('duration_seconds') or 0)))
-                anchors.update(common)
-                for pt in p['points']:
-                    d=pt['duration_seconds']
-                    if d not in common:continue
-                    if d not in winners or pt['average_watts']>winners[d]['average_watts']:
-                        winners[d]=pt | dict(activity=p['activity'])
-            data['series'][key]=dict(points=[p for _,p in sorted(winners.items())],anchors=sorted(anchors),count=len(selected),start=start.isoformat() if start else None,end_exclusive=end.isoformat())
+        for key,start in [('six',end-timedelta(days=42)),('year',months_before(end,12)),('two_year',months_before(end,24)),('five_year',months_before(end,60)),('all',None)]:
+            data['series'][key]=envelope(profiles,start=start,end=end,exclude=activity_id)
         return data

@@ -7,7 +7,7 @@
   const box=document.getElementById('elapsed-inspector'), unpin=document.getElementById('elapsed-unpin');
   const details=document.getElementById('elapsed-recording-details'), detailContent=document.getElementById('elapsed-recording-content');
   const announce=document.getElementById('elapsed-announcement'), selector=document.getElementById('curve-b');
-  const names={ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',all:'All earlier history'};
+  const names={ride:'This ride',six:'Previous 6 weeks',year:'Prior 12 months',two_year:'Prior 2 years',five_year:'Prior 5 years',all:'All earlier history'};
   const ns='http://www.w3.org/2000/svg';
   const timezone=data.calendar_timezone || 'America/Los_Angeles';
   const date=value=>value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:timezone}) : 'All earlier supported history';
@@ -36,10 +36,10 @@
     const delta=document.getElementById('elapsed-delta');
     announce.textContent=`${document.getElementById('elapsed-duration').textContent}. ${document.getElementById('elapsed-series-a').innerText}. ${document.getElementById('elapsed-series-b').innerText}. ${delta.hidden?'':delta.getAttribute('aria-label')}. ${pinned?'Pinned':'Preview'}.`;
   }
-  function row(container,key,point,isMinimum) {
+  function row(container,key,point) {
     container.replaceChildren();container.className='elapsed-inspector-row '+(key==='ride'?'elapsed-inspector-a':'elapsed-inspector-b');
     const heading=document.createElement('strong');
-    heading.textContent=(isMinimum?'Full ride — recorded-power minimum':names[key])+': '+(point?`${point.rounded_watts} W`:'Unavailable at this duration');
+    heading.textContent=names[key]+': '+(point?`${point.rounded_watts} W`:'Unavailable at this duration');
     container.append(heading);
     if (!point) {
       const note=document.createElement('p');
@@ -53,16 +53,12 @@
       container.append(info);
     }
     const evidence=document.createElement('p');
-    if (isMinimum) {
-      evidence.textContent=`${(point.coverage*100).toFixed(2)}% observed; ${point.unknown_seconds} s unrecorded. Only recorded work contributes; unrecorded power could raise the full-ride average.`;
-    } else {
       let parts=[];
       if (point.pause_seconds) parts.push(`Paused ${point.pause_seconds} s at zero`);
       if (point.estimated_seconds) parts.push(`${point.estimated_seconds} s estimated`);
-      if (point.unknown_seconds) parts.push(`${point.unknown_seconds} s unknown, assumed zero`);
+      if (point.unknown_seconds) parts.push(`${point.unknown_seconds} s unknown, assumed zero work`);
       if (!parts.length) return;
       evidence.textContent=parts.join(' · ')+'.';
-    }
     container.append(evidence);
   }
   function position() {
@@ -80,18 +76,16 @@
     selection=d;svg.dataset.duration=String(d);box.hidden=false;unpin.hidden=!pinned;
     svg.querySelectorAll('.curve-selected').forEach(e=>e.remove());
     element('path',{d:`M${scale.x(d)} ${scale.top}V${scale.bottom}`,class:'curve-selected curve-guide'});
-    const minimum=data.minimum && data.minimum.duration_seconds===d ? data.minimum : null;
-    const current=minimum || maps[0].get(d), prior=maps[1].get(d);
+    const current=maps[0].get(d), prior=maps[1].get(d);
     [current,prior].forEach((p,i)=>{
       if (!p) return;
-      if (!i && minimum) element('path',{d:`M${scale.x(d)} ${scale.y(p.average_watts)-6}l6 6 -6 6 -6 -6 Z`,class:'curve-selected curve-minimum-marker'});
-      else element(i?'rect':'circle',i?{x:scale.x(d)-4,y:scale.y(p.average_watts)-4,width:8,height:8,class:'curve-selected curve-marker curve-marker-b'}:{cx:scale.x(d),cy:scale.y(p.average_watts),r:4,class:'curve-selected curve-marker curve-marker-a'});
+      element(i?'rect':'circle',i?{x:scale.x(d)-4,y:scale.y(p.average_watts)-4,width:8,height:8,class:'curve-selected curve-marker curve-marker-b'}:{cx:scale.x(d),cy:scale.y(p.average_watts),r:4,class:'curve-selected curve-marker curve-marker-a'});
     });
     document.getElementById('elapsed-duration').textContent=duration(d);
-    row(document.getElementById('elapsed-series-a'),'ride',current,!!minimum);
-    row(document.getElementById('elapsed-series-b'),keys[1],prior,false);
+    row(document.getElementById('elapsed-series-a'),'ride',current);
+    row(document.getElementById('elapsed-series-b'),keys[1],prior);
     const diff=document.getElementById('elapsed-delta');
-    if (current && prior && !minimum) {
+    if (current && prior) {
       const v=current.rounded_watts-prior.rounded_watts;
       const signed=v<0?`−${Math.abs(v)}`:v>0?`+${v}`:'0';
       diff.textContent=` · ${signed} W`;diff.setAttribute('aria-label',`This ride minus comparison: ${signed} watts`);diff.hidden=false;
@@ -100,12 +94,13 @@
     if (!pinned || !detailsPinned || detailsKey!==currentKey) details.open=false;
     detailsKey=currentKey;detailsPinned=pinned;
     detailContent.replaceChildren();
-    [[names.ride,minimum?null:current],[names[keys[1]],prior]].forEach(([label,p])=>{
+    [[names.ride,current],[names[keys[1]],prior]].forEach(([label,p])=>{
       if (!p) return;
       const item=document.createElement('p'), parts=[`${(p.coverage*100).toFixed(2)}% observed`,`${p.observed_seconds} s observed`];
       if(p.pause_seconds)parts.push(`paused ${p.pause_seconds} s at zero`);
       if(p.estimated_seconds)parts.push(`${p.estimated_seconds} s estimated`);
-      if(p.unknown_seconds)parts.push(`${p.unknown_seconds} s unknown, assumed zero`);
+      if(p.unknown_seconds)parts.push(`${p.unknown_seconds} s unknown, assumed zero work`);
+      if(p.source?.scope_reason)parts.push("file elapsed bounds not fully supported; recorded-power scope used");
       item.textContent=`${label}: ${parts.join(' · ')}.`;detailContent.append(item);
     });
     details.hidden=!pinned || !detailContent.childElementCount;
@@ -118,16 +113,19 @@
   function render() {
     if (panel.hidden || !svg.clientWidth) return;
     keys=['ride',selector.value]; maps=keys.map(k=>new Map(data.series[k].points.map(p=>[p.duration_seconds,p])));
-    durations=[...new Set([...keys.flatMap(k=>data.series[k].anchors || []),...maps.flatMap(m=>[...m.keys()]),...(data.minimum?[data.minimum.duration_seconds]:[]),...(data.elapsed_duration>0?[data.elapsed_duration]:[])])].filter(d=>d>0).sort((a,b)=>a-b);
+    const maxD=Math.max(0,...maps.flatMap(m=>[...m.keys()]),data.elapsed_duration || 0);
+    durations=[...new Set([...keys.flatMap(k=>data.series[k].anchors || []),...maps.flatMap(m=>[...m.keys()]),...(data.elapsed_duration>0?[data.elapsed_duration]:[])])].filter(d=>d>0 && d<=maxD).sort((a,b)=>a-b);
     keys.forEach((k,i)=>{const s=data.series[k];document.getElementById(i?'curve-b-bounds':'curve-a-bounds').textContent=`${s.count} qualifying ${s.count===1?'ride':'rides'}`+(i?` · ${date(s.start)} → ${date(s.end_exclusive)} (end excluded)`:'');});
     let messages=[];
-    if (!maps[0].size) messages.push(data.current_reason==='profile_update_required'?'This activity needs a Power Curve update.':data.minimum?'No standard elapsed windows qualify; the full-ride minimum is shown separately.':'No qualifying power data for this ride.');
+    if (!maps[0].size) messages.push(data.current_reason==='profile_update_required'?'This activity needs a Power Curve update.':'No qualifying power data for this ride.');
     if (!maps[1].size) messages.push(data.baseline_reason?'Comparison unavailable: this activity has no supported absolute start.':`No qualifying rides in ${names[keys[1]]}.`);
     if (data.ambiguous_durations?.length) messages.push('Some durations have competing file sources and remain unavailable.');
     document.getElementById('curve-empty').textContent=messages.join(' ');
     const endpoint=document.getElementById('elapsed-endpoint-status');
-    if (data.elapsed_duration && !maps[0].has(data.elapsed_duration)) {
-      endpoint.textContent=data.minimum ? `Full ride ${duration(data.elapsed_duration)}: recorded-power minimum available (${(data.minimum.coverage*100).toFixed(2)}% observed).` : `Full ride ${duration(data.elapsed_duration)}: unavailable${data.endpoint_coverage!=null?` (${(data.endpoint_coverage*100).toFixed(2)}% observed coverage)`:''}.`;
+    if (data.scope_reason) {
+      endpoint.textContent="Full ride unavailable: the file's elapsed bounds are not supported by recorded power or verified timer boundaries.";
+    } else if (data.elapsed_duration && !maps[0].has(data.elapsed_duration)) {
+      endpoint.textContent=`Full ride ${duration(data.elapsed_duration)}: unavailable${data.endpoint_coverage!=null?` (${(data.endpoint_coverage*100).toFixed(2)}% observed coverage)`:''}.`;
     } else endpoint.textContent='';
     svg.replaceChildren();panel.dataset.curveEmpty=String(!durations.length);
     svg.setAttribute('tabindex',durations.length?'0':'-1');svg.setAttribute('aria-hidden',String(!durations.length));
@@ -135,8 +133,8 @@
     if (!durations.includes(selection)) selection=durations.reduce((best,d)=>Math.abs(d-1200)<Math.abs(best-1200)?d:best,durations[0]);
     const width=Math.max(220,svg.clientWidth),height=svg.clientHeight;
     svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
-    const left=48,right=width-16,top=22,bottom=height-52,maxD=durations.at(-1);
-    const maximum=Math.max(1,...maps.flatMap(m=>[...m.values()].map(p=>p.average_watts)),data.minimum?.average_watts || 0);
+    const left=48,right=width-16,top=22,bottom=height-52;
+    const maximum=Math.max(1,...maps.flatMap(m=>[...m.values()].map(p=>p.average_watts)));
     const step=Math.max(1,Math.ceil(maximum/5/25)*25),maxY=Math.ceil(maximum/step)*step;
     const x=d=>left+Math.sqrt(d/maxD)*(right-left),y=w=>bottom-w/maxY*(bottom-top);
     scale={x,y,top,bottom};
@@ -160,7 +158,6 @@
       element('path',{d:path,class:`curve-line curve-line-${i?'b':'a'}`});
       for (const [d,p] of map) element('circle',{cx:x(d),cy:y(p.average_watts),r:1.4,class:`curve-anchor curve-anchor-${i?'b':'a'}`});
     });
-    if (data.minimum) element('path',{d:`M${x(data.minimum.duration_seconds)} ${y(data.minimum.average_watts)-6}l6 6 -6 6 -6 -6 Z`,class:'curve-minimum-marker'});
     if (!box.hidden) inspect(selection);
   }
   svg.addEventListener('pointermove',e=>{

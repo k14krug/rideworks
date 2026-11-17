@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-04 — One power-curve calculation across RideWorks
 
-**Status:** done — Analyst Gate 1 cleared at `54c29cd` and Owner approved closeout after Dev review. [PR #66](https://github.com/k14krug/rideworks/pull/66) remains unmerged. No deployment authorized.
+**Status:** done — Analyst Gate 1 cleared at `54c29cd`, Owner approved closeout and [PR #66](https://github.com/k14krug/rideworks/pull/66) was merged. No deployment authorized.
 
 **Scope:** Use the shared 90%-coverage elapsed method on both Power Curve views; preserve strict 20-Minute History and Home.
 
@@ -27,7 +27,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-07 — Solid prior-year mileage lines
 
-**Status:** pending — next after PC-04 closeout and integration.
+**Status:** in_progress — solid prior-year line styling and Dev verification.
 
 **Scope:** Home → Mileage by Year only. Make both prior-year strokes solid; leave mileage data, totals, goal and other charts unchanged.
 

@@ -1,9 +1,9 @@
 # STATUS.md
 
 **Product:** RideWorks.
-**Current task:** PC-04 — One power-curve calculation across RideWorks.
-**State:** `done` — Analyst and Owner gates cleared.
-**Branch:** `pc-04-unified-power-curve`.
-**PR:** [#66](https://github.com/k14krug/rideworks/pull/66) (draft).
-**Verification:** 667 Python tests, 104 synthetic Chromium checks and 15 retained-data browser checks; FIT impact and source preservation reviewed on a disposable copy. See [implementation report](reports/PC-04/implementation.md).
-**Next action:** No active implementation task. HOME-UI-07 remains queued after PC-04 integration; no deployment authorized.
+**Current task:** HOME-UI-07 — Solid prior-year mileage lines.
+**State:** `ready_for_review` — HARD Analyst review.
+**Branch:** `home-ui-07-solid-annual-lines`.
+**PR:** [#67](https://github.com/k14krug/rideworks/pull/67) (draft).
+**Verification:** Computed stroke styles, visual review and before/after content checks at desktop and 390 px; see [implementation report](reports/HOME-UI-07/implementation.md).
+**Next action:** Analyst review; Owner running-Dev review follows clearance. No deployment authorized.

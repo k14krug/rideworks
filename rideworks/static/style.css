@@ -714,8 +714,8 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .home-redesign .home-annual-chart .home-annual-endpoint { fill: var(--blue); font-size: 21px; font-weight: 650; }
 .home-annual-line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .home-annual-line.home-annual-0 { stroke: #2563eb; stroke-width: 2.5; }
-.home-annual-line.home-annual-1 { stroke: #d97706; stroke-dasharray: 6 3; }
-.home-annual-line.home-annual-2 { stroke: #0d9488; stroke-dasharray: 2 3; }
+.home-annual-line.home-annual-1 { stroke: #d97706; }
+.home-annual-line.home-annual-2 { stroke: #0d9488; }
 .home-annual-point.home-annual-0 { fill: #2563eb; }
 .home-annual-point.home-annual-1 { fill: #d97706; }
 .home-annual-point.home-annual-2 { fill: #0d9488; }

@@ -6,6 +6,7 @@
 [hidden] { display: none !important; }
 .power-curve-panel { padding: 22px; min-width: 0; }
 .curve-heading { display: flex; justify-content: space-between; gap: 16px; }
+.curve-minimum-marker { fill: white; stroke: #2563eb; stroke-width: 2; }
 .curve-jump { display: inline-block; margin-top: 8px; font-size: 12px; }
 .curve-heading h2 { font-size: 19px; margin-bottom: 5px; }
 .curve-heading p, .curve-heading > span { font-size: 12px; }
@@ -1034,3 +1035,32 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .race-actions{display:flex;flex-wrap:wrap;gap:.75rem}
 @media(max-width:1100px){.race-fields{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.race-header{align-items:flex-start;flex-direction:column}.race-fields,.race-crop-comparison{grid-template-columns:repeat(2,minmax(0,1fr))}.rw-page .race-panel.race-review-panel .race-fields input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls input:not([type=radio]):not([type=checkbox]),.rw-page .race-panel.race-review-panel .race-row-controls select{min-height:38px}}
+
+/* Activity Review elapsed curve: independent of the Performance curve. */
+[data-curve-activity="true"] .elapsed-plot { position: relative; min-width: 0; }
+.activity-review-redesign [data-curve-activity="true"] #power-curve-chart { height: 510px; }
+[data-curve-activity="true"] .curve-a-swatch { border-color: #153e83; border-width: 4px; }
+[data-curve-activity="true"] .curve-b-swatch { border-color: #5b8592; border-top-style: solid; border-width: 2px; }
+[data-curve-activity="true"] .curve-line-a { stroke: #153e83; stroke-width: 3.5; }
+[data-curve-activity="true"] .curve-line-b { stroke: #5b8592; stroke-width: 2; stroke-dasharray: none; }
+[data-curve-activity="true"] .curve-anchor-a { fill: #153e83; }
+[data-curve-activity="true"] .curve-anchor-b { fill: #5b8592; }
+[data-curve-activity="true"] .curve-marker-a { stroke: #153e83; }
+[data-curve-activity="true"] .curve-marker-b { stroke: #527e8b; }
+[data-curve-activity="true"] .curve-minimum-marker { stroke: #153e83; }
+.elapsed-inspector { position: absolute; z-index: 1; width: min(385px, calc(100% - 10px)); max-height: calc(100% - 120px); overflow: auto; padding: 10px 12px; background: #fff; border: 1px solid #aabbd0; border-radius: 4px; box-shadow: 0 2px 6px #0f2a441f; font-size: 12px; line-height: 1.35; }
+.elapsed-inspector-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.elapsed-inspector-heading button { border: 1px solid #aabbd0; background: white; color: #153e83; padding: 4px 8px; border-radius: 3px; cursor: pointer; }
+.elapsed-inspector-row { border-left: 3px solid #153e83; padding-left: 8px; margin-top: 7px; overflow-wrap: anywhere; }
+.elapsed-inspector-b { border-left: 2px solid #5b8592; }
+.elapsed-inspector-row p { margin-top: 3px; font-size: 11px; }
+.elapsed-inspector-row a { display: inline-block; margin-top: 2px; }
+#elapsed-delta { font-weight: 600; color: #0f2a44; }
+#elapsed-recording-details { margin-top: 8px; font-size: 11px; }
+#elapsed-recording-details p { margin-top: 5px; }
+#elapsed-endpoint-status { font-size: 12px; margin-top: 8px; }
+.elapsed-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 740px) {
+  .activity-review-redesign [data-curve-activity="true"] #power-curve-chart { height: 430px; }
+  .elapsed-inspector { width: min(290px, calc(100% - 10px)); }
+}

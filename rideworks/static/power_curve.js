@@ -10,6 +10,7 @@
     : {six:'Last 6 weeks',previous:'Previous 6 weeks',ytd:'Year to date',last_year:'Previous calendar year',all:'All time'};
   const $ = id => document.getElementById('curve-'+id);
   const fmt = d => d < 60 ? d+' s' : d < 3600 ? (d/60).toFixed(d%60 ? 1 : 0)+' min' : (d/3600).toFixed(d%3600 ? 2 : 0)+' h';
+  const precise = d => `${Math.floor(d/3600)}:${String(Math.floor(d%3600/60)).padStart(2,'0')}:${String(d%60).padStart(2,'0')}`;
   const date = value => value ? new Date(value).toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:data.calendar_timezone || document.documentElement.dataset.displayTimezone || 'America/Los_Angeles'}) : 'All earlier supported history';
   const namespace = 'http://www.w3.org/2000/svg';
   const node = (tag, attrs, content) => {
@@ -32,30 +33,43 @@
     selection=d;svg.dataset.duration=String(d);
     svg.querySelectorAll('.curve-selected').forEach(el=>el.remove());
     node('path',{d:`M${scale.x(d)} ${scale.top}V${scale.bottom}`,class:'curve-selected curve-guide'});
+    const minimum=data.mode==='activity' && data.minimum && data.minimum.duration_seconds===d ? data.minimum : null;
     const selected=maps.map(map=>map.get(d));
+    if (minimum) selected[0]=minimum;
     selected.forEach((point,i) => {
       const key=i ? 'b' : 'a';
-      $(key+'-label').textContent=names[keys[i]]+' · '+fmt(d);
+      $(key+'-label').textContent=point?.result_kind==='recorded_power_minimum' ? 'Full ride — recorded-power minimum · '+precise(d) : names[keys[i]]+' · '+fmt(d);
       $(key+'-watts').textContent=point ? point.rounded_watts+' W' : 'Unavailable at this duration';
       const link=$(key+'-link');link.hidden=!point;
-      $(key+'-ride').textContent=point ? point.activity.title+' · '+(point.activity.absolute_time ? date(point.activity.start_time) : (point.activity.date_day || 'Date unavailable')+' · absolute start unavailable') : 'No qualifying observed window.';
+      $(key+'-ride').textContent=point?.result_kind==='recorded_power_minimum' ? 'Recorded '+(point.coverage*100).toFixed(1)+'% of non-pause time; '+point.unknown_seconds+' s unrecorded. Unrecorded power could raise the full-ride average.' : point ? point.activity.title+' · '+(point.activity.absolute_time ? date(point.activity.start_time) : (point.activity.date_day || 'Date unavailable')+' · absolute start unavailable') : 'No qualifying observed window.';
+      if (point?.result_kind==='elapsed_power') {
+        $(key+'-ride').textContent += ' · '+(point.coverage*100).toFixed(1)+'% observed; '+point.pause_seconds+' s paused, '+point.estimated_seconds+' s estimated, '+point.unknown_seconds+' s unknown assumed zero.';
+      }
+      if (!point && !i && data.mode==='activity' && d===data.elapsed_duration && data.endpoint_coverage != null) {
+        $(key+'-ride').textContent='Insufficient recorded power: '+(data.endpoint_coverage*100).toFixed(1)+'% observed coverage.';
+      }
       const provenance=$(key+'-source');
       if (!point) {provenance.replaceChildren();return;}
       link.href='/activities/'+point.activity.activity_id;
       const source=point.source;
+      const coverage = data.mode==='activity' ? [
+        ['Watt-seconds / duration',point.sum_watts+' / '+d],['Observed seconds',point.observed_seconds],
+        ['Observed non-pause coverage',point.coverage == null ? null : (point.coverage*100).toFixed(2)+'%'],
+        ['Confirmed pause seconds',point.pause_seconds],['Interpolated seconds',point.estimated_seconds],['Unknown seconds',point.unknown_seconds]
+      ] : [['Exact mean (integer watt sum / samples)',point.sum_watts+' / '+d]];
       detail(provenance,[['Evidence',source.origin],['Source',source.content_format],
-        ['Arithmetic mean (W)',point.average_watts],['Exact mean (integer watt sum / samples)',point.sum_watts+' / '+d],
+        ['Arithmetic mean (W)',point.average_watts],...coverage,
         ['Rounding','Nearest whole watt, halves up'],['Window start',point.start_timestamp],
         ['Window end (exclusive)',point.end_exclusive_timestamp],['Source ID',source.source_id],
         ['Extraction ID',source.extraction_id],['API summary Source ID',source.summary_source_id],
         ['API observation digest',source.observation_sha256],['Timer quality',source.timer_quality],
-        ['Timer limitation',source.timer_problem],['Timer/source discrepancy affects this effort',source.timer_discrepancy ? 'Yes: valid recorded observations extend outside unverified timer scope. Recorded samples govern this effort.' : 'No discrepancy established'],
+        ...(data.mode==='activity' ? [['Timer limitation',point.timer_problem],['Timer conflicts',point.timer_conflicts?.join(', ') || null],['Timer/source discrepancy',point.timer_conflicts?.length ? 'Timer evidence conflicts with recorded power or pause boundaries.' : 'No discrepancy established']] : [['Timer limitation',source.timer_problem],['Timer/source discrepancy affects this effort',source.timer_discrepancy ? 'Yes: valid recorded observations extend outside unverified timer scope. Recorded samples govern this effort.' : 'No discrepancy established']]),
         ['Qualifying windows',point.eligible_window_count]]);
       node(i ? 'rect' : 'circle', i ? {x:scale.x(d)-4,y:scale.y(point.average_watts)-4,width:8,height:8,class:'curve-selected curve-marker curve-marker-b'}
         : {cx:scale.x(d),cy:scale.y(point.average_watts),r:4,class:'curve-selected curve-marker curve-marker-a'});
     });
     $('duration').textContent='Inspect: '+fmt(d)+' ('+d+' seconds)';
-    $('difference').textContent=selected.every(Boolean)
+    $('difference').textContent=selected.every(Boolean) && !minimum
       ? (selected[0].rounded_watts-selected[1].rounded_watts>0 ? '+' : '')+(selected[0].rounded_watts-selected[1].rounded_watts)+' W · '+(data.mode==='activity'?'ride − baseline':'A − B')
       : 'Comparison unavailable';
   }
@@ -63,7 +77,7 @@
     if (panel.hidden || svg.clientWidth === 0) return;
     keys=[data.mode === 'activity' ? 'ride' : $('a').value,$('b').value];
     maps=keys.map(key=>new Map(data.series[key].points.map(p=>[p.duration_seconds,p])));
-    durations=[...new Set(maps.flatMap(map=>[...map.keys()]))].sort((a,b)=>a-b);
+    durations=[...new Set([...maps.flatMap(map=>[...map.keys()]),...keys.flatMap(key=>data.series[key].anchors || []),...(data.minimum ? [data.minimum.duration_seconds] : [])])].sort((a,b)=>a-b);
     keys.forEach((key,i)=> {
       const s=data.series[key];
       $(i?'b-bounds':'a-bounds').textContent=s.count+' qualifying '+(s.count===1?'ride':'rides')+(key==='ride' ? '' : ' · '+date(s.start)+' → '+date(s.end_exclusive)+' (end excluded)');
@@ -76,7 +90,7 @@
       api_power_stream_unavailable:'No qualifying retained API watt/time streams.',
       api_device_watts_not_confirmed:'The API source does not confirm device watts.'};
     const messages=[];
-    if (!maps[0].size) messages.push(data.mode === 'activity' ? (reasons[data.current_reason] || 'No qualifying power data for this ride.') : 'No qualifying rides in '+names[keys[0]]+'.');
+    if (!maps[0].size) messages.push(data.mode === 'activity' ? (data.minimum ? 'No standard elapsed windows qualify; the full-ride minimum is shown separately.' : (reasons[data.current_reason] || 'No qualifying power data for this ride.')) : 'No qualifying rides in '+names[keys[0]]+'.');
     if (!maps[1].size) messages.push(data.baseline_reason ? 'Comparison unavailable: this activity has no supported absolute start.' : 'No qualifying rides in '+names[keys[1]]+'.');
     if (data.ambiguous_durations?.length) messages.push('Some durations have competing file sources and remain unavailable.');
     if (data.mode==='performance') messages.push('Periods may overlap; a period best can come from a different ride at each duration. Calendar bounds: '+data.calendar_timezone+'.');
@@ -95,7 +109,7 @@
     svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
     const left=48,right=width-16,top=22,bottom=height-46;
     const maxD=durations.at(-1), domain=Math.max(2,maxD);
-    const maximum=Math.max(1,...maps.flatMap(map=>[...map.values()].map(p=>p.average_watts)));
+    const maximum=Math.max(1,...maps.flatMap(map=>[...map.values()].map(p=>p.average_watts)),data.minimum?.average_watts || 0);
     const step=Math.max(1,Math.ceil(maximum/5/25)*25), maxY=Math.ceil(maximum/step)*step;
     const x=d=>left+Math.log(d)/Math.log(domain)*(right-left), y=w=>bottom-w/maxY*(bottom-top);
     scale={x,y,top,bottom};
@@ -114,13 +128,16 @@
     node('text',{x:(left+right)/2,y:height-4,'text-anchor':'middle'},'Duration · logarithmic scale');
     maps.forEach((map,i)=> {
       let path='',pen=false;
+      const evaluated = data.series[keys[i]].anchors ? new Set(data.series[keys[i]].anchors) : null;
       for (const d of durations) {
+        if (evaluated && !evaluated.has(d)) continue;
         const p=map.get(d);if (!p) {pen=false;continue;}
         path+=(pen?'L':'M')+x(d)+' '+y(p.average_watts);pen=true;
       }
       node('path',{d:path,class:'curve-line curve-line-'+(i?'b':'a')});
       for (const [d,p] of map) node('circle',{cx:x(d),cy:y(p.average_watts),r:1.7,class:'curve-anchor curve-anchor-'+(i?'b':'a')});
     });
+    if (data.minimum) node('path',{d:`M${x(data.minimum.duration_seconds)} ${y(data.minimum.average_watts)-6}l6 6 -6 6 -6 -6 Z`,class:'curve-minimum-marker'});
     inspect(durations.reduce((best,d)=>Math.abs(Math.log(d/selection))<Math.abs(Math.log(best/selection))?d:best,durations[0]));
   }
   const choose = event => {

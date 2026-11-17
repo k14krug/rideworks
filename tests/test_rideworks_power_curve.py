@@ -303,8 +303,16 @@ class CurveSourceTests(unittest.TestCase):
         status,headers,_=app.post('/settings/power-curves/rebuild',body,'http://127.0.0.1:8765')
         self.assertEqual(status,303);self.assertEqual(headers['Location'],'/performance?curve=1')
         self.assertEqual(curve_history(self.store)['pending'],0)
-        self.assertIn('power-curve-data',app.get('/activities/'+identity)[2].decode())
+        activity_html=app.get('/activities/'+identity)[2].decode()
+        self.assertIn('power-curve-data',activity_html)
+        self.assertIn('/static/elapsed_power_curve.js',activity_html)
+        self.assertIn('id="elapsed-inspector"',activity_html)
+        self.assertNotIn('Effort provenance',activity_html)
+        self.assertNotIn('class="curve-inspection"',activity_html)
+        self.assertIn('class="curve-inspection"',html)
+        self.assertIn('/static/power_curve.js',html)
         self.assertEqual(app.get('/static/power_curve.js')[0],200)
+        self.assertEqual(app.get('/static/elapsed_power_curve.js')[0],200)
         self.assertEqual(app.post('/settings/power-curves/rebuild',b'nonce=bad','http://127.0.0.1:8765')[0],403)
         with patch('rideworks.power_curve.rebuild_curves',side_effect=IntegrityError('private')):
             self.assertEqual(converge_curves(self.store),dict(power_curve_update='incomplete'))
@@ -313,12 +321,13 @@ class CurveSourceTests(unittest.TestCase):
         for table in ('race_import_reconciliations','race_import_sections','race_result_removals','race_result_history','race_results','race_imports'):
             self.store.connection.execute('DROP TABLE '+table)
         self.store.connection.execute('DROP TABLE power_curve_profiles')
+        self.store.connection.execute('DROP TABLE elapsed_power_curve_profiles')
         self.store.connection.execute('PRAGMA user_version=9')
         import rideworks.store as module
         with patch.object(module,'MIGRATION_10',module.MIGRATION_10.replace('PRAGMA user_version = 10;','INSERT INTO nonexistent VALUES(1);')):
             with self.assertRaises(sqlite3.Error):Store(self.store.data_dir)
         self.assertEqual(self.store.connection.execute('PRAGMA user_version').fetchone()[0],9)
-        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],14)
+        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],15)
 
     def test_curve_migration_waits_for_completed_planning_migration(self):
         import rideworks.store as module
@@ -327,7 +336,7 @@ class CurveSourceTests(unittest.TestCase):
                 self.assertEqual(paused.connection.execute('PRAGMA user_version').fetchone()[0],8)
                 self.assertIsNone(paused.connection.execute("SELECT name FROM sqlite_master WHERE name='power_curve_profiles'").fetchone())
         with Store(self.root/'paused') as recovered:
-            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],14)
+            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],15)
 
     def test_changed_input_during_build_is_not_published(self):
         identity=self.api(1,[100]*20)

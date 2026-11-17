@@ -25,6 +25,16 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
+### HOME-UI-07 — Solid prior-year mileage lines
+
+**Status:** pending — next after PC-04 closeout and integration.
+
+**Scope:** Home → Mileage by Year only. Make both prior-year strokes solid; leave mileage data, totals, goal and other charts unchanged.
+
+**Execution:** [HOME-UI-07 JIT](docs/tasks/HOME-UI-07.md); `/TASK HOME-UI-07` only. HARD Analyst and Owner Dev gates.
+
+---
+
 ### PC-03 — Apply the Activity Review chart presentation to Power Curve
 
 **Status:** done — Analyst and Owner gates cleared; [final acceptance](https://github.com/k14krug/rideworks/pull/65#issuecomment-6936272214). [PR #65](https://github.com/k14krug/rideworks/pull/65) merged to `main` as `c0f5e70`. Owner authorized production rollout of PC-02 and PC-03; deployment not verified.

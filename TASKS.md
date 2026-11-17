@@ -27,7 +27,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-02 — Full elapsed Power Curve in Activity Review
 
-**Status:** in_progress — elapsed curve implementation and verification underway.
+**Status:** done — Analyst and Owner gates cleared; [final acceptance](https://github.com/k14krug/rideworks/pull/64#issuecomment-6935369213). [PR #64](https://github.com/k14krug/rideworks/pull/64) merged to `main` as `96c94ac`. No production deployment authorized.
 
 **Scope:** Compute the selected ride and historical overlays on the same elapsed-window method, with a real full-duration point when evidence permits and explicit coverage limitations otherwise. Preserve closed PC-01, both Performance views, strict 20-minute results and Home bests.
 

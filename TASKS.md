@@ -15,6 +15,16 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### PC-04 — One power-curve calculation across RideWorks
+
+**Status:** pending — Owner requested immediate correction; next task.
+
+**Scope:** Use the Activity Review standard elapsed method on Power → Power Curve. Keep the ride-only minimum out of period bests; preserve strict 20-Minute History and Home.
+
+**Execution:** [PC-04 JIT](docs/tasks/PC-04.md); `/TASK PC-04` only. HARD Analyst and Owner Dev gates. No deployment authorized.
+
+---
+
 ### PC-03 — Apply the Activity Review chart presentation to Power Curve
 
 **Status:** done — Analyst and Owner gates cleared; [final acceptance](https://github.com/k14krug/rideworks/pull/65#issuecomment-6936272214). [PR #65](https://github.com/k14krug/rideworks/pull/65) merged to `main` as `c0f5e70`. Owner authorized production rollout of PC-02 and PC-03; deployment not verified.

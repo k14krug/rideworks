@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-04 — One power-curve calculation across RideWorks
 
-**Status:** in_progress — implementation and verification underway.
+**Status:** blocked — Analyst review of supported result from malformed FIT timing required by PC-04 §3.
 
 **Scope:** Use the shared 90%-coverage elapsed method on both Power Curve views; preserve strict 20-Minute History and Home.
 

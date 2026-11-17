@@ -100,3 +100,24 @@ matching values or differing window offsets do not establish Strava's method.
 Reproduce the Sauce portion with the pinned public checkout and private aligned
 streams JSON using `node tools/compare_sauce_peak.mjs <checkout> <streams.json>
 4804 5400 6000 6480 6553`; inputs and private screenshots remain outside Git.
+
+## Section 3 diagnostic — stop for Analyst review
+
+On the disposable retained-data copy, an unsupported far-tail anchor comes
+from one older FIT profile whose reported elapsed duration is vastly longer
+than its recorded power and timer summary. The timer boundaries are unverified
+and its full elapsed endpoint is not supported.
+
+Separately, the same profile supplies a plotted period winner whose window ends
+after the last recorded power observation and includes unknown seconds. The
+current rule treats those unknown seconds as zero work. The suspect source
+summary therefore affects a supported point, not just an unsupported axis
+anchor. Whether that window should be eligible requires Analyst review; this
+diagnostic does not alter source data, admission rules, cached calculations or
+chart extent.
+
+The longest supported historical comparison point comes from a separate FIT
+source whose recorded timestamps and elapsed summary support its duration; it
+has complete observed coverage. Per the explicit stop condition, the requested
+axis and period-option changes have not been implemented pending review. Exact
+personal timings and measurements were reported privately to the Owner.

@@ -240,7 +240,27 @@ def rebuild(store, *, force=False):
     return dict(status='incomplete' if counts['changed_during_build'] else 'completed',computed=counts['computed'],reused=counts['reused'],changed_during_build=counts['changed_during_build'],elapsed_seconds=round(perf_counter()-started,3))
 
 
-def comparison(store,activity_id):
+def envelope(profiles, *, start, end, exclude=None):
+    """Select standard common-grid elapsed results for a half-open period."""
+    winners={}; selected=[]; anchors=set()
+    for p in profiles:
+        a=p['activity']
+        if a['activity_id']==exclude or not a['absolute_time']:continue
+        stamp=datetime.fromisoformat(a['start_time']).astimezone(timezone.utc)
+        if stamp>=end or start is not None and stamp<start:continue
+        selected.append((stamp,a['activity_id'],p))
+    for _,_,p in sorted(selected,key=lambda x:x[:2]):
+        common=set(duration_grid(math.floor(p.get('duration_seconds') or 0)))
+        anchors.update(common)
+        for pt in p['points']:
+            d=pt['duration_seconds']
+            if d not in common:continue
+            if d not in winners or pt['average_watts']>winners[d]['average_watts']:
+                winners[d]=pt | dict(activity=p['activity'])
+    return dict(points=[p for _,p in sorted(winners.items())],anchors=sorted(anchors),count=len(selected),start=start.isoformat() if start else None,end_exclusive=end.isoformat())
+
+
+def comparison(store,activity_id=None, *, as_of=None, zone=timezone.utc):
     with store._transaction():
         snapshots=store.activity_history(); saved={r['activity_id']:r for r in store.connection.execute('SELECT * FROM elapsed_power_curve_profiles WHERE method=?',(METHOD,))}
         profiles=[];results={};pending=0
@@ -254,6 +274,15 @@ def comparison(store,activity_id):
             a=presentation(s);p['activity']={k:a[k] for k in ('activity_id','title','start_time','absolute_time','date_day')}
             results[identity]=p
             if p['points']:profiles.append(p)
+        if activity_id is None:
+            end=as_of or datetime.now(timezone.utc)
+            if end.tzinfo is None:raise ValueError('Power Curve as-of timezone is required')
+            local=end.astimezone(zone)
+            year=local.replace(month=1,day=1,hour=0,minute=0,second=0,microsecond=0)
+            data=dict(method=METHOD,grid=GRID,pending=pending,mode='performance',series={},as_of=end.isoformat(),calendar_timezone=str(zone))
+            for key,start,stop in [('six',end-timedelta(days=42),end),('previous',end-timedelta(days=84),end-timedelta(days=42)),('ytd',year,end),('last_year',year.replace(year=year.year-1),year),('all',None,end)]:
+                data['series'][key]=envelope(profiles,start=start,end=stop)
+            return data
         result=results.get(activity_id);current=next((presentation(s) for s in snapshots if s['activity']['activity_id']==activity_id),None)
         points=[p | dict(activity=result['activity']) for p in result['points']] if result else []
         data=dict(method=METHOD,grid=GRID,pending=pending,mode='activity',series={},current_reason=result['reason'] if result else 'profile_update_required',ambiguous_durations=result.get('ambiguous_durations',[]) if result else [],minimum=None)
@@ -269,20 +298,5 @@ def comparison(store,activity_id):
             return data
         end=datetime.fromisoformat(current['start_time']).astimezone(timezone.utc)
         for key,start in [('six',end-timedelta(days=42)),('year',months_before(end,12)),('all',None)]:
-            winners={}; selected=[]; anchors=set()
-            for p in profiles:
-                a=p['activity']
-                if a['activity_id']==activity_id or not a['absolute_time']:continue
-                stamp=datetime.fromisoformat(a['start_time']).astimezone(timezone.utc)
-                if stamp>=end or start is not None and stamp<start:continue
-                selected.append((stamp,a['activity_id'],p))
-            for _,_,p in sorted(selected,key=lambda x:x[:2]):
-                common=set(duration_grid(math.floor(p.get('duration_seconds') or 0)))
-                anchors.update(common)
-                for pt in p['points']:
-                    d=pt['duration_seconds']
-                    if d not in common:continue
-                    if d not in winners or pt['average_watts']>winners[d]['average_watts']:
-                        winners[d]=pt | dict(activity=p['activity'])
-            data['series'][key]=dict(points=[p for _,p in sorted(winners.items())],anchors=sorted(anchors),count=len(selected),start=start.isoformat() if start else None,end_exclusive=end.isoformat())
+            data['series'][key]=envelope(profiles,start=start,end=end,exclude=activity_id)
         return data

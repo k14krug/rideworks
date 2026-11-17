@@ -28,6 +28,13 @@ class ElapsedMath(unittest.TestCase):
         self.assertEqual(p['sum_watts'],625300)
         self.assertAlmostEqual(p['average_watts'],625300/6553)
 
+    def test_standard_window_with_pause_estimate_and_unknown(self):
+        missing=set(range(20,30)) | {40,60,61}
+        p=self.calc(100,[(i,100) for i in range(100) if i not in missing],[(20,30)])['points'][-1]
+        self.assertEqual((p['observed_seconds'],p['pause_seconds'],p['estimated_seconds'],p['unknown_seconds']),(87,10,1,2))
+        self.assertEqual((p['sum_watts'],p['average_watts']),(8800,88))
+        self.assertAlmostEqual(p['coverage'],87/90)
+
     def test_coverage_and_fallback(self):
         for observed in (89,90,94,95):
             r=self.calc(100,[(i,100) for i in range(observed)])
@@ -75,6 +82,8 @@ class ElapsedMath(unittest.TestCase):
         rows=[dict(record_index=i,power=w,timestamp=(START+timedelta(seconds=t)).isoformat()) for i,(t,w) in enumerate(samples)]
         strict=mmp(rows,durations=[1200])['points'][0]
         self.assertEqual(strict['average_watts'],100)
+        self.assertTrue(any(p['duration_seconds']==2400 for p in r['points']))
+        self.assertFalse(mmp(rows,durations=[2400])['points'])
 
     def test_invalid_timestamp(self):
         for samples in ([(0,1),(0,2)],[(1,1),(0,2)],[(0.5,1)],[(3,1)],[(0,-1)]):
@@ -163,6 +172,75 @@ class ElapsedSourceAndCache(unittest.TestCase):
         point=next(p for p in data['series']['six']['points'] if p['duration_seconds']==60)
         self.assertEqual(point['activity']['activity_id'],inside)
         self.assertEqual(point['rounded_watts'],100)
+
+    def test_shared_period_results_and_strict_consumers(self):
+        from datetime import timedelta
+        from rideworks.elapsed_curve import comparison,rebuild
+        from rideworks.power_curve import comparison as strict_comparison, curve_history
+        old=self.api(31,START,[100]*120,{60})
+        self.api(32,START+timedelta(hours=1),[100]*120,{60})
+        later=self.api(33,START+timedelta(days=1),[50]*120)
+        rebuild(self.store)
+        strict_before=strict_comparison(self.store,as_of=START+timedelta(days=1))
+        history_before=curve_history(self.store)
+        review_before=comparison(self.store,later)
+        performance=comparison(self.store,as_of=START+timedelta(days=1))
+        for d in (20,90,120):
+            activity_point=next(p for p in review_before['series']['six']['points'] if p['duration_seconds']==d)
+            period_point=next(p for p in performance['series']['six']['points'] if p['duration_seconds']==d)
+            self.assertEqual(activity_point,period_point)
+            self.assertEqual(period_point['activity']['activity_id'],old)
+        self.assertEqual(next(p for p in performance['series']['six']['points'] if p['duration_seconds']==120)['sum_watts'],12000)
+        self.assertEqual(strict_before,strict_comparison(self.store,as_of=START+timedelta(days=1)))
+        self.assertEqual(history_before,curve_history(self.store))
+        self.assertEqual(review_before,comparison(self.store,later))
+
+    def test_elapsed_period_excludes_minimum_and_off_grid_and_stale(self):
+        from datetime import timedelta
+        from rideworks.elapsed_curve import comparison,rebuild
+        old=self.api(41,START,[300]*100,set(range(40,46)))
+        self.api(42,START+timedelta(hours=1),[100]*101)
+        rebuild(self.store)
+        data=comparison(self.store,as_of=START+timedelta(days=1))
+        points=data['series']['six']['points']
+        self.assertFalse(any(p['duration_seconds'] in (100,101) for p in points))
+        self.assertTrue(all(p['result_kind']=='elapsed_power' for p in points))
+        self.store.connection.execute("UPDATE elapsed_power_curve_profiles SET input_signature='stale' WHERE activity_id=?",(old,))
+        partial=comparison(self.store,as_of=START+timedelta(days=1))
+        self.assertEqual(partial['pending'],1)
+        self.assertTrue(partial['series']['six']['points'])
+        self.assertTrue(all(p['rounded_watts']==100 for p in partial['series']['six']['points']))
+        self.store.connection.execute("UPDATE elapsed_power_curve_profiles SET input_signature='stale'")
+        pending=comparison(self.store,as_of=START+timedelta(days=1))
+        self.assertEqual(pending['pending'],2)
+        self.assertFalse(pending['series']['six']['points'])
+
+    def test_elapsed_period_bounds_and_timezone(self):
+        from datetime import timedelta
+        from zoneinfo import ZoneInfo
+        from rideworks.elapsed_curve import comparison,rebuild
+        asof=datetime(2026,1,1,6,tzinfo=timezone.utc)
+        previous=self.api(51,asof-timedelta(days=84),[110]*60)
+        six=self.api(52,asof-timedelta(days=42),[120]*60)
+        self.api(53,asof,[999]*60)
+        rebuild(self.store)
+        west=comparison(self.store,as_of=asof,zone=ZoneInfo('America/Los_Angeles'))
+        utc=comparison(self.store,as_of=asof)
+        self.assertEqual(west['series']['six']['points'][0]['activity']['activity_id'],six)
+        self.assertEqual(west['series']['previous']['points'][0]['activity']['activity_id'],previous)
+        self.assertTrue(west['series']['ytd']['points'])
+        self.assertFalse(utc['series']['ytd']['points'])
+
+    def test_unrounded_winner_and_stable_ties(self):
+        from datetime import timedelta
+        from rideworks.elapsed_curve import envelope
+        def profile(identity,when,value):
+            return dict(activity=dict(activity_id=identity,start_time=when.isoformat(),absolute_time=True),duration_seconds=30,
+                        points=[dict(duration_seconds=30,average_watts=value,rounded_watts=100)])
+        profiles=[profile('z',START,100.1),profile('a',START,100.1),profile('later',START+timedelta(seconds=1),100.2)]
+        end=START+timedelta(days=1)
+        self.assertEqual(envelope(profiles,start=None,end=end)['points'][0]['activity']['activity_id'],'later')
+        self.assertEqual(envelope(profiles[:2],start=None,end=end)['points'][0]['activity']['activity_id'],'a')
 
     def test_competing_native_sources_fail_closed_and_block_api_fallback(self):
         from pathlib import Path

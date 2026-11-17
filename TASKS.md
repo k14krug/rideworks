@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### PC-04 — One power-curve calculation across RideWorks
 
-**Status:** pending — Owner requested immediate correction; next task.
+**Status:** in_progress — implementation and verification underway.
 
 **Scope:** Use the Activity Review standard elapsed method on Power → Power Curve. Keep the ride-only minimum out of period bests; preserve strict 20-Minute History and Home.
 

@@ -50,6 +50,11 @@
     link.href='/activities/'+encodeURIComponent(a.activity_id);link.textContent=a.title;
     info.append(link,document.createTextNode(` · ${a.absolute_time?date(a.start_time):(a.date_day || 'Date unavailable')}`));
     container.append(info);
+    const notes=[];
+    if(point.pause_seconds) notes.push(`${point.pause_seconds} s confirmed pause`);
+    if(point.estimated_seconds) notes.push(`${point.estimated_seconds} s estimated`);
+    if(point.unknown_seconds) notes.push(`${point.unknown_seconds} s unknown; no work recorded`);
+    if(notes.length) { const note=document.createElement('p');note.textContent=notes.join(' · ')+'.';container.append(note); }
   }
   function position() {
     if (box.hidden || !scale) return;
@@ -89,13 +94,15 @@
       const item=document.createElement('div'), heading=document.createElement('strong'), dl=document.createElement('dl');
       heading.textContent=label;item.append(heading);
       const source=p.source || {};
-      const entries=[['Evidence',source.origin],['Source',source.content_format],['Arithmetic mean (W)',p.average_watts],
-        ['Exact mean (integer watt sum / samples)',`${p.sum_watts} / ${d}`],['Rounding','Nearest whole watt, halves up'],
+      const entries=[['Evidence',source.origin],['Source',source.content_format],['Elapsed average (W)',p.average_watts],
+        ['Work / elapsed seconds',`${p.sum_watts} watt-seconds / ${d} seconds`],['Recorded work (watt-seconds)',p.observed_watt_seconds],
+        ['Observed non-pause coverage',p.coverage==null?null:`${(p.coverage*100).toFixed(2)}%`],['Observed seconds',p.observed_seconds],
+        ['Confirmed pause seconds',p.pause_seconds],['Estimated seconds',p.estimated_seconds],['Unknown seconds assumed zero work',p.unknown_seconds],
+        ['Rounding','Nearest whole watt, halves up'],
         ['Window start',p.start_timestamp],['Window end (exclusive)',p.end_exclusive_timestamp],['Source ID',source.source_id],
         ['Extraction ID',source.extraction_id],['API summary Source ID',source.summary_source_id],
-        ['API observation digest',source.observation_sha256],['Timer quality',source.timer_quality],['Timer limitation',source.timer_problem],
-        ['Timer/source discrepancy',source.timer_discrepancy?'Recorded observations extend outside unverified timer scope.':'No discrepancy established'],
-        ['Qualifying windows',p.eligible_window_count]];
+        ['API observation digest',source.observation_sha256],['Timer quality',source.timer_quality],['Timer limitation',p.timer_problem],
+        ['Timer conflicts',p.timer_conflicts?.length?p.timer_conflicts.join(', '):'None']];
       for(const [name,value] of entries){const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=name;dd.textContent=value==null?'Unavailable':String(value);row.append(dt,dd);dl.append(row);}
       item.append(dl);detailContent.append(item);
     });
@@ -106,18 +113,10 @@
     const px=clientX-svg.getBoundingClientRect().left;
     return durations.reduce((best,d)=>Math.abs(scale.x(d)-px)<Math.abs(scale.x(best)-px)?d:best,durations[0]);
   }
-  // PC-01's common grid; only span each series through its last supported anchor.
-  function grid(longest) {
-    const values=new Set();
-    for(let i=1;i<=Math.min(30,longest);i++)values.add(i);
-    for(let d=30;d<=longest;d=Math.floor((d*107+99)/100))values.add(d);
-    for(const d of [60,90,120,180,300,600,900,1200,1800,2400,3600,5400,7200,10800,14400])if(d<=longest)values.add(d);
-    return [...values].sort((a,b)=>a-b);
-  }
   function render() {
     if (panel.hidden || !svg.clientWidth) return;
     keys=[selectorA.value,selectorB.value]; maps=keys.map(k=>new Map(data.series[k].points.map(p=>[p.duration_seconds,p])));
-    const evaluated=maps.map(m=>new Set(grid(Math.max(0,...m.keys()))));
+    const evaluated=maps.map((m,i)=>new Set((data.series[keys[i]].anchors||[]).filter(d=>d<=Math.max(0,...m.keys()))));
     durations=[...new Set([...evaluated.flatMap(v=>[...v]),...maps.flatMap(m=>[...m.keys()])])].filter(d=>d>0).sort((a,b)=>a-b);
     keys.forEach((k,i)=>{const s=data.series[k];document.getElementById(i?'curve-b-bounds':'curve-a-bounds').textContent=`${s.count} qualifying ${s.count===1?'ride':'rides'} · ${date(s.start)} → ${date(s.end_exclusive)} (end excluded)`;});
     let messages=[];
@@ -149,7 +148,7 @@
       const label=element('text',{x:pos,y:bottom+22,'text-anchor':edge?'end':'middle'},edge?edgeLabel:tick(d));
       if(edge && label.getComputedTextLength()>right-left) {label.setAttribute('textLength',right-left);label.setAttribute('lengthAdjust','spacingAndGlyphs');}
     });
-    element('text',{x:(left+right)/2,y:height-5,'text-anchor':'middle'},'Duration · square-root scale');
+    element('text',{x:(left+right)/2,y:height-5,'text-anchor':'middle'},'Elapsed duration · square-root scale');
     maps.forEach((map,i)=>{
       let path='',pen=false;
       for (const d of durations) {if (!evaluated[i].has(d) && !map.has(d)) continue;const p=map.get(d);if(!p){pen=false;continue;}path+=(pen?'L':'M')+x(d)+' '+y(p.average_watts);pen=true;}
@@ -201,7 +200,7 @@
   const showView=()=>{
     const curve=new URL(location.href).searchParams.get('curve')==='1';
     panel.hidden=!curve;historyPanel.hidden=curve;
-    caption.textContent=curve?'Power-duration best efforts · Trusted Virtual Ride power evidence':caption.dataset.historyCaption;
+    caption.textContent=curve?'Elapsed power-duration best efforts · Trusted Virtual Ride power evidence':caption.dataset.historyCaption;
     links.forEach(link=>{const selected=(link.dataset.powerView==='curve')===curve;link.classList.toggle('active',selected);if(selected)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
     render();
   };

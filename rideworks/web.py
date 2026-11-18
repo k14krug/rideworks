@@ -695,7 +695,7 @@ class Application:
                 from .home import home_page
                 from .planning import write_history_caches
                 cache_writes = ([], [])
-                html = home_page(store, url.query, cache_writes=cache_writes)
+                html = home_page(store, url.query, cache_writes=cache_writes, strava_settings=self.settings)
                 body = self.page(store, html, display_zone=zone.key)
                 write_history_caches(store, cache_writes)
                 return 200, 'text/html', body
@@ -1066,7 +1066,8 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.send_header('Referrer-Policy', 'no-referrer' if urlsplit(self.path).path == '/strava/callback' else 'same-origin')
-            self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self' https://www.strava.com; frame-ancestors 'none'")
+            connect = "'self'" if method == 'GET' and urlsplit(self.path).path == '/' else "'none'"
+            self.send_header('Content-Security-Policy', f"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src {connect}; object-src 'none'; base-uri 'none'; form-action 'self' https://www.strava.com; frame-ancestors 'none'")
             for name, value in headers.items():
                 self.send_header(name, value)
             self.end_headers()

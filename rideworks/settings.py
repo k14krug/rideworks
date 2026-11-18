@@ -17,6 +17,7 @@ from .store import Store
 from .strava import (ApiClient, ApiError, AuthenticationError, OperationBusyError, TokenFile, authorization_url,
                      callback_values, complete_connect, disconnect, sync)
 from .strava_api import SyncError
+from .strava_check import CheckRenewalError, RecentRideCheck
 
 COUNTS = ('new_activities', 'existing_activities_enriched', 'unchanged_observations',
           'ambiguous_new_associations', 'performance_rebuild_recommended')
@@ -41,6 +42,8 @@ class Settings:
         self.nonce = secrets.token_urlsafe(32)
         self.pending = None
         self.operation = Lock()
+        self.recent_rides = RecentRideCheck(data_dir, client_factory)
+        self.home_sync_notice = None
         # Derived aggregate display state only. No credentials, OAuth codes or IDs.
         self.display = TokenFile(data_dir)
         self.display.path = self.display.root / '.strava-settings.json'
@@ -54,6 +57,19 @@ class Settings:
             return self.credentials()
         except ConfigurationError:
             return None
+
+    def home_connection(self):
+        if not self.configured():
+            return False
+        try:
+            TokenFile(self.data_dir).read()
+            return True
+        except AuthenticationError:
+            return False
+
+    @staticmethod
+    def json_response(**values):
+        return 200, {'Content-Type': 'application/json'}, json.dumps(values).encode()
 
     def state(self):
         try:
@@ -190,16 +206,31 @@ class Settings:
             valid = False
         if not self.access.allows_origin(origin, self.port) or not valid:
             return 403, {}, b'Invalid Settings action. Reload Settings and try again.'
+        sync_action = path == '/settings/strava/sync'
+        home_sync = sync_action and values == {'nonce': supplied, 'home': ['1']}
+        if path == '/home/strava/check':
+            if set(values) != {'nonce'}:
+                return 400, {}, b'Invalid Home check.'
+            return self.json_response(status=self.recent_rides.check(self.configured(), busy=self.operation.locked))
+        if sync_action and not home_sync and set(values) != {'nonce'}:
+            return 400, {}, b'Invalid Sync action.'
         if goal_action and (set(values) not in ({'nonce','tz','target_miles'},{'nonce','tz','clear'}) or any(len(v)!=1 for v in values.values())):
             return 400, {}, b'Invalid annual goal form. Reload Settings and try again.'
         if path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/power-curves/rebuild', '/settings/annual-goal'):
             return 404, {}, b'Unknown Settings action.'
         if not self.operation.acquire(blocking=False):
             return 409, {}, NOTICES['busy'].encode()
+        if not secrets.compare_digest(supplied[0].encode(), self.nonce.encode()):
+            self.operation.release()
+            return 403, {}, b'Invalid Settings action. Reload Settings and try again.'
         # A second queued submission cannot reuse this action nonce.
         self.nonce = secrets.token_urlsafe(32)
         self.notice = None
         self.goal_notice = None
+        connection_action = sync_action or path.endswith(('/connect', '/disconnect'))
+        if connection_action:
+            self.recent_rides.invalidate()
+            self.home_sync_notice = None
         try:
             with Store(self.data_dir) as store:
                 if goal_action:
@@ -241,12 +272,21 @@ class Settings:
                             state = secrets.token_urlsafe(32)
                             self.pending = state, time.monotonic() + 180
                             return self.redirect(authorization_url(client.client_id, self.access.callback_url(self.port), state))
+                    self.recent_rides.wait_for_renewal()
                     result = sync(store, client)
                     self.remember({'attention': result.get('stream_authorization_attention',False), 'successful_at': result['before'],
                                    **{k: result[k] for k in COUNTS},**{k:result.get(k,0) for k in STREAM_COUNTS},
                                    'stream_rate_limited':result.get('stream_rate_limited',False),
                                    'performance_update':result['performance_update'],
                                    **({'performance_eligible':result['performance_eligible']} if 'performance_eligible' in result else {})})
+                    if home_sync:
+                        notes = ['Strava sync complete.']
+                        if any(result.get(k) for k in ('stream_failed', 'stream_deferred', 'stream_unavailable', 'stream_rate_limited')):
+                            notes.append('Some ride graphs are unavailable or still need an update.')
+                        if 'incomplete' in (result.get('performance_update'), result.get('power_curve_update')):
+                            notes.append('Some power results still need an update.')
+                        self.home_sync_notice = ' '.join(notes)
+                        return self.json_response(status='complete')
         except (RideWorksError, OSError, sqlite3.Error) as error:
             if goal_action:
                 return 500, {}, b'Annual goal could not be saved. Your previous target is retained; reload Settings and try again.'
@@ -255,8 +295,19 @@ class Settings:
             elif path == '/settings/power-curves/rebuild':
                 self.notice = 'Power Curve update incomplete. Existing profiles were retained. Check local source availability and retry the update from Performance.'
             else:
-                self.failure(error)
+                if isinstance(error, CheckRenewalError):
+                    self.notice = error.user_message
+                else:
+                    self.failure(error)
+                if home_sync:
+                    message = self.notice
+                    if message == NOTICES['sync_failed']:
+                        message = 'Sync could not complete. Check Settings and try again.'
+                    return self.json_response(status='failed', message=message, nonce=self.nonce,
+                                              connected=self.home_connection())
         finally:
+            if connection_action:
+                self.recent_rides.invalidate()
             self.operation.release()
         return self.redirect()
 
@@ -278,5 +329,7 @@ class Settings:
         except (SyncError, ConfigurationError, OSError) as error:
             self.failure(error, authorization=True)
         finally:
+            self.recent_rides.invalidate()
+            self.home_sync_notice = None
             self.operation.release()
         return self.redirect()

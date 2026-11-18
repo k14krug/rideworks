@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-08 — Check for new Strava rides and sync from Home
 
-**Status:** pending — next task. Check without blocking Home; run the existing Sync from either Home or Admin.
+**Status:** in_progress — Check without blocking Home; run the existing Sync from either Home or Admin.
 
 **Execution:** [JIT](docs/tasks/HOME-UI-08.md); `/TASK HOME-UI-08` only.
 

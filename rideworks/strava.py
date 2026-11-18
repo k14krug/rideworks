@@ -68,9 +68,10 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class ApiClient:
-    def __init__(self,credentials,*,opener=None):
+    def __init__(self,credentials,*,opener=None,timeout=20):
         self.client_id,self.client_secret=credentials
         self.opener=opener or build_opener(NoRedirect())
+        self.timeout=timeout
         self.rate={}
         self.stream_requests=0
         self.summary_requests=0
@@ -97,7 +98,7 @@ class ApiClient:
         if stream_endpoint:self.stream_requests+=1
         if summary_endpoint:self.summary_requests+=1
         try:
-            response=self.opener.open(request,timeout=20)
+            response=self.opener.open(request,timeout=self.timeout)
             with response:
                 self.rate.update(rate_state(response.headers))
                 if response.status!=200:
@@ -298,6 +299,23 @@ def refreshed_connection(tokens,client,*,now=None):
     return current
 
 
+def activity_page(client, current, window, page):
+    payload=client.activities(current['access_token'],window,page)
+    if not isinstance(payload,list) or len(payload)>PAGE_SIZE:
+        raise SyncError('Strava returned an invalid activity-list page')
+    observations=[]
+    for item in payload:
+        if isinstance(item,dict) and 'athlete' in item:
+            if not isinstance(item['athlete'],dict) or item['athlete'].get('id')!=current['athlete_id']:
+                raise SyncError('Strava activity belongs to an unexpected athlete')
+        values=normalize(item)
+        start=int(absolute(values['start_date']).timestamp())
+        if not window['after']<start<window['before']:
+            raise SyncError('Strava activity lies outside the requested forward window')
+        observations.append(values)
+    return observations
+
+
 def sync(store,client,*,now=None):
     timestamp=int(time.time()) if now is None else now
     tokens=TokenFile(store.data_dir)
@@ -308,17 +326,9 @@ def sync(store,client,*,now=None):
         try:
             current=refreshed_connection(tokens,client,now=timestamp)
             for page in range(1,21):
-                payload=client.activities(current['access_token'],window,page);pages+=1
-                if not isinstance(payload,list) or len(payload)>PAGE_SIZE:
-                    raise SyncError('Strava returned an invalid activity-list page')
-                for item in payload:
-                    if isinstance(item,dict) and 'athlete' in item:
-                        if not isinstance(item['athlete'],dict) or item['athlete'].get('id')!=current['athlete_id']:
-                            raise SyncError('Strava activity belongs to an unexpected athlete')
-                    values=normalize(item)
-                    start=int(absolute(values['start_date']).timestamp())
-                    if not window['after']<start<window['before']:
-                        raise SyncError('Strava activity lies outside the requested forward window')
+                payload=activity_page(client,current,window,page)
+                pages+=1
+                for values in payload:
                     previous=observations.get(values['id'])
                     if previous is not None and previous!=values:
                         raise SyncError('Conflicting observations during pagination; retry a later manual sync')

@@ -330,12 +330,14 @@ def _home_page(store, query='', *, cache_writes, strava_settings):
     advisor = today_card(plan_data,compact=True,include_completed=False,home_visual=True)
     from .strava_effort import chip, for_store as relative_effort_ratings
     ratings = relative_effort_ratings(store) if data['recent'] else {}
+    from .segments import tracked_counts, tracked_link
+    segment_counts = tracked_counts(store, [row['activity_id'] for row in data['recent']])
     race_watts = recent_race_watts(store, data['recent'])
     rows = []
     for row in data['recent']:
         watts = race_watts.get(row['activity_id'])
         race_power = '—' if watts is None else f'{watts} W'
-        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td class="home-effort">{chip(ratings.get(row['activity_id']))}</td><td data-label="Ride">{recent_ride_link(row)}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td><td data-label="Race Avg W" class="home-race-power" title="Zwift screenshot race average">{escape(race_power)}</td></tr>''')
+        rows.append(f'''<tr class="home-recent-row" data-activity-id="{row['activity_id']}"><td data-label="Date">{browser_time(row,compact=True)}</td><td class="home-effort">{chip(ratings.get(row['activity_id']))}</td><td data-label="Ride">{recent_ride_link(row)}{tracked_link(row['activity_id'], segment_counts.get(row['activity_id'], 0))}</td><td data-label="Distance">{miles(row['distance']/1609.344 if row['distance'] is not None else None)}</td><td data-label="Duration">{duration(row['duration'])}</td><td data-label="Avg Pwr" class="home-avg-power">{'Unavailable' if row['average_power'] is None else f'{row["average_power"]:,g} W'}</td><td data-label="Race Avg W" class="home-race-power" title="Zwift screenshot race average">{escape(race_power)}</td></tr>''')
     recent = f'<div class="home-recent-list"><table class="home-recent-table"><thead><tr><th>Date</th><th><abbr title="Strava Relative Effort">Effort</abbr></th><th>Ride</th><th>Distance</th><th>Duration</th><th>Avg Pwr</th><th>Race Avg W</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>' if rows else '<p class="empty">No cycling Activities yet.</p>'
     week_rows = ''.join(f'<tr><td>{w["start"]}</td><td>{miles(w["miles"])}</td><td>{miles(g["needed_miles_per_week"])}</td><td>{w["file_count"]}</td><td>{w["api_count"]}</td><td>{w["distance_unavailable"]}</td></tr>' for w,g in zip(data['weeks'],data['weekly_goal']))
     details = [('Browser timezone',zone.key),('YTD start',ytd['start']),('As of',data['as_of']),

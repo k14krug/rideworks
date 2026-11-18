@@ -2,7 +2,7 @@
 
 **Product:** RideWorks.
 **Current task:** SEG-01 — Saved watched Strava segments and Sync updates.
-**State:** `ready for implementation` — Owner approved narrower Zwift-first scope; Analyst cleared the per-ride probe for that scope.
+**State:** `ready_for_review` — HARD Analyst gate.
 **Branch:** `seg-01-watched-segments`.
-**Verification:** Activity detail verified exact efforts and unique local ride links on both reference rides. Historical coverage and routine Sync behavior remain unverified. See [sanitized probe report](reports/SEG-01/probe.md).
-**Next action:** On explicit `/TASK SEG-01`, implement the revised JIT on this branch and stop at HARD Analyst review. No automatic historical backfill, merge, or deployment.
+**Verification:** 677 Python tests, controlled Dev Chromium at 1440 and 390 px, and two bounded live read-only detail checks. See the [implementation report](reports/SEG-01/implementation.md).
+**Next action:** HARD Analyst review, then HARD Owner review in running Dev.

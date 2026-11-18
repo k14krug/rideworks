@@ -8,6 +8,7 @@ import os
 import re
 from pathlib import Path
 import secrets
+import sqlite3
 import sys
 import tempfile
 import time
@@ -145,6 +146,13 @@ class ApiClient:
         if not re.fullmatch(r'[1-9][0-9]{0,19}',identity):
             raise SyncError('Invalid Strava summary identity')
         return self.request('GET',f'https://www.strava.com/api/v3/activities/{identity}',token=access_token)
+
+    def activity_detail(self, access_token, external_id):
+        identity = str(external_id)
+        if not re.fullmatch(r'[1-9][0-9]{0,18}', identity) or int(identity) > 2**63-1:
+            raise SyncError('Invalid Strava activity identity')
+        return self.request('GET', f'https://www.strava.com/api/v3/activities/{identity}?include_all_efforts=true',
+                            token=access_token)
 
     def revoke(self,refresh_token):
         return self.request('POST','https://www.strava.com/oauth/revoke',
@@ -316,7 +324,7 @@ def activity_page(client, current, window, page):
     return observations
 
 
-def sync(store,client,*,now=None):
+def sync(store,client,*,now=None,watched_segments=False):
     timestamp=int(time.time()) if now is None else now
     tokens=TokenFile(store.data_dir)
     with tokens.lock():
@@ -337,15 +345,26 @@ def sync(store,client,*,now=None):
             else:raise SyncError('Recent activity window exceeded 20 pages; sync stopped without historical crawl')
         except AuthenticationError:
             tokens.clear();raise
-        result=apply_observations(store,list(observations.values()),current['athlete_id'],timestamp)
+        result=apply_observations(store,list(observations.values()),current['athlete_id'],timestamp,
+                                  queue_segments=watched_segments)
         from .strava_streams import enrich, recent_candidates
         stream_result=enrich(store,client,current['access_token'],recent_candidates(store,window))
+        segment_result = {}
+        if watched_segments:
+            from .segments import check_pending
+            stop = ('authorization' if stream_result.get('stream_authorization_attention')
+                    else 'rate_limit' if stream_result.get('stream_rate_limited') else None)
+            try:
+                segment_result = check_pending(store, client, current, stop=stop)
+            except (OSError, sqlite3.Error):
+                # The activity import and pending queue have already committed.
+                segment_result = {'segment_stop': 'local_error'}
         from .performance import converge_performance
         performance_result=converge_performance(store)
         from .power_curve import converge_curves
         curve_result=converge_curves(store)
     return dict(status='completed',scope=SCOPE,**window,pages_requested=pages,
-                api_activities_observed=len(observations),rate_limits=dict(client.rate),**result,**stream_result,**performance_result,**curve_result)
+                api_activities_observed=len(observations),rate_limits=dict(client.rate),**result,**stream_result,**performance_result,**curve_result,**segment_result)
 
 
 def disconnect(store,client):

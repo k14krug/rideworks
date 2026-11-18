@@ -187,7 +187,7 @@ class StoreTests(TestCase):
         with patch('rideworks.training_state.calculate_ride',wraps=__import__('rideworks.training_state',fromlist=['calculate_ride']).calculate_ride) as calc:
             training_state(self.store,'America/Los_Angeles',as_of=when);self.assertEqual(calc.call_count,1)
         with Store(self.root/'store') as reopened:
-            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],15)
+            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],16)
             self.assertEqual(reopened.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
             training_state(reopened,'America/Los_Angeles',as_of=when)
 
@@ -221,7 +221,7 @@ class StoreTests(TestCase):
             self.store.connection.execute('DROP TABLE '+table)
         for table in ('elapsed_power_curve_profiles','power_curve_profiles','planning_feedback','planning_classifications','planning_classification_cache','planning_intents'):
             self.store.connection.execute('DROP TABLE '+table)
-        self.store.connection.execute('DROP TABLE training_stress_cache');self.store.connection.execute('PRAGMA user_version=7')
+        self.store.connection.execute('DROP TABLE training_stress_cache');self.store.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; PRAGMA user_version=7')
         records=list(self.store.connection.execute('SELECT * FROM records'))
         with Store(self.root/'store') as migrated:
             self.assertEqual([tuple(r) for r in migrated.connection.execute('SELECT * FROM records')],[tuple(r) for r in records])
@@ -266,7 +266,7 @@ class AdditionalTests(TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with Store(directory) as store:
                 store.connection.execute('DROP TABLE training_stress_cache')
-                store.connection.execute('PRAGMA user_version=7')
+                store.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; PRAGMA user_version=7')
             broken=module.MIGRATION_8.replace('PRAGMA user_version = 8;','INSERT INTO nonexistent VALUES(1);')
             with patch.object(module,'MIGRATION_8',broken),self.assertRaises(sqlite3.Error):Store(directory)
             with sqlite3.connect(Path(directory)/'rideworks.sqlite3') as db:

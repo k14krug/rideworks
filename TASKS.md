@@ -25,7 +25,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-01 — Saved watched Strava segments and Sync updates
 
-**Status:** pending — Owner approved Zwift-first per-ride capture; both reference lookups verified. No automatic backfill.
+**Status:** in_progress — approved Zwift-first per-ride capture.
 
 **Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at HARD Analyst review after implementation.
 

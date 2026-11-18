@@ -25,7 +25,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-01 — Saved watched Strava segments and Sync updates
 
-**Status:** pending — next task. First prove Tempus and Titans Loop history and ride linkage in Dev.
+**Status:** blocked — awaiting the private Tempus and Titans Loop reference effort link for the Dev probe.
 
 **Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at Analyst probe gate before implementation.
 

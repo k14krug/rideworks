@@ -37,3 +37,16 @@ earlier effort-list HTTP 404 remains unresolved, so historical coverage and
 retrieval beyond 30 entries remain unverified. No corrected-ID request was
 needed. The probe retained no raw response, private identifiers, or elapsed
 values. SEG-01 remains at the HARD Analyst access and coverage gate.
+
+## Newer Zwift ride follow-up
+
+One authenticated activity-detail GET with `include_all_efforts=true` returned
+HTTP 200 and six efforts. Exactly one matched the supplied effort ID at full
+64-bit precision. The effort belonged to the connected athlete and reference
+ride, its nested segment ID matched the canonical link, and its elapsed time
+was a positive integer. The activity ID matched exactly one RideWorks ride.
+
+This repeats the older ride's single-effort visibility and deterministic
+linkage. Historical effort-list coverage and routine Sync behavior remain
+unverified. No raw response or private IDs were retained. Return to HARD
+Analyst review.

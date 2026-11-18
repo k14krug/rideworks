@@ -22,3 +22,18 @@ particularly sections 5.5 and 6.2.
 
 - [Strava segment effort API reference](https://developers.strava.com/docs/reference/#api-SegmentEfforts)
 - [Strava API Policy](https://www.strava.com/legal/api_policy)
+
+## Activity-effort follow-up
+
+One authenticated activity-detail GET with `include_all_efforts=true` returned
+HTTP 200 for the Owner's reference ride. The response contained ten efforts.
+Exactly one matched the supplied effort ID with full 64-bit precision. It
+belonged to the connected athlete and reference ride, its nested segment ID
+matched the canonical link, and its elapsed time was a positive integer.
+A read-only lookup of the Strava activity ID found one existing RideWorks ride.
+
+The result establishes single-ride visibility and deterministic linkage. The
+earlier effort-list HTTP 404 remains unresolved, so historical coverage and
+retrieval beyond 30 entries remain unverified. No corrected-ID request was
+needed. The probe retained no raw response, private identifiers, or elapsed
+values. SEG-01 remains at the HARD Analyst access and coverage gate.

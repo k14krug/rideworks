@@ -18,3 +18,9 @@ After clearance, draft PR and sanitized report. Test old-history retrieval beyon
 
 ## Execution Control
 **Allowed Invocation: `/TASK only`.** Start on refreshed main after HOME-UI-08 integration. HARD — Analyst after read-only probe, then HARD — Analyst after implementation and HARD — Owner in running Dev. No merge or deployment authorized.
+
+## Analyst follow-up — 404 diagnosis only
+
+The first probe did not clear the implementation gate. On explicit `/TASK SEG-01`, use the original activity-effort link already provided by the Owner (not just the canonical segment link) locally. Make at most one documented activity-detail GET with `include_all_efforts=true` on that known ride; look for the exact effort ID and verify the nested segment ID against the canonical link. Preserve 64-bit identifiers exactly. If the nested segment ID differs, one effort-list request for the corrected ID is useful. Otherwise, if needed, use at most one known public outdoor segment as a control on the same failing endpoints and note subscription status if already known. No guessed IDs, scraping, tier/scope changes, or historical sweep. Report sanitized outcomes only; no persistence of response data or app changes. Stop again at HARD — Analyst, including if the activity detail gives a match: one effort does not prove historical coverage.
+
+Separately, the 2026 API Policy §§5.5 and 6.2 do not support treating API effort responses as an indefinite queryable history. Do not implement the durable API store described above without resolving that boundary. This hold does not change existing RideWorks data or sync. If access is available, distinguish a live/transient API view from a durable history sourced independently from original ride files; the latter requires a separate design decision and validation. No merge or deployment authorized.

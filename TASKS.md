@@ -25,9 +25,9 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-01 — Saved watched Strava segments and Sync updates
 
-**Status:** blocked — exact efforts and local ride links verified on two rides. Historical effort-list access remains unverified. Analyst review required.
+**Status:** pending — Owner approved Zwift-first per-ride capture; both reference lookups verified. No automatic backfill.
 
-**Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at Analyst probe gate before implementation.
+**Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at HARD Analyst review after implementation.
 
 ---
 

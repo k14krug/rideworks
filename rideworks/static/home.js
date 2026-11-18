@@ -85,6 +85,7 @@
                 if (!button.disabled) {
                     badge.textContent = messages[result.status] || messages.unavailable;
                     badge.classList.toggle('new-rides', result.status === 'new');
+                    button.classList.toggle('home-sync-primary', result.status === 'new');
                 }
             } catch {
                 if (!button.disabled) badge.textContent = messages.unavailable;
@@ -96,6 +97,7 @@
             event.preventDefault();
             if (button.disabled) return;
             button.disabled = true;
+            button.classList.remove('home-sync-primary');
             check.abort();
             outcome.textContent = 'Syncing with Strava…';
             badge.textContent = '';

@@ -17,7 +17,7 @@ from .store import Store
 from .strava import (ApiClient, ApiError, AuthenticationError, OperationBusyError, TokenFile, authorization_url,
                      callback_values, complete_connect, disconnect, sync)
 from .strava_api import SyncError
-from .strava_check import RecentRideCheck
+from .strava_check import CheckRenewalError, RecentRideCheck
 
 COUNTS = ('new_activities', 'existing_activities_enriched', 'unchanged_observations',
           'ambiguous_new_associations', 'performance_rebuild_recommended')
@@ -272,6 +272,7 @@ class Settings:
                             state = secrets.token_urlsafe(32)
                             self.pending = state, time.monotonic() + 180
                             return self.redirect(authorization_url(client.client_id, self.access.callback_url(self.port), state))
+                    self.recent_rides.wait_for_renewal()
                     result = sync(store, client)
                     self.remember({'attention': result.get('stream_authorization_attention',False), 'successful_at': result['before'],
                                    **{k: result[k] for k in COUNTS},**{k:result.get(k,0) for k in STREAM_COUNTS},
@@ -294,7 +295,10 @@ class Settings:
             elif path == '/settings/power-curves/rebuild':
                 self.notice = 'Power Curve update incomplete. Existing profiles were retained. Check local source availability and retry the update from Performance.'
             else:
-                self.failure(error)
+                if isinstance(error, CheckRenewalError):
+                    self.notice = error.user_message
+                else:
+                    self.failure(error)
                 if home_sync:
                     message = self.notice
                     if message == NOTICES['sync_failed']:

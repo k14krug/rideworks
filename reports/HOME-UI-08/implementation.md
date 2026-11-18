@@ -34,3 +34,23 @@ progress and outcomes, and reloads its current view after completed Sync.
   remains for Owner review in Dev.
 
 [Strava athlete activity list reference](https://developers.strava.com/docs/reference/#api-Activities-getLoggedInAthleteActivities)
+
+## Analyst and Owner review revision
+
+A manual Sync reserves the shared operation before waiting up to six seconds
+for any token renewal already started by a Home check. The check signals
+completion after saving the rotated token and releasing the filesystem lock.
+Manual Sync then takes that lock through the existing workflow. A failed
+renewal and an expired wait produce distinct messages and allow a retry.
+The check invalidation prevents an older result from restoring the alert.
+
+The Home Sync button uses the filled primary style while the check confirms
+new rides, alongside the text alert. Submitting Sync removes the primary
+style and disables the button. The fresh check decides its state after reload.
+
+All 672 tests passed, including 18 focused Settings tests. Controlled renewal
+tests covered one submission from each surface, retention and use of the
+rotated token, suppression of the older result, and failure and timeout recovery.
+Chromium with controlled responses verified normal, highlighted, disabled
+during Sync, and normal after confirmation at both 1440 and 390 px. The
+highlighted button had white text on blue and visible keyboard focus.

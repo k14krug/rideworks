@@ -105,6 +105,83 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(json.loads(self.home_action()[2])['status'], 'clear')
         self.assertEqual(len(self.http.requests), 4)
 
+    def test_manual_sync_waits_for_background_token_rotation(self):
+        for from_home in (True, False):
+            with self.subTest(from_home=from_home):
+                entered, release, waiting = (threading.Event() for _ in range(3))
+                state = self.tokens.read()
+                state['expires_at'] = self.now
+                self.tokens.save(state)
+                calls = []
+                parent = self
+
+                class RenewingHTTP:
+                    def open(inner, request, timeout):
+                        calls.append(request)
+                        if request.full_url.endswith('/oauth/token'):
+                            entered.set()
+                            if not release.wait(5):
+                                raise AssertionError('Test did not release renewal')
+                            return parent.token_response()
+                        return Response([parent.observation(identity=2)])
+
+                def client_factory(credentials):
+                    client = ApiClient(credentials, opener=RenewingHTTP())
+                    client.streams = lambda access, identity: {}
+                    return client
+
+                checker = self.settings.recent_rides
+                checker.client_factory = self.settings.client_factory = client_factory
+                checker.invalidate()
+                checked, synced = [], []
+                check = threading.Thread(target=lambda: checked.append(self.home_action()))
+                submit = self.home_action if from_home else lambda _: self.post('sync')
+                manual = threading.Thread(target=lambda: synced.append(submit(True)))
+                check.start()
+                try:
+                    self.assertTrue(entered.wait(5))
+                    wait = checker.renewal.result
+                    def signal_wait(*args, **kwargs):
+                        waiting.set()
+                        return wait(*args, **kwargs)
+                    with patch.object(checker.renewal, 'result', side_effect=signal_wait):
+                        manual.start()
+                        self.assertTrue(waiting.wait(5))
+                        self.assertEqual(len(calls), 1)
+                        self.assertEqual(self.post('sync')[0], 409)
+                finally:
+                    release.set()
+                    check.join(5)
+                    if manual.ident is not None:
+                        manual.join(5)
+                self.assertEqual(synced[0][0], 200 if from_home else 303)
+                if from_home:
+                    self.assertEqual(json.loads(synced[0][2])['status'], 'complete')
+                self.assertEqual(len(calls), 2)
+                self.assertEqual(calls[-1].get_header('Authorization'), 'Bearer new-fake-access')
+                self.assertEqual(self.tokens.read()['refresh_token'], 'new-fake-refresh')
+                self.assertEqual(json.loads(checked[0][2])['status'], 'superseded')
+                self.assertEqual(json.loads(self.home_action()[2])['status'], 'clear')
+
+    def test_home_sync_renewal_failure_and_timeout_allow_retry(self):
+        from concurrent.futures import Future
+        checker = self.settings.recent_rides
+        for complete in (True, False):
+            with self.subTest(complete=complete):
+                renewal = checker.renewal = Future()
+                if complete:
+                    renewal.set_result(False)
+                with patch('rideworks.strava_check.RENEWAL_WAIT_SECONDS', .01):
+                    result = json.loads(self.home_action(True)[2])
+                self.assertEqual(result['status'], 'failed')
+                self.assertIn('could not be renewed' if complete else 'still renewing', result['message'])
+                self.assertTrue(result['connected'])
+                self.assertEqual(result['nonce'], self.settings.nonce)
+                self.assertFalse(self.settings.operation.locked())
+        checker.renewal = None
+        self.http.responses.append(Response([]))
+        self.assertEqual(json.loads(self.home_action(True)[2])['status'], 'complete')
+
     def test_home_check_caches_incomplete_offline_and_rate_limit(self):
         from urllib.error import URLError
         for reply, expected in (

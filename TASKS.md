@@ -31,6 +31,14 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
+### SEG-02 — Validate bulk sources for watched-segment history
+
+**Status:** pending after SEG-01 is accepted and integrated. One targeted Hilly KOM API probe and a small Owner-supplied Tempus My Results sample. Research only; no import implementation.
+
+**Execution:** [JIT](docs/tasks/SEG-02.md); `/TASK SEG-02` only; stop at HARD Analyst.
+
+---
+
 ### PC-04 — One power-curve calculation across RideWorks
 
 **Status:** done — Analyst Gate 1 cleared at `54c29cd`, Owner approved closeout and [PR #66](https://github.com/k14krug/rideworks/pull/66) was merged. No deployment authorized.

@@ -17,7 +17,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### HOME-UI-08 — Check for new Strava rides and sync from Home
 
-**Status:** in_progress — Check without blocking Home; run the existing Sync from either Home or Admin.
+**Status:** done — Analyst and Owner gates cleared; PR #68 merged as `4587ff2`. No production deployment authorized.
 
 **Execution:** [JIT](docs/tasks/HOME-UI-08.md); `/TASK HOME-UI-08` only.
 
@@ -25,7 +25,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-01 — Saved watched Strava segments and Sync updates
 
-**Status:** pending after HOME-UI-08 integration. First prove Tempus and Titans Loop history and ride linkage in Dev.
+**Status:** pending — next task. First prove Tempus and Titans Loop history and ride linkage in Dev.
 
 **Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at Analyst probe gate before implementation.
 

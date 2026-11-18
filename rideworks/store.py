@@ -432,6 +432,42 @@ PRAGMA user_version = 15;
 COMMIT;
 """
 
+MIGRATION_16 = """
+BEGIN IMMEDIATE;
+CREATE TABLE strava_watched_segments (
+    segment_id TEXT PRIMARY KEY,
+    athlete_id TEXT NOT NULL,
+    name TEXT NOT NULL
+);
+CREATE TABLE strava_saved_efforts (
+    effort_id TEXT PRIMARY KEY,
+    segment_id TEXT NOT NULL REFERENCES strava_watched_segments(segment_id),
+    external_activity_id TEXT NOT NULL,
+    start_time TEXT NOT NULL,
+    elapsed_seconds INTEGER NOT NULL CHECK(elapsed_seconds > 0)
+);
+CREATE INDEX saved_effort_activity ON strava_saved_efforts(external_activity_id);
+CREATE INDEX saved_effort_segment ON strava_saved_efforts(segment_id, start_time);
+CREATE TABLE strava_pending_segment_rides (
+    external_activity_id TEXT PRIMARY KEY REFERENCES strava_api_activities(external_id),
+    athlete_id TEXT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0
+);
+CREATE VIEW strava_saved_effort_ride_links AS
+WITH saved_ids AS (SELECT DISTINCT external_activity_id FROM strava_saved_efforts),
+candidates AS (
+    SELECT s.external_activity_id, a.activity_id FROM saved_ids s
+    JOIN strava_api_activities a ON a.external_id = s.external_activity_id
+    UNION
+    SELECT s.external_activity_id, a.activity_id FROM saved_ids s
+    JOIN strava_export_sources a ON a.external_id = s.external_activity_id
+)
+SELECT external_activity_id, MIN(activity_id) AS activity_id
+FROM candidates GROUP BY external_activity_id HAVING COUNT(*) = 1;
+PRAGMA user_version = 16;
+COMMIT;
+"""
+
 
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
@@ -468,7 +504,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+        if version not in range(17):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -522,6 +558,9 @@ class Store:
                 version = 14
             if version == 14:
                 self.connection.executescript(MIGRATION_15)
+                version = 15
+            if version == 15:
+                self.connection.executescript(MIGRATION_16)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

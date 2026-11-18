@@ -25,9 +25,9 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-01 — Saved watched Strava segments and Sync updates
 
-**Status:** pending — next task. First prove Tempus and Titans Loop history and ride linkage in Dev.
+**Status:** in_progress — approved Zwift-first per-ride capture.
 
-**Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at Analyst probe gate before implementation.
+**Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at HARD Analyst review after implementation.
 
 ---
 

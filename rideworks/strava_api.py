@@ -108,7 +108,8 @@ def _strong_candidates(store, values):
     return candidates
 
 
-def apply_observations(store, observations, athlete_id, successful_at, *, established_targets=None, expected_current_sources=None):
+def apply_observations(store, observations, athlete_id, successful_at, *, established_targets=None,
+                       expected_current_sources=None, queue_segments=False):
     """Atomic observations; targeted maintenance must preserve the sync checkpoint."""
     if established_targets is not None and successful_at is not None:
         raise SyncError('Targeted enrichment cannot advance the forward-sync checkpoint')
@@ -117,6 +118,12 @@ def apply_observations(store, observations, athlete_id, successful_at, *, establ
                   strong_local_matches=0,performance_rebuild_recommended=0)
     touched = set()
     with store._transaction(write=True):
+        if queue_segments:
+            from .segments import zwift_summary
+            queue_segments = bool(store.connection.execute(
+                'SELECT 1 FROM strava_watched_segments WHERE athlete_id=? LIMIT 1',
+                (str(athlete_id),),
+            ).fetchone())
         checkpoint = store.connection.execute('SELECT * FROM strava_sync_state WHERE singleton=1').fetchone()
         if checkpoint and checkpoint['athlete_id'] != str(athlete_id):
             raise SyncError('Connected Strava athlete differs from the stored checkpoint')
@@ -166,6 +173,11 @@ def apply_observations(store, observations, athlete_id, successful_at, *, establ
                 totals['existing_activities_enriched']+=1
             store.connection.execute('INSERT INTO strava_api_activities VALUES (?,?,?) ON CONFLICT(external_id) DO UPDATE SET current_source_id=excluded.current_source_id',
                                      (external,identity,source_id))
+            if queue_segments and not established and zwift_summary(values):
+                store.connection.execute(
+                    'INSERT OR IGNORE INTO strava_pending_segment_rides (external_activity_id, athlete_id) VALUES (?,?)',
+                    (external, str(athlete_id)),
+                )
             touched.add(identity)
         if touched:
             totals['performance_rebuild_recommended'] = sum(bool(store.connection.execute('SELECT 1 FROM performance_history WHERE activity_id=?',(identity,)).fetchone()) for identity in touched)

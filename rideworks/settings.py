@@ -22,6 +22,7 @@ from .strava_check import CheckRenewalError, RecentRideCheck
 COUNTS = ('new_activities', 'existing_activities_enriched', 'unchanged_observations',
           'ambiguous_new_associations', 'performance_rebuild_recommended')
 STREAM_COUNTS = ('stream_enriched','stream_unavailable','stream_failed','stream_deferred','stream_reused')
+SEGMENT_COUNTS = ('segment_pending', 'segment_checked', 'segment_failed')
 NOTICES = {
     'connected': 'Strava connected. You can sync now.',
     'disconnected': 'Strava disconnected. Your activity history is retained.',
@@ -49,6 +50,7 @@ class Settings:
         self.display.path = self.display.root / '.strava-settings.json'
         self.notice = None
         self.goal_notice = None
+        self.segment_notice = None
         self.port = 8765
         self.access = HTTPAccess()
 
@@ -78,6 +80,9 @@ class Settings:
                 return {}
             result = {'attention': value.get('attention') is True}
             result.update({k:value[k] for k in STREAM_COUNTS if type(value.get(k)) is int and value[k]>=0})
+            result.update({k:value[k] for k in SEGMENT_COUNTS if type(value.get(k)) is int and value[k]>=0})
+            if value.get('segment_stop') in ('authorization', 'rate_limit', 'local_error'):
+                result['segment_stop'] = value['segment_stop']
             result['stream_rate_limited']=value.get('stream_rate_limited') is True
             if value.get('performance_update') in ('updated','current','incomplete'):
                 result['performance_update']=value['performance_update']
@@ -135,6 +140,7 @@ class Settings:
         last_time = local_time(datetime.fromtimestamp(cutoff, timezone.utc).isoformat(), compact=True) if cutoff else 'Never'
         outcome = ''
         if cutoff == saved.get('successful_at') and all(k in saved for k in COUNTS):
+            from .segments import pending_message
             outcome = (f'<p id="strava-outcome">{saved[COUNTS[0]]:,} new · {saved[COUNTS[1]]:,} enriched · '
                        f'{saved[COUNTS[2]]:,} unchanged</p>')
             if saved[COUNTS[3]]:
@@ -152,6 +158,9 @@ class Settings:
                 outcome += '<p id="performance-sync-outcome">Performance is current.</p>'
             elif saved.get('performance_update')=='incomplete':
                 outcome += '<p id="performance-sync-outcome">Performance update incomplete. Synchronized rides are retained; retry the Performance update.</p>'
+            segment_note = pending_message(saved)
+            if segment_note:
+                outcome += f'<p>{escape(segment_note)}</p>'
             outcome += '<p><a href="/activities?sort=newest">View Activities</a></p>'
         def action(name, label, secondary=False):
             button_class = ' class="secondary"' if secondary else ''
@@ -197,6 +206,7 @@ class Settings:
 
     def post(self, path, body, origin):
         goal_action = path == '/settings/annual-goal'
+        segment_action = path == '/segments/add'
         try:
             values = parse_qs(body.decode('ascii'), max_num_fields=3 if goal_action else 2,
                               strict_parsing=True, keep_blank_values=goal_action)
@@ -214,9 +224,11 @@ class Settings:
             return self.json_response(status=self.recent_rides.check(self.configured(), busy=self.operation.locked))
         if sync_action and not home_sync and set(values) != {'nonce'}:
             return 400, {}, b'Invalid Sync action.'
+        if segment_action and (set(values) != {'nonce', 'link'} or len(values['link']) != 1):
+            return 400, {}, b'Paste a Strava activity-effort link.'
         if goal_action and (set(values) not in ({'nonce','tz','target_miles'},{'nonce','tz','clear'}) or any(len(v)!=1 for v in values.values())):
             return 400, {}, b'Invalid annual goal form. Reload Settings and try again.'
-        if path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/power-curves/rebuild', '/settings/annual-goal'):
+        if path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/power-curves/rebuild', '/settings/annual-goal', '/segments/add'):
             return 404, {}, b'Unknown Settings action.'
         if not self.operation.acquire(blocking=False):
             return 409, {}, NOTICES['busy'].encode()
@@ -233,6 +245,15 @@ class Settings:
             self.home_sync_notice = None
         try:
             with Store(self.data_dir) as store:
+                if segment_action:
+                    from .segments import add_selected_effort
+                    credentials = self.configured()
+                    if not credentials:
+                        raise ConfigurationError('Configure Strava in Settings first.')
+                    self.recent_rides.wait_for_renewal()
+                    add_selected_effort(store, self.client_factory(credentials), values['link'][0])
+                    self.segment_notice = 'Strava effort saved.'
+                    return self.redirect('/segments')
                 if goal_action:
                     try:
                         zone = browser_zone(values['tz'][0])
@@ -273,21 +294,30 @@ class Settings:
                             self.pending = state, time.monotonic() + 180
                             return self.redirect(authorization_url(client.client_id, self.access.callback_url(self.port), state))
                     self.recent_rides.wait_for_renewal()
-                    result = sync(store, client)
+                    result = sync(store, client, watched_segments=True)
                     self.remember({'attention': result.get('stream_authorization_attention',False), 'successful_at': result['before'],
                                    **{k: result[k] for k in COUNTS},**{k:result.get(k,0) for k in STREAM_COUNTS},
                                    'stream_rate_limited':result.get('stream_rate_limited',False),
                                    'performance_update':result['performance_update'],
+                                   **{k:result[k] for k in (*SEGMENT_COUNTS, 'segment_stop') if k in result},
                                    **({'performance_eligible':result['performance_eligible']} if 'performance_eligible' in result else {})})
                     if home_sync:
+                        from .segments import pending_message
                         notes = ['Strava sync complete.']
                         if any(result.get(k) for k in ('stream_failed', 'stream_deferred', 'stream_unavailable', 'stream_rate_limited')):
                             notes.append('Some ride graphs are unavailable or still need an update.')
                         if 'incomplete' in (result.get('performance_update'), result.get('power_curve_update')):
                             notes.append('Some power results still need an update.')
+                        segment_note = pending_message(result)
+                        if segment_note:
+                            notes.append(segment_note)
                         self.home_sync_notice = ' '.join(notes)
                         return self.json_response(status='complete')
         except (RideWorksError, OSError, sqlite3.Error) as error:
+            if segment_action:
+                self.segment_notice = (str(error) if isinstance(error, (SyncError, ConfigurationError))
+                                       else 'The effort could not be saved. Try again later.')
+                return self.redirect('/segments')
             if goal_action:
                 return 500, {}, b'Annual goal could not be saved. Your previous target is retained; reload Settings and try again.'
             if path == '/settings/performance/rebuild':

@@ -2,6 +2,7 @@
 
 **Product:** RideWorks.
 **Current task:** SEG-01 — Saved watched Strava segments and Sync updates.
-**State:** `blocked` — awaiting the Owner-provided private reference effort link.
+**State:** `blocked` — HARD Analyst probe gate.
 **Branch:** `seg-01-watched-segments`.
-**Next action:** Verify the reference effort and bounded history in Dev before HARD Analyst review. Include the current Strava API retention terms in the review of the proposed saved history.
+**Verification:** Two authenticated read-only Dev requests returned HTTP 404. See [sanitized probe report](reports/SEG-01/probe.md).
+**Next action:** Analyst review of access and the retention boundary before implementation.

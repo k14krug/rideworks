@@ -25,7 +25,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-01 — Saved watched Strava segments and Sync updates
 
-**Status:** in_progress — approved Zwift-first per-ride capture.
+**Status:** done — Analyst and Owner gates cleared; PR #69 merged as `5723548`. No production deployment authorized.
 
 **Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at HARD Analyst review after implementation.
 
@@ -33,7 +33,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-02 — Validate bulk sources for watched-segment history
 
-**Status:** pending after SEG-01 is accepted and integrated. One targeted Hilly KOM API probe and a small Owner-supplied Tempus My Results sample. Research only; no import implementation.
+**Status:** pending — next task. One targeted Hilly KOM API probe and a small Owner-supplied Tempus My Results sample. Research only; no import implementation.
 
 **Execution:** [JIT](docs/tasks/SEG-02.md); `/TASK SEG-02` only; stop at HARD Analyst.
 

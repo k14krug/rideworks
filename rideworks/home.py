@@ -282,18 +282,18 @@ def power_chart(performance, zone):
 {trend_axes(start.astimezone(zone),end.astimezone(zone),low,high,12,4,years=True)}{''.join(parts)}</svg>'''+('' if current else '<p class="home-trend-note">Current 42-day best unavailable.</p>')
 
 
-def home_page(store, query='', *, cache_writes=None):
+def home_page(store, query='', *, cache_writes=None, strava_settings=None):
     own_cache_writes = cache_writes is None
     pending = ([], []) if own_cache_writes else cache_writes
     with store._transaction(write=True):
-        html = _home_page(store, query, cache_writes=pending)
+        html = _home_page(store, query, cache_writes=pending, strava_settings=strava_settings)
         if own_cache_writes:
             from .planning import write_history_caches
             write_history_caches(store, pending)
         return html
 
 
-def _home_page(store, query='', *, cache_writes):
+def _home_page(store, query='', *, cache_writes, strava_settings):
     zone = query_zone(query,'home_tz')
     if zone is None:
         return shell('Home','''<div class="home-redesign"><header><h1>Home</h1></header><section class="panel"><h2>Cycling mileage and Performance</h2><p>Invalid timezone. Supply one valid timezone or omit the parameter to use America/Los_Angeles.</p><p><a href="/activities">Activities</a> · <a href="/performance">Performance</a></p></section></div>''',active='home')
@@ -356,6 +356,16 @@ def _home_page(store, query='', *, cache_writes):
                     ('Needed average miles per week',goal['needed_miles_per_week'])]
     sync_status = 'Last sync: '+local_time(data['successful_sync'],compact=True) if data['successful_sync'] else 'No successful sync recorded'
     sync = f'<p class="home-sync">{sync_status} · <a href="/settings">Settings</a></p>'
+    if strava_settings:
+        notice = escape(strava_settings.home_sync_notice or '')
+        if strava_settings.home_connection():
+            sync += f'''<form id="home-strava-sync" method="post" action="/settings/strava/sync">
+<input type="hidden" name="nonce" value="{escape(strava_settings.nonce, quote=True)}">
+<button type="submit">Sync now</button></form>
+<p id="home-strava-check" role="status">Checking Strava for new rides…</p>'''
+        else:
+            sync += '<p id="home-strava-check">Strava connection unavailable. See Settings.</p>'
+        sync = f'<div class="home-strava">{sync}<p id="home-sync-outcome" role="status">{notice}</p></div>'
     from .training_state import training_state
     from .training_state_page import training_home
     training_data = training_state(store, zone.key, as_of=datetime.fromisoformat(data['as_of']), cache_writes=cache_writes[0])

@@ -73,6 +73,98 @@ class SettingsTests(unittest.TestCase):
                        'new-fake-access', 'new-fake-refresh', 'private-code', 'private-secret-that-must-not-appear'):
             self.assertNotIn(secret, value)
 
+    def home_action(self, sync=False, nonce=None, origin='http://127.0.0.1:8765'):
+        fields = {'nonce': self.settings.nonce if nonce is None else nonce}
+        if sync:
+            fields['home'] = '1'
+        return self.app.post('/settings/strava/sync' if sync else '/home/strava/check',
+                             urlencode(fields).encode(), origin)
+
+    def test_home_checks_known_export_and_new_then_shared_sync(self):
+        self.assertIn('Sync now', self.app.get('/')[2].decode())
+        self.assertEqual(self.http.requests, [])
+        self.http.responses.append(Response([self.observation()]))
+        for _ in range(2):
+            self.assertEqual(json.loads(self.home_action()[2])['status'], 'clear')
+        self.assertEqual(len(self.http.requests), 1)
+        self.assertEqual(self.count('strava_sync_state'), 0)
+        self.assertEqual(self.count('strava_api_activities'), 0)
+        self.settings.recent_rides.invalidate()
+        rows = [self.observation(), self.observation(identity=2, seconds=1)]
+        self.http.responses.extend(Response(rows) for _ in range(3))
+        self.assertEqual(json.loads(self.home_action()[2])['status'], 'new')
+        self.assertEqual(self.home_action(True, nonce='bad')[0], 403)
+        self.assertEqual(self.home_action(True, origin=None)[0], 403)
+        self.assertEqual(self.home_action(origin='https://untrusted.example')[0], 403)
+        with self.settings.operation:
+            self.assertEqual(self.home_action(True)[0], 409)
+            self.assertEqual(self.post('sync')[0], 409)
+        self.assertEqual(json.loads(self.home_action(True)[2])['status'], 'complete')
+        self.assertIn('Strava sync complete.', self.app.get('/')[2].decode())
+        self.assertEqual(self.count('strava_api_activities'), 2)
+        self.assertEqual(json.loads(self.home_action()[2])['status'], 'clear')
+        self.assertEqual(len(self.http.requests), 4)
+
+    def test_home_check_caches_incomplete_offline_and_rate_limit(self):
+        from urllib.error import URLError
+        for reply, expected in (
+            (Response([self.observation()] * 100), 'incomplete'),
+            (URLError('offline'), 'unavailable'),
+            (HTTPError('https://www.strava.com', 429, '', {}, io.BytesIO()), 'rate_limited'),
+        ):
+            self.settings.recent_rides.invalidate()
+            self.http.responses.append(reply)
+            before = len(self.http.requests)
+            for _ in range(2):
+                self.assertEqual(json.loads(self.home_action()[2])['status'], expected)
+            self.assertEqual(len(self.http.requests), before + 1)
+        self.tokens.clear()
+        self.assertEqual(json.loads(self.home_action()[2])['status'], 'disconnected')
+        self.assertNotIn('Sync now', self.app.get('/')[2].decode())
+        self.assertEqual(self.count('strava_sync_state'), 0)
+
+    def test_home_check_coalesces_and_discards_pre_sync_response(self):
+        entered, release, joined = (threading.Event() for _ in range(3))
+        calls = []
+        observation = self.observation(identity=2)
+
+        class DelayedClient:
+            def activities(inner, token, window, page):
+                calls.append(page)
+                entered.set()
+                if not release.wait(5):
+                    raise AssertionError('Test did not release the check')
+                return [observation]
+
+        checker = self.settings.recent_rides
+        checker.client_factory = lambda credentials: DelayedClient()
+        results = []
+        def check():
+            results.append(json.loads(self.home_action()[2])['status'])
+        first = threading.Thread(target=check)
+        second = threading.Thread(target=check)
+        first.start()
+        try:
+            self.assertTrue(entered.wait(5))
+            wait = checker.flight.result
+            def signal_join(*args, **kwargs):
+                joined.set()
+                return wait(*args, **kwargs)
+            with patch.object(checker.flight, 'result', side_effect=signal_join):
+                second.start()
+                self.assertTrue(joined.wait(5))
+                self.http.responses.append(Response([observation]))
+                self.assertEqual(self.post('sync')[0], 303)
+        finally:
+            release.set()
+            first.join(5)
+            if second.ident is not None:
+                second.join(5)
+        self.assertEqual(calls, [1])
+        self.assertEqual(results, ['superseded', 'superseded'])
+        self.assertEqual(json.loads(self.home_action()[2])['status'], 'clear')
+        self.assertEqual(calls, [1, 1])
+
     def test_navigation_missing_configured_connected_and_attention(self):
         self.tokens.clear(); self.credentials = None
         html = self.html()

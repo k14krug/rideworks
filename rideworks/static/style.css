@@ -306,6 +306,9 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 /* Home reuses the accepted shell, cards and source evidence typography. */
 .home-heading { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px 20px; }
 .home-heading p { font-size:12px; margin-top:5px; }
+.home-strava { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.home-strava p:empty { display: none; }
+.home-strava .new-rides { color: var(--navy); font-weight: 650; }
 .home-metric { min-width:0; }
 .home-metric > div { align-items:flex-start; }
 .home-metric h2 { font-size:12px; font-weight:550; }

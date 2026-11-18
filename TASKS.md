@@ -15,6 +15,22 @@ Only one implementation/research task should normally be `in_progress`.
 
 ## Planned work
 
+### HOME-UI-08 — Check for new Strava rides and sync from Home
+
+**Status:** pending — next task. Check without blocking Home; run the existing Sync from either Home or Admin.
+
+**Execution:** [JIT](docs/tasks/HOME-UI-08.md); `/TASK HOME-UI-08` only.
+
+---
+
+### SEG-01 — Saved watched Strava segments and Sync updates
+
+**Status:** pending after HOME-UI-08 integration. First prove Tempus and Titans Loop history and ride linkage in Dev.
+
+**Execution:** [JIT](docs/tasks/SEG-01.md); `/TASK SEG-01` only; stop at Analyst probe gate before implementation.
+
+---
+
 ### PC-04 — One power-curve calculation across RideWorks
 
 **Status:** done — Analyst Gate 1 cleared at `54c29cd`, Owner approved closeout and [PR #66](https://github.com/k14krug/rideworks/pull/66) was merged. No deployment authorized.

@@ -23,7 +23,7 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'elapsed_power_curve.js': 'text/javascript', 'strict_power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'race_review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'elapsed_power_curve.js': 'text/javascript', 'strict_power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'race_review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript', 'segment_history.js': 'text/javascript'}
 
 
 def duration(seconds):

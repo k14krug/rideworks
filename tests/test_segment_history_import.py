@@ -40,7 +40,7 @@ class SegmentHistoryTests(unittest.TestCase):
         preview = self.settings.current_history_preview()
         result = self.import_post('save', {'preview':preview['token']} | decisions)
         self.assertEqual(result[0], 303)
-        return self.settings.segment_notice
+        return self.settings.segment_history_notice
 
     def api_rows(self, count):
         rows = []
@@ -123,6 +123,37 @@ class SegmentHistoryTests(unittest.TestCase):
         self.assertEqual(self.count('strava_pasted_efforts'), 27)
         self.assertEqual(len(self.http.requests), 1)
         self.assertEqual(len(parse_paste(block)[0]), 27)
+
+    def test_browser_plain_text_groups_multiline_rows_without_inventing_links(self):
+        block = ('Rank Name Date Speed HR Power Time\n'
+                 '1\tRider\tMar 9, 2024\t21.5 mph\t146 bpm\n'
+                 '191 Wsvg\n34:24\n\n'
+                 '2 Rider Mar 10, 2024\n35:05\n'
+                 '3 Rider Mar 11, 2024 20 mph\n\n'
+                 '4 Rider Mar 12, 2024\n—\n36:05')
+        rows, invalid = parse_paste(block)
+        self.assertEqual([(r.calendar_day, r.displayed_seconds, r.external_activity_id) for r in rows],
+                         [('2024-03-09', 2064, None), ('2024-03-10', 2105, None), ('2024-03-12', 2165, None)])
+        self.assertEqual(invalid, [(8, '3 Rider Mar 11, 2024 20 mph')])
+        self.watch()
+        self.assertIn('3 readable rows · 0 unique ride links · 1 unparsed', self.preview('paste', block))
+        self.assertIn('Saved 3', self.save())
+
+    def test_failed_paste_retains_draft_and_shows_actionable_result(self):
+        self.watch()
+        html = self.preview('paste', '</textarea><script>unsafe</script>')
+        self.assertIn('Nothing imported.', html)
+        self.assertIn(f'value="{SEGMENT}" selected', html)
+        self.assertIn('&lt;/textarea&gt;&lt;script&gt;unsafe&lt;/script&gt;</textarea>', html)
+        self.assertNotIn('<button>Save history</button>', html)
+        self.assertEqual(self.count('strava_pasted_efforts'), 0)
+        self.settings.configured = lambda: None
+        result = self.import_post('preview', {'segment': str(SEGMENT), 'method': 'api', 'paste': 'Draft text'})
+        self.assertEqual(result[:2], (303, {'Location': '/segments'}))
+        html = self.app.get('/segments')[2].decode()
+        self.assertIn('Connect Strava in Settings or try Paste My Results.', html)
+        self.assertIn(f'value="{SEGMENT}" selected', html)
+        self.assertIn('>Draft text</textarea>', html)
 
     def test_paste_overlap_defaults_and_explicit_same_ride_multiplicity(self):
         self.watch()

@@ -19,6 +19,8 @@ ROW_LIMIT = 200
 MONTHS = {month: i for i, month in enumerate('Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(), 1)}
 DAY = r'(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[A-Z][a-z]{2} [0-9]{1,2}, [0-9]{4})'
 DURATION = r'(?:[0-9]{1,3}:)?[0-9]{1,3}:[0-9]{2}'
+METRIC = r'(?:[0-9]+(?:\.[0-9]+)?\s*(?:mph|km/h|kph|bpm|W(?:svg)?)|[—–-])'
+MULTILINE_START = re.compile(fr'[0-9]+\s+.*?\b({DAY})(?:\s+{METRIC})*')
 
 
 @dataclass(frozen=True)
@@ -99,19 +101,40 @@ def parse_paste(text):
     if len(text) > PASTE_LIMIT:
         raise SyncError(f'Paste at most {PASTE_LIMIT:,} characters per batch.')
     rows, invalid = [], []
+    pending = None
     for number, line in enumerate(text.splitlines(), start=1):
         stripped = line.strip()
         if not stripped or (re.fullmatch(r'[\s|:\-]+', stripped) and '-' in stripped):
             continue
         labels = [cell.strip().casefold() for cell in re.split(r'\t+|\|', stripped) if cell.strip()]
-        if 'date' in labels and labels[-1] == 'time':
+        if ('date' in labels and labels[-1] == 'time'
+                or re.fullmatch(r'Rank\s+Name\s+Date\s+Speed\s+HR\s+Power\s+Time', stripped, re.I)):
+            if pending:
+                invalid.append((pending[0], pending[1][:180]))
+                pending = None
             continue
-        if len(rows) + len(invalid) >= ROW_LIMIT:
-            raise SyncError(f'Paste at most {ROW_LIMIT} rows per batch.')
+        if pending:
+            start, first_line, day = pending
+            if re.fullmatch(fr'{METRIC}(?:\s+{METRIC})*', stripped):
+                continue
+            pending = None
+            if re.fullmatch(DURATION, stripped):
+                number, line = start, f'{day}\t{stripped}'
+                stripped = f'{first_line} · {stripped}'
+            else:
+                invalid.append((start, first_line[:180]))
         try:
             rows.append(parse_pasted_row(line))
         except (ValueError, KeyError, SyncError):
-            invalid.append((number, stripped[:180]))
+            start_match = MULTILINE_START.fullmatch(stripped)
+            if start_match and len(re.findall(DAY, stripped)) == 1:
+                pending = (number, stripped, start_match[1])
+            else:
+                invalid.append((number, stripped[:180]))
+        if len(rows) + len(invalid) + bool(pending) > ROW_LIMIT:
+            raise SyncError(f'Paste at most {ROW_LIMIT} rows per batch.')
+    if pending:
+        invalid.append((pending[0], pending[1][:180]))
     return rows, invalid
 
 

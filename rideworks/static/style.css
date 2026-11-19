@@ -1091,21 +1091,35 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 [data-curve-activity="false"] #elapsed-recording-content dt { font-weight: 600; }
 [data-curve-activity="false"] #elapsed-recording-content dd { margin: 0; }
 
-.segments-content { display: grid; gap: 16px; max-width: 920px; }
+.segments-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 920px; }
 .segment-add form { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px; margin-block: 12px; }
 .segment-add input[type="url"] { flex: 1 1 260px; min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 5px; }
 .segment-add button { padding: 8px 14px; border: 1px solid var(--blue); border-radius: 5px; background: var(--blue); color: #fff; font: inherit; }
 .segment-add [role="status"]:empty { display: none; }
-.segment-attempts { padding: 0; margin: 12px 0 0; list-style: none; }
-.segment-attempts li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; border-top: 1px solid var(--border); padding: 8px 0; }
+.segment-attempts { width: 100%; margin-top: 12px; border-collapse: collapse; }
+.segment-attempts th, .segment-attempts td { padding: 8px 12px 8px 0; text-align: left; vertical-align: top; }
+.segment-attempts td { border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.segment-attempts td a { display: block; width: fit-content; }
+.segment-cell-label { display: none; }
+.segment-saved-list { margin-top: 12px; }
+.segment-card { overflow-wrap: anywhere; }
+@media (max-width: 680px) {
+  .segment-attempts, .segment-attempts tbody, .segment-attempts tr { display: block; }
+  .segment-attempts thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .segment-attempts tbody tr { border-top: 1px solid var(--border); padding-block: 6px; }
+  .segment-attempts td { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; border: 0; padding: 3px 0; }
+  .segment-cell-label { display: block; color: var(--muted); }
+}
 .tracked-segment-link { display: block; width: fit-content; font-size: 12px; }
 .activity-list .tracked-segment-link { margin: 0 0 8px; }
-.segment-history form, .segment-preview form { display: grid; gap: 8px; max-width: 680px; }
+.segment-history form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; max-width: 680px; }
 .segment-history textarea, .segment-history select, .segment-preview select, .segment-later-match select {
-  max-width: 100%; width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 5px; font: inherit;
+  box-sizing: border-box; min-width: 0; max-width: 100%; width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 5px; font: inherit;
 }
+.segment-history textarea { resize: vertical; }
 .segment-import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.segment-preview fieldset { display: grid; gap: 8px; min-width: 0; border: 1px solid var(--border); border-radius: 5px; }
+.segment-preview { border-top: 1px solid var(--border); padding-top: 12px; overflow-wrap: anywhere; }
+.segment-preview h3 { margin: 0; }
+.segment-preview fieldset { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; border: 1px solid var(--border); border-radius: 5px; }
 .segment-preview form > button { justify-self: start; }
-.segment-later-match { flex-basis: 100%; min-width: 0; }
-.segment-later-match form { display: grid; gap: 6px; max-width: 620px; }
+.segment-later-match form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }

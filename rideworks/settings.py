@@ -51,7 +51,9 @@ class Settings:
         self.notice = None
         self.goal_notice = None
         self.segment_notice = None
+        self.segment_history_notice = None
         self.segment_history_preview = None
+        self.segment_history_draft = None
         self.port = 8765
         self.access = HTTPAccess()
 
@@ -321,7 +323,11 @@ class Settings:
                         self.home_sync_notice = ' '.join(notes)
                         return self.json_response(status='complete')
         except (RideWorksError, OSError, sqlite3.Error) as error:
-            if segment_action or history_action:
+            if history_action:
+                self.segment_history_notice = (str(error) if isinstance(error, (SyncError, ConfigurationError))
+                                               else 'History could not be imported. Try again later.')
+                return self.redirect('/segments')
+            if segment_action:
                 self.segment_notice = (str(error) if isinstance(error, (SyncError, ConfigurationError))
                                        else 'The effort could not be saved. Try again later.')
                 return self.redirect('/segments')
@@ -354,8 +360,12 @@ class Settings:
             return preview
         return None
 
+    def current_history_draft(self):
+        draft = self.segment_history_draft
+        return draft if draft and draft['expires'] > time.monotonic() else {}
+
     def segment_history_action(self, store, path, values):
-        from .segment_import import (api_preview, candidates, confirm_later_match, parse_paste,
+        from .segment_import import (PASTE_LIMIT, api_preview, candidates, confirm_later_match, parse_paste,
                                      save_api, save_paste, watched_segment)
         if any(len(items) != 1 for items in values.values()):
             return 400, {}, b'Invalid history form.'
@@ -365,7 +375,10 @@ class Settings:
                 return 400, {}, b'Invalid history preview request.'
             self.segment_history_preview = None
             self.segment_notice = None
+            self.segment_history_notice = None
             segment_id = fields['segment']
+            self.segment_history_draft = {'segment_id': segment_id, 'paste': fields['paste'][:PASTE_LIMIT],
+                                          'expires': time.monotonic()+600}
             watched_segment(store, segment_id)
             preview = {'segment_id': segment_id, 'method': fields['method'],
                        'token': secrets.token_urlsafe(24), 'expires': time.monotonic()+600}
@@ -389,7 +402,7 @@ class Settings:
             if not fields['effort'].startswith('api:'):
                 return 400, {}, b'Invalid saved-result match.'
             confirm_later_match(store, int(fields['paste_id']), fields['effort'][4:])
-            self.segment_notice = 'Match confirmed. The effort is shown once.'
+            self.segment_history_notice = 'Match confirmed. The effort is shown once.'
             return self.redirect('/segments')
         preview = self.current_history_preview()
         if not preview or not secrets.compare_digest(fields.pop('preview', '').encode(), preview['token'].encode()):
@@ -399,17 +412,19 @@ class Settings:
             if fields:
                 return 400, {}, b'Invalid API confirmation.'
             count = save_api(store, segment_id, rows)
-            self.segment_notice = f'Saved {count} Strava efforts. {len(rows)-count} already saved.'
+            self.segment_history_notice = f'Saved {count} Strava efforts. {len(rows)-count} already saved.'
         else:
             shown = {i: {match.key for match in found} for i, found in preview['candidates'].items()}
             if set(fields) - {f'r{i}' for i in shown}:
                 return 400, {}, b'Invalid paste confirmation.'
             decisions = {i: fields[f'r{i}'] for i in shown if f'r{i}' in fields}
             saved, matched, skipped, repeated = save_paste(store, segment_id, rows, decisions, shown)
-            self.segment_notice = ('This paste batch was already reviewed.' if repeated else
-                                   f'Saved {saved} pasted results. {matched} matched existing results. '
-                                   f'{skipped} possible duplicates skipped. {len(preview["invalid"])} unparsed rows skipped.')
+            self.segment_history_notice = ('This paste batch was already reviewed.' if repeated else
+                                           f'Saved {saved} pasted results. {matched} matched existing results. '
+                                           f'{skipped} possible duplicates skipped. {len(preview["invalid"])} unparsed rows skipped.')
         self.segment_history_preview = None
+        if self.segment_history_draft:
+            self.segment_history_draft['paste'] = ''
         return self.redirect('/segments')
 
     def callback(self, query):

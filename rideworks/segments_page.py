@@ -65,12 +65,23 @@ def segments_page(store, settings, query):
 <label for="segment-match-{pid}">Saved API effort</label>
 <select id="segment-match-{pid}" name="effort" required><option value="">Choose a match</option>
 {options(matches)}</select><button>Confirm same effort</button></form></details>'''
-            attempts.append(f'<li>{when}<strong>{duration(effort["seconds"])}</strong>'
-                            f'<span>{provenance}</span>{source}{linked}{review}</li>')
+            cells = [('Date', when), ('Time', f'<strong>{duration(effort["seconds"])}</strong>'),
+                     ('Source', f'<span>{provenance}</span>{source}{review}'), ('Ride', linked)]
+            attempts.append('<tr role="row">' + ''.join(
+                f'<td role="cell"><span class="segment-cell-label" aria-hidden="true">{label}</span>'
+                f'<div>{value}</div></td>' for label, value in cells
+            ) + '</tr>')
         best = (f'<p>{"Fastest saved on this ride" if ride else "Fastest saved effort"} · '
                 f'{duration(min(row["seconds"] for row in efforts))} · {len(efforts)} saved</p>') if efforts else ''
-        sections.append(f'<section class="panel segment-card"><h2>{escape(name)}</h2>{best}'
-                        f'<ul class="segment-attempts">{"".join(attempts)}</ul></section>')
+        history = ''
+        if attempts:
+            labels = ''.join(f'<th scope="col" role="columnheader">{label}</th>' for label in ('Date', 'Time', 'Source', 'Ride'))
+            history = (f'<table class="segment-attempts" role="table" aria-label="{escape(name, quote=True)} saved efforts">'
+                       f'<thead role="rowgroup"><tr role="row">{labels}</tr></thead>'
+                       f'<tbody role="rowgroup">{"".join(attempts)}</tbody></table>')
+            if len(attempts) > 8:
+                history = f'<details class="segment-saved-list"><summary>View {len(attempts)} saved efforts</summary>{history}</details>'
+        sections.append(f'<section class="panel segment-card"><h2>{escape(name)}</h2>{best}{history}</section>')
     if not sections:
         sections.append('<p>No saved efforts for this ride.</p>' if ride else '<p>No watched segments yet.</p>')
     form = ''
@@ -85,12 +96,14 @@ def segments_page(store, settings, query):
 <button type="submit">Save effort</button></form><p role="status">{notice}</p></section>'''
     imports = ''
     if not ride:
-        imports = import_form([(key, name) for key, name in groups], settings.nonce)
+        result = ''
         preview = settings.current_history_preview()
         if preview and filters.get('preview') == ['1']:
             watch = store.connection.execute('SELECT * FROM strava_watched_segments WHERE segment_id=?',
                                              (preview['segment_id'],)).fetchone()
-            imports = preview_panel(store, preview, settings.nonce, watch) + imports
+            result = preview_panel(store, preview, settings.nonce, watch)
+        imports = import_form(groups, settings.nonce, settings.current_history_draft(),
+                              settings.segment_history_notice, result)
     return shell('Segments', f'''<header><h1>Segments</h1>{heading}
 <p>Only saved efforts are shown. Strava history may be incomplete.</p></header>
 <div class="segments-content">{form}{imports}{"".join(sections)}</div>''', active='segments')

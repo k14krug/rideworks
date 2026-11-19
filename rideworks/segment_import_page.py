@@ -15,21 +15,27 @@ def options(matches):
     )
 
 
-def import_form(watches, nonce):
+def import_form(watches, nonce, draft, notice, preview):
     if not watches:
         return ''
-    choices = ''.join(f'<option value="{escape(w[0], quote=True)}">{escape(w[1])}</option>' for w in watches)
-    return f'''<section class="panel segment-add segment-history"><h2>Import history</h2>
-<form action="/segments/history/preview" method="post">
+    choices = ''.join(
+        f'<option value="{escape(key, quote=True)}"{" selected" if key == draft.get("segment_id") else ""}>'
+        f'{escape(name)}</option>' for key, name in watches
+    )
+    return f'''<section class="panel segment-add segment-history" aria-labelledby="history-title">
+<h2 id="history-title">Import history</h2>
+<form id="history-import-form" action="/segments/history/preview" method="post">
 <input type="hidden" name="nonce" value="{escape(nonce, quote=True)}">
 <label for="history-segment">Watched segment</label>
 <select id="history-segment" name="segment" required>{choices}</select>
 <label for="history-paste">Paste My Results</label>
-<textarea id="history-paste" name="paste" rows="5" maxlength="{PASTE_LIMIT}"></textarea>
-<p>Include the Date and Time columns. Activity links in the pasted text can connect results to saved rides.</p>
+<textarea id="history-paste" name="paste" rows="5" maxlength="{PASTE_LIMIT}" aria-describedby="history-instructions">{escape(draft.get('paste', ''))}</textarea>
+<p id="history-instructions">Copy rows from Strava’s My Results table, including the Date and Time columns.</p>
 <div class="segment-import-actions"><button name="method" value="api">From Strava</button>
 <button name="method" value="paste">Preview paste</button></div>
-</form></section>'''
+</form>
+<p id="history-progress" role="status">{escape(notice or '')}</p>
+{preview}</section><script src="/static/segment_history.js" defer></script>'''
 
 
 def preview_panel(store, preview, nonce, watch):
@@ -56,6 +62,9 @@ def preview_panel(store, preview, nonce, watch):
         linked = sum(local_ride(store, row.external_activity_id) is not None for row in rows)
         summary = (f'<p>{len(rows)} readable rows · {linked} unique ride links · {len(invalid)} unparsed · '
                    f'{len(overlap)} possible duplicates skipped by default.</p>')
+        if not rows:
+            summary = ('<p><strong>Nothing imported.</strong> Copy complete rows from Strava’s My Results table, '
+                       'including Date and Time, then paste them and select Preview paste.</p>' + summary)
         summary += '<p>This batch was already reviewed.</p>' if repeated else ''
         exceptions = ''
         if invalid:
@@ -74,5 +83,6 @@ def preview_panel(store, preview, nonce, watch):
     confirm = (f'<form action="/segments/history/save" method="post"><input type="hidden" name="nonce" value="{nonce}">'
                f'<input type="hidden" name="preview" value="{token}">{exceptions}'
                '<button>Save history</button></form>') if action else exceptions
-    return (f'<section class="panel segment-add segment-preview"><h2>Import preview · {escape(watch["name"])}</h2>'
-            f'{summary}{notes}{confirm}<a href="/segments">Back to watched segments</a></section>')
+    return (f'<section class="segment-preview" id="history-preview" aria-labelledby="history-preview-title" tabindex="-1">'
+            f'<h3 id="history-preview-title">Import preview · {escape(watch["name"])}</h3>'
+            f'{summary}{notes}{confirm}</section>')

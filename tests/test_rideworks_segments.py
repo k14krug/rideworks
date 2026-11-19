@@ -93,7 +93,7 @@ class SegmentTests(unittest.TestCase):
         html = self.app.get('/segments')[2].decode()
         self.assertIn('RideWorks ride link unavailable', html)
         self.assertIn('Fastest saved effort · <strong>6:09</strong>', html)
-        self.assertIn(str(EFFORT), html)
+        self.assertNotIn('Effort details', html)
         self.http.responses.extend([Response([self.listing(ACTIVITY)]), Response(self.detail(ACTIVITY, old, other))])
         self.assertEqual(json.loads(self.sync(home=True)[2])['status'], 'complete')
         self.assertEqual(self.count('strava_saved_efforts'), 2)
@@ -101,9 +101,9 @@ class SegmentTests(unittest.TestCase):
                                              (str(ACTIVITY),)).fetchone()[0]
         self.assertEqual(tracked_counts(self.store, [ride]), {ride: 1})
         for path in ('/', '/activities'):
-            self.assertIn(f'/segments?ride={ride}">1 tracked segment', self.app.get(path)[2].decode())
+            self.assertIn(f'/segments?ride={ride}" aria-label="1 tracked segment">1</a>', self.app.get(path)[2].decode())
         filtered = self.app.get(f'/segments?ride={ride}')[2].decode()
-        self.assertEqual(filtered.count('Strava effort</a>'), 2)
+        self.assertEqual(filtered.count(f'href="/activities/{ride}">RideWorks ride</a>'), 2)
         self.assertIn('All watched segments', filtered)
         self.assertNotIn('RideWorks ride link unavailable', filtered)
         self.assertEqual(len(self.http.requests), 6)

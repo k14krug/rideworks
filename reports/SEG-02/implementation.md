@@ -172,3 +172,31 @@ workflow on the synthetic store. The updated
 
 The full suite passed 690 tests with
 `env -u DEBUG .venv/bin/python -m unittest discover -s tests`.
+
+## Activity segment counts and compact effort rows
+
+Home's Recent Activities card and the Activities page have a dedicated
+Segments column. Each numeric link opens the corresponding ride-filtered
+history, and each watched segment counts once regardless of its number of
+efforts. Rides without a saved match show a dash. The main activity links
+still open Activity Review.
+
+The short, full and ride-filtered histories show compact rows with
+RideWorks ride navigation. Saved source and match data remain available
+to the import and confirmation logic. A separate Review possible matches
+section appears only when a pasted effort has a candidate to confirm.
+
+Chromium passed the workflow at 1440 and 390 px with synthetic rides
+showing two matches, one match and a dash. The two-match ride had repeated
+efforts on the same watched segment. At both widths, the check opened the
+correct filtered history from Home and Activities, followed a separate
+ride link, and confirmed a real match exception outside the ordinary
+rows. Ranking, native clipboard and API replay checks passed again.
+
+[Home count column](verification/home-segment-counts.png) ·
+[Activities count column](verification/activities-segment-counts.png) ·
+[Compact desktop history](verification/segments-desktop.png) ·
+[Compact phone history](verification/segments-390.png)
+
+The full suite passed 690 tests with
+`env -u DEBUG .venv/bin/python -m unittest discover -s tests`.

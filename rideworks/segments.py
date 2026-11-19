@@ -219,6 +219,7 @@ def tracked_counts(store, activity_ids):
 
 def tracked_link(activity_id, count):
     if not count:
-        return ''
+        return '—'
     href = escape('/segments?' + urlencode({'ride': activity_id}), quote=True)
-    return f'<a class="tracked-segment-link" href="{href}">{count} tracked {"segment" if count == 1 else "segments"}</a>'
+    label = f'{count} tracked {"segment" if count == 1 else "segments"}'
+    return f'<a class="tracked-segment-link" href="{href}" aria-label="{label}">{count}</a>'

@@ -185,12 +185,13 @@ class SegmentHistoryTests(unittest.TestCase):
         self.assertEqual(tracked_counts(self.store,[ride]), {ride:1})
         html = self.app.get(f'/segments?ride={ride}')[2].decode()
         self.assertIn('2 saved', html)
-        self.assertIn('Review possible API match', html)
+        self.assertIn('</table></details><details class="segment-match-review"><summary>Review possible matches (1)', html)
+        self.assertNotIn('Effort details', html)
         pid = self.store.connection.execute('SELECT paste_id FROM strava_pasted_efforts').fetchone()[0]
         self.assertEqual(self.import_post('match',{'paste_id':str(pid),'effort':'api:11'})[0],303)
         html = self.app.get(f'/segments?ride={ride}')[2].decode()
         self.assertIn('1 saved', html)
-        self.assertIn('Strava API and My Results paste', html)
+        self.assertNotIn('Review possible matches', html)
         metric = self.store.connection.execute(
             "SELECT avg_power, avg_hr, device_watts, power_source, hr_source FROM strava_segment_history WHERE effort_id='11'"
         ).fetchone()

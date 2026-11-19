@@ -12,8 +12,6 @@ from .web import duration, local_time, shell
 COLUMNS = (('date', 'Date'), ('seconds', 'Time'), ('effort_rank', 'Rank / Behind best'),
            ('avg_power', 'Avg Power'), ('avg_hr', 'Avg HR'))
 SHORT_HISTORY = 10
-POWER_EVIDENCE = {None: 'Power status unknown', 0: 'Estimated power', 1: 'Device-reported power'}
-METRIC_SOURCES = {'api': 'Strava API', 'paste': 'My Results paste'}
 
 
 def segments_link(*, anchor='', **filters):
@@ -32,36 +30,26 @@ def add_segment(nonce, notice):
 </section>'''
 
 
-def effort_details(store, effort, nonce):
-    external_id = effort['external_activity_id']
-    source = ''
-    if effort['effort_id']:
-        href = f'https://www.strava.com/activities/{external_id}/segments/{effort["effort_id"]}'
-        source = f'<a href="{escape(href, quote=True)}">Strava effort</a>'
-    elif external_id:
-        href = f'https://www.strava.com/activities/{external_id}'
-        source = f'<a href="{escape(href, quote=True)}">Strava activity</a>'
-    provenance = {'api': 'Strava API', 'both': 'Strava API and My Results paste',
-                  'paste': 'My Results paste · displayed time'}[effort['source']]
-    evidence = ''
-    if effort['power_source']:
-        evidence += f'<p>Avg Power · {METRIC_SOURCES[effort["power_source"]]} · {POWER_EVIDENCE[effort["device_watts"]]}</p>'
-    if effort['hr_source']:
-        evidence += f'<p>Avg HR · {METRIC_SOURCES[effort["hr_source"]]}</p>'
-    review = ''
-    if effort['source'] == 'paste':
-        pasted = PastedRow(effort['calendar_day'], effort['seconds'], external_id)
+def possible_matches(store, efforts, nonce):
+    exceptions = []
+    for effort in efforts:
+        if effort['source'] != 'paste':
+            continue
+        pasted = PastedRow(effort['calendar_day'], effort['seconds'], effort['external_activity_id'])
         matches = candidates(store, effort['segment_id'], pasted, api_only=True)
-        if matches:
-            pid = effort['paste_id']
-            review = f'''<form class="segment-later-match" action="/segments/history/match" method="post">
+        if not matches:
+            continue
+        pid = effort['paste_id']
+        exceptions.append(f'''<li><form class="segment-later-match" action="/segments/history/match" method="post">
 <input type="hidden" name="nonce" value="{escape(nonce, quote=True)}">
 <input type="hidden" name="paste_id" value="{pid}">
-<label for="segment-match-{pid}">Review possible API match</label>
-<select id="segment-match-{pid}" name="effort" required><option value="">Choose a match</option>
-{options(matches)}</select><button>Confirm same effort</button></form>'''
-    return (f'<details class="segment-effort-details"><summary>Effort details</summary><p>{provenance}</p>'
-            f'{evidence}{source}{review}</details>')
+<label for="segment-match-{pid}">Pasted effort · {escape(pasted.calendar_day)} · {duration(pasted.displayed_seconds)}</label>
+<select id="segment-match-{pid}" name="effort" required><option value="">Choose a saved API effort</option>
+{options(matches)}</select><button>Confirm same effort</button></form></li>''')
+    if not exceptions:
+        return ''
+    return (f'<details class="segment-match-review"><summary>Review possible matches ({len(exceptions)})</summary>'
+            f'<ul>{"".join(exceptions)}</ul></details>')
 
 
 def metric_cell(value, unit, device=None):
@@ -71,7 +59,7 @@ def metric_cell(value, unit, device=None):
     return f'<span>{value:.10g} {unit}</span>{suffix}'
 
 
-def history_table(store, nonce, efforts, name, sort, direction, links):
+def history_table(efforts, name, sort, direction, links):
     headers = []
     for key, label in COLUMNS:
         active = key == sort
@@ -94,7 +82,7 @@ def history_table(store, nonce, efforts, name, sort, direction, links):
                  rank,
                  metric_cell(effort['avg_power'], 'W', effort['device_watts']),
                  metric_cell(effort['avg_hr'], 'bpm'),
-                 linked + effort_details(store, effort, nonce))
+                 linked)
         attempts.append('<tr role="row">' + ''.join(
             f'<td role="cell"><span class="segment-cell-label" aria-hidden="true">{label}</span>'
             f'<div>{value}</div></td>'
@@ -191,7 +179,7 @@ def segments_page(store, settings, query, zone):
             visible = ordered if full else ordered[:SHORT_HISTORY]
             links = dict(ride=ride, segment=segment_id, view='all' if full else '',
                          tz=filters.get('tz'), anchor=f'{anchor}-history')
-            table = history_table(store, settings.nonce, visible, name, card_sort, card_direction, links)
+            table = history_table(visible, name, card_sort, card_direction, links)
             more = ''
             if total > SHORT_HISTORY:
                 href = segments_link(**(links | {'view': '' if full else 'all', 'sort': card_sort, 'direction': card_direction}))
@@ -201,8 +189,9 @@ def segments_page(store, settings, query, zone):
             coverage = (' on this ride. Rank uses all saved efforts for this segment.' if ride else '')
             history = (f'<details class="segment-saved-list" id="{anchor}-history"{expanded}><summary>Saved history</summary>'
                        f'<p>Showing {len(visible)} of {total} saved efforts{coverage}</p>{table}{more}</details>')
+        review = possible_matches(store, attempts, settings.nonce)
         sections.append(f'<section class="panel segment-card" id="{anchor}"><div class="segment-heading">'
-                        f'<div><h2>{escape(name)}</h2>{best}</div>{action}</div>{imports}{history}</section>')
+                        f'<div><h2>{escape(name)}</h2>{best}</div>{action}</div>{imports}{history}{review}</section>')
     if not sections:
         sections.append('<p>No saved efforts for this ride.</p>' if ride else '<p>No watched segments yet.</p>')
     show_add = not ride and filters.get('add') == '1'

@@ -39,6 +39,69 @@ async page => {
     await page.screenshot({path: `/tmp/${path}`, fullPage: true, animations: 'disabled'});
   };
 
+  const checkActivityColumns = async width => {
+    for (const path of ['/', '/activities']) {
+      const home = path === '/';
+      await page.goto(base + path);
+      const countCell = home ? 'td[data-label=Segments]' : '.row-segments';
+      const row = home ? '.home-recent-row' : '.activity-result-row';
+      const rideLink = home ? '.home-recent-ride' : '.activity-row';
+      if (width === 1440) {
+        await page.locator(home ? '.home-recent-table thead' : '.activity-columns')
+          .getByText('Segments', {exact: true}).waitFor();
+        await page.locator(home ? '.home-recent' : '.activity-results').screenshot({
+          path: home ? '/tmp/seg02-home-columns.png' : '/tmp/seg02-activities-columns.png',
+          animations: 'disabled'
+        });
+      }
+      for (const expected of [2, 1, 0]) {
+        const title = `Synthetic Ride ${2 === expected ? 0 : expected === 1 ? 1 : 2}`;
+        const activity = page.locator(row).filter({has: page.getByText(title, {exact: true})});
+        const count = activity.locator(countCell);
+        const href = await activity.locator(rideLink).getAttribute('href');
+        assert(href.startsWith('/activities/'), 'separate ride navigation');
+        if (!expected) {
+          assert((await count.innerText()).includes('—') && await count.getByRole('link').count() === 0, 'unmatched ride shows a dash');
+          await activity.locator(rideLink).click();
+          assert(new URL(page.url()).pathname === href, 'ride link still opens Activity Review');
+          await page.goto(base + path);
+          continue;
+        }
+        if (width === 390) {
+          if (home) {
+            const label = await count.evaluate(cell => getComputedStyle(cell, '::before').content);
+            assert(label.includes('Segments'), 'Home mobile count label');
+          } else {
+            await count.getByText('Segments', {exact: true}).waitFor();
+          }
+        }
+        const link = count.getByRole('link', {name: `${expected} tracked segment${expected === 1 ? '' : 's'}`, exact: true});
+        assert(await link.innerText() === String(expected), 'count displays only the number');
+        await link.click();
+        assert(new URL(page.url()).searchParams.get('ride') === href.split('/').at(-1), 'count opens the matching ride filter');
+        await page.getByRole('link', {name: 'All watched segments'}).waitFor();
+        assert(await page.locator('.segment-card').count() === expected, 'filtered watch count includes repeated efforts only once');
+        assert(await page.getByText('Effort details', {exact: true}).count() === 0, 'filtered rows have no effort disclosures');
+        await checkNoOverflow();
+        await page.goto(base + path);
+      }
+      await checkNoOverflow();
+    }
+  };
+
+  const confirmMatch = async countName => {
+    await page.goto(base + '/activities');
+    await page.getByRole('link', {name: countName, exact: true}).click();
+    const details = page.locator('details.segment-match-review');
+    const attempt = details.locator('form');
+    await details.getByText('Review possible matches (1)', {exact: true}).click();
+    assert(await details.locator('xpath=ancestor::table').count() === 0, 'exception is outside normal rows');
+    await attempt.getByRole('combobox').selectOption({index: 1});
+    await checkNoOverflow();
+    await attempt.getByRole('button', {name: 'Confirm same effort'}).click();
+    await page.getByText('Match confirmed. The effort is shown once.').waitFor();
+  };
+
   assert(await page.locator('#history-import-form, #segment-link').count() === 0, 'forms initially closed');
   await page.getByRole('link', {name: 'Add segment', exact: true}).click();
   await page.getByLabel('Strava activity-effort link').waitFor();
@@ -160,10 +223,8 @@ async page => {
   await card.getByRole('link', {name: 'View all 109 efforts'}).click();
   assert(await displayed() === 109, 'all prior, clipboard, and API efforts preserved');
   const rich = table.getByRole('row').filter({has: page.getByText('34:24', {exact: true})});
-  await rich.getByText('Effort details', {exact: true}).click();
-  await rich.getByRole('link', {name: 'Strava activity', exact: true}).waitFor();
   await rich.getByRole('link', {name: 'RideWorks ride', exact: true}).waitFor();
-  await rich.getByText('Avg Power · My Results paste · Power status unknown', {exact: true}).waitFor();
+  assert(await table.getByText('Effort details', {exact: true}).count() === 0, 'full history remains compact');
   await rich.getByText('191 W', {exact: true}).waitFor();
   await table.getByText('193 W', {exact: true}).waitFor();
   await table.getByText('251.5 W', {exact: true}).waitFor();
@@ -179,8 +240,15 @@ async page => {
     assert(await table.getByText('#1 · Best', {exact: true}).count() === 0, 'fastest efforts belong to another ride');
     await checkNoOverflow();
   }
+  await page.setViewportSize({width: 1440, height: 900});
+  await checkActivityColumns(1440);
+  await confirmMatch('2 tracked segments');
+  await page.setViewportSize({width: 390, height: 900});
+  await checkActivityColumns(390);
+  await confirmMatch('1 tracked segment');
+  assert(await page.locator('details.segment-match-review').count() === 0, 'confirmed exceptions no longer appear');
   await source.close();
   return {richClipboard: types, richRows: 2, localLink: 1, plainRows: 3, apiRows: 2,
-    replay: true, fullHistory: 109, shortView: 10, numericSort: true, missingLast: true, rankTiesAndRideFilter: true,
-    progressAndRecovery: true, viewports: [1440, 390], screenshots: 2};
+    replay: true, fullHistory: 109, shortView: 10, numericSort: true, missingLast: true, rankTiesAndRideFilter: true, dedicatedCountColumns: true, compactRowsAndMatchReview: true,
+    progressAndRecovery: true, viewports: [1440, 390], screenshots: 4};
 }

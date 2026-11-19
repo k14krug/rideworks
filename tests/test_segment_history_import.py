@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 from rideworks.segment_import import parse_paste
 from rideworks.segments import tracked_counts
 from rideworks.segments_page import sorted_efforts
+from rideworks.strava_api import apply_observations, normalize
 from rideworks import store as store_module
 from test_rideworks_segments import ACTIVITY, EFFORT, ORIGIN, Response, SEGMENT
 import test_rideworks_segments as fixtures
@@ -253,3 +254,28 @@ class SegmentHistoryTests(unittest.TestCase):
         efforts = [api, paste]
         self.assertEqual(sorted_efforts(efforts, 'date', 'desc', ZoneInfo('America/Los_Angeles')), [paste, api])
         self.assertEqual(sorted_efforts(efforts, 'date', 'desc', ZoneInfo('UTC')), [api, paste])
+
+    def test_rank_uses_deduplicated_segment_history_even_when_filtered_to_a_ride(self):
+        self.watch()
+        faster_ride = ACTIVITY + 1
+        first, second = self.api_rows(2)
+        for row in (first, second):
+            row.update(activity={'id': faster_ride}, elapsed_time=120)
+        self.http.responses.append(Response([first, second]))
+        self.preview('api')
+        self.assertIn('Saved 2', self.save())
+
+        day = first['start_date'][:10]
+        self.preview('paste', f'| [{day}](https://www.strava.com/activities/{faster_ride}) | 2:00 |')
+        self.assertIn('1 matched existing results', self.save(r0=f'api:{first["id"]}'))
+        html = self.app.get(f'/segments?segment={SEGMENT}&view=all&sort=effort_rank&direction=asc')[2].decode()
+        self.assertEqual(html.count('#1 · Best'), 2)
+        self.assertIn('#3 · +4:15', html)
+
+        apply_observations(self.store, [normalize(self.listing(ACTIVITY))], 321, self.now)
+        ride = self.store.connection.execute('SELECT activity_id FROM strava_api_activities WHERE external_id=?',
+                                             (str(ACTIVITY),)).fetchone()[0]
+        filtered = self.app.get(f'/segments?ride={ride}')[2].decode()
+        self.assertIn('Fastest saved on this ride · <strong>6:15</strong>', filtered)
+        self.assertIn('#3 · +4:15', filtered)
+        self.assertNotIn('#1 · Best', filtered)

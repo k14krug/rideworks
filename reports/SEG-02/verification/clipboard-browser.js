@@ -47,23 +47,34 @@ async page => {
   assert(!(await card.locator('.segment-saved-list').evaluate(el => el.open)), 'history initially closed');
   await openHistory();
   assert(await displayed() === 10 && await direction('Date') === 'descending', 'newest first, ten rows');
-  assert(!(await first(3).innerText()).includes('510.5'), 'oldest high power starts offscreen');
-  assert(await table.getByRole('columnheader').count() === 5, 'five columns');
+  assert(!(await first(4).innerText()).includes('510.5'), 'oldest high power starts offscreen');
+  assert(await table.getByRole('columnheader').count() === 6, 'six columns');
   assert(await table.getByRole('columnheader', {name: 'Ride'}).getByRole('link').count() === 0, 'Ride does not sort');
-  await sort('Avg Power', true);
-  assert(await direction('Avg Power') === 'descending' && (await first(3).innerText()).includes('510.5 W'), 'keyboard sort across all 102 rows');
+  assert(await table.getByText('#1 · Best', {exact: true}).count() === 0, 'tied best efforts start outside the short view');
+  await sort('Rank / Behind best', true);
+  assert(await direction('Rank / Behind best') === 'descending' && await first(3).innerText() === '#102 · +4:15', 'rank sorts numerically descending');
+  await sort('Rank / Behind best', true);
+  assert(await direction('Rank / Behind best') === 'ascending', 'rank sort direction after keyboard toggle');
+  assert(await table.locator('tbody .segment-rank').allTextContents().then(ranks =>
+    ranks.slice(0, 3).join('|') === '#1 · Best|#1 · Best|#3 · +0:02'), 'tied best and exact gap to third');
+  await card.getByRole('link', {name: 'View all 102 efforts'}).click();
+  assert(await displayed() === 102 && await last(3).innerText() === '#102 · +4:15', 'full history keeps rank and gap');
+  await card.getByRole('link', {name: 'Show short history'}).click();
   await screenshot('seg02-history-desktop.png');
+  await sort('Avg Power', true);
+  assert(await direction('Avg Power') === 'descending' && (await first(4).innerText()).includes('510.5 W'), 'keyboard sort across all 102 rows');
+
   await sort('Avg Power');
-  assert(await direction('Avg Power') === 'ascending' && (await first(3).innerText()).includes('92 W'), 'numeric ascending');
+  assert(await direction('Avg Power') === 'ascending' && (await first(4).innerText()).includes('92 W'), 'numeric ascending');
   await sort('Time');
   await sort('Time');
   assert(await direction('Time') === 'ascending' && (await first(2).innerText()) === '2:00', 'numeric durations');
   await table.getByRole('columnheader', {name: 'Avg HR', exact: true}).getByRole('link').click();
-  assert(await direction('Avg HR') === 'descending' && (await first(4).innerText()) === '191 bpm', 'whole-history HR sort');
+  assert(await direction('Avg HR') === 'descending' && (await first(5).innerText()) === '191 bpm', 'whole-history HR sort');
   await card.getByRole('link', {name: 'View all 102 efforts'}).click();
-  assert(await displayed() === 102 && (await last(4).innerText()) === '—', 'full view, missing last on descending');
+  assert(await displayed() === 102 && (await last(5).innerText()) === '—', 'full view, missing last on descending');
   await sort('Avg HR');
-  assert(await direction('Avg HR') === 'ascending' && (await last(4).innerText()) === '—', 'missing last on ascending');
+  assert(await direction('Avg HR') === 'ascending' && (await last(5).innerText()) === '—', 'missing last on ascending');
   await card.getByRole('link', {name: 'Show short history'}).click();
   assert(await displayed() === 10, 'return to short history');
 
@@ -140,9 +151,9 @@ async page => {
   await card.getByRole('link', {name: 'Close import'}).click();
   assert(await displayed() === 10, 'history opens without expanded import');
   assert(await table.locator('tbody .segment-cell-label').first().isVisible(), 'narrow row labels');
-  assert((await first(3).innerText()).includes('—'), 'malformed API power is unavailable');
+  assert((await first(4).innerText()).includes('—'), 'malformed API power is unavailable');
   await table.getByRole('link', {name: 'Avg Power', exact: true}).click();
-  assert((await first(3).innerText()).includes('510.5 W'), 'sorting available at 390 px');
+  assert((await first(4).innerText()).includes('510.5 W'), 'sorting available at 390 px');
   await checkNoOverflow();
   await screenshot('seg02-history-390.png');
 
@@ -162,10 +173,14 @@ async page => {
     await page.getByRole('link', {name: '2 tracked segments', exact: true}).click();
     await page.getByRole('link', {name: 'All watched segments'}).waitFor();
     await page.getByRole('heading', {name: 'Synthetic West Loop'}).waitFor();
+    await sort('Rank / Behind best', true);
+    await sort('Rank / Behind best', true);
+    assert(await first(3).innerText() === '#3 · +0:02', 'filtered ride keeps rank from all saved efforts');
+    assert(await table.getByText('#1 · Best', {exact: true}).count() === 0, 'fastest efforts belong to another ride');
     await checkNoOverflow();
   }
   await source.close();
   return {richClipboard: types, richRows: 2, localLink: 1, plainRows: 3, apiRows: 2,
-    replay: true, fullHistory: 109, shortView: 10, numericSort: true, missingLast: true,
+    replay: true, fullHistory: 109, shortView: 10, numericSort: true, missingLast: true, rankTiesAndRideFilter: true,
     progressAndRecovery: true, viewports: [1440, 390], screenshots: 2};
 }

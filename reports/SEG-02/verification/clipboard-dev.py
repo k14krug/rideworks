@@ -30,9 +30,9 @@ def main():
                 power = 510.5 if index == 0 else (90 + index * 2 if index % 3 else None)
                 hr = 191 if index == 0 else (110 + index // 2 if index % 4 else None)
                 effort = Effort(str(row['id']), str(SEGMENT), 'Synthetic Watched Loop',
-                                row['start_date'], 120 + index, power, hr,
+                                row['start_date'], 120 if index < 2 else 120 + index, power, hr,
                                 index % 2 == 0 if power is not None else None)
-                save_effort(fixture.store, str(ACTIVITY), effort)
+                save_effort(fixture.store, str(ACTIVITY + 1 if index < 2 else ACTIVITY), effort)
         api_rows = fixture.api_rows(103)[101:103]
         api_rows[0].update(average_watts=251.5, average_heartrate=153.5, device_watts=False)
         api_rows[1].update(average_watts='invalid', average_heartrate=157)

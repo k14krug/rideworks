@@ -9,7 +9,8 @@ from .segment_import import PastedRow, candidates
 from .segment_import_page import import_form, options, preview_panel
 from .web import duration, local_time, shell
 
-COLUMNS = (('date', 'Date'), ('seconds', 'Time'), ('avg_power', 'Avg Power'), ('avg_hr', 'Avg HR'))
+COLUMNS = (('date', 'Date'), ('seconds', 'Time'), ('effort_rank', 'Rank / Behind best'),
+           ('avg_power', 'Avg Power'), ('avg_hr', 'Avg HR'))
 SHORT_HISTORY = 10
 POWER_EVIDENCE = {None: 'Power status unknown', 0: 'Estimated power', 1: 'Device-reported power'}
 METRIC_SOURCES = {'api': 'Strava API', 'paste': 'My Results paste'}
@@ -87,7 +88,10 @@ def history_table(store, nonce, efforts, name, sort, direction, links):
                   if effort['activity_id'] else '<span>RideWorks ride link unavailable</span>')
         when = (local_time(effort['start_time'], compact=True) if effort['start_time']
                 else escape(effort['calendar_day']))
+        behind = f'+{duration(effort["behind_best"])}' if effort['behind_best'] else 'Best'
+        rank = f'<span class="segment-rank">#{effort["effort_rank"]} · {behind}</span>'
         cells = (when, f'<strong>{duration(effort["seconds"])}</strong>',
+                 rank,
                  metric_cell(effort['avg_power'], 'W', effort['device_watts']),
                  metric_cell(effort['avg_hr'], 'bpm'),
                  linked + effort_details(store, effort, nonce))
@@ -133,9 +137,15 @@ def segments_page(store, settings, query, zone):
         title = presentation(snapshots[0])['title'] if snapshots else 'Ride unavailable'
         heading = f'<p>{escape(title)} · <a href="/segments">All watched segments</a></p>'
     rows = store.connection.execute(
-        """SELECT w.segment_id, w.name, e.*, l.activity_id
+        """WITH ranked_efforts AS (
+               SELECT *,
+                      RANK() OVER (PARTITION BY segment_id ORDER BY seconds) AS effort_rank,
+                      seconds - MIN(seconds) OVER (PARTITION BY segment_id) AS behind_best
+               FROM strava_segment_history
+           )
+           SELECT w.segment_id, w.name, e.*, l.activity_id
            FROM strava_watched_segments w
-           LEFT JOIN strava_segment_history e USING (segment_id)
+           LEFT JOIN ranked_efforts e USING (segment_id)
            LEFT JOIN strava_saved_effort_ride_links l USING (external_activity_id)"""
         + (' WHERE l.activity_id=?' if ride else '')
         + ' ORDER BY w.name COLLATE NOCASE, w.segment_id, COALESCE(e.start_time,e.calendar_day) DESC, e.effort_id, e.paste_id',
@@ -188,8 +198,9 @@ def segments_page(store, settings, query, zone):
                 label = 'Show short history' if full else f'View all {total} efforts'
                 more = f'<p><a href="{href}">{label}</a></p>'
             expanded = ' open' if active or ride else ''
+            coverage = (' on this ride. Rank uses all saved efforts for this segment.' if ride else '')
             history = (f'<details class="segment-saved-list" id="{anchor}-history"{expanded}><summary>Saved history</summary>'
-                       f'<p>Showing {len(visible)} of {total} saved efforts</p>{table}{more}</details>')
+                       f'<p>Showing {len(visible)} of {total} saved efforts{coverage}</p>{table}{more}</details>')
         sections.append(f'<section class="panel segment-card" id="{anchor}"><div class="segment-heading">'
                         f'<div><h2>{escape(name)}</h2>{best}</div>{action}</div>{imports}{history}</section>')
     if not sections:

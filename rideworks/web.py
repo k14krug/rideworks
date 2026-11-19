@@ -29,7 +29,7 @@ ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'ela
 def duration(seconds):
     if seconds is None:
         return 'Unavailable'
-    total = int(float(seconds) + 0.5)
+    total = seconds if type(seconds) is int else int(float(seconds) + 0.5)
     hours, rest = divmod(total, 3600)
     minutes, secs = divmod(rest, 60)
     return f'{hours}:{minutes:02}:{secs:02}' if hours else f'{minutes}:{secs:02}'

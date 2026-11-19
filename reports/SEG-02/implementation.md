@@ -150,3 +150,25 @@ Synthetic running Dev screenshots
 [Phone, 390 px](verification/segments-390.png).
 The browser commands above run the expanded check and write the two
 screenshots to `/tmp`.
+
+## Rank and time behind the fastest saved effort
+
+Each history row shows its rank and exact time behind the fastest saved
+effort for that segment. Tied fastest efforts both show `#1 · Best`, and
+competition ranking gives the next effort rank 3. The calculation uses
+the existing deduplicated history and compares all saved entries before
+filtering, sorting or applying the ten-row view. A ride-filtered history
+retains the same rank and gap and explains the comparison scope.
+
+The focused test covers an API effort linked to a confirmed pasted result
+and checks that it counts once in the ranking. The disposable Chromium
+fixture started with two tied best efforts outside the newest ten. The
+browser check verified numeric rank sorting in both directions, full
+history, keyboard operation, and rank consistency when opening a filtered
+ride from Home and Activities. It also reran the clipboard and API replay
+workflow on the synthetic store. The updated
+[desktop](verification/segments-desktop.png) and
+[390 px](verification/segments-390.png) screenshots show the rank column.
+
+The full suite passed 690 tests with
+`env -u DEBUG .venv/bin/python -m unittest discover -s tests`.

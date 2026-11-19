@@ -32,11 +32,18 @@ unique local ride for each link, with no additional Strava request. This
 demonstrates repeat detection for a saved ID and exact ride resolution when
 those URLs are available. The links alone contain no date or elapsed time.
 
-Strava help describes dates and times in My Results. The supplied links do
-not establish which fields survive an ordinary clipboard copy of the visible
-rows or how many rows can be copied together. A plain paste of a few full rows
-is still needed to assess date and duration parsing, preserved link targets,
-and visible batch size.
+The Owner's screenshot shows 25 visible ranked rows in the All Time view.
+Each shows a calendar date with an English month name and four-digit year,
+and a separate Time column displaying minutes and seconds. The screenshot
+shows no time of day or time zone. Dates appear as links, but their targets
+are unavailable in the image. The view shows 25 rows at once in this example.
+Total history and the number of rows that can be copied at once are unknown.
+
+The screenshot supports a date-and-displayed-duration preview. A plain paste
+of a few full rows is still needed to verify clipboard row structure and
+whether it supplies any link targets. Retain the distinction between the
+displayed Time value and an API-verified elapsed time until they can be
+compared on a confirmed matching effort.
 
 ## Candidate handling for a subsequent brief
 

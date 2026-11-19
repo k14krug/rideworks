@@ -694,7 +694,7 @@ class Application:
                     return self.not_found()
             if path == '/segments':
                 from .segments_page import segments_page
-                return 200, 'text/html', self.page(store, segments_page(store, self.settings, url.query), display_zone=zone.key)
+                return 200, 'text/html', self.page(store, segments_page(store, self.settings, url.query, zone), display_zone=zone.key)
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':

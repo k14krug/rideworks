@@ -409,7 +409,7 @@ class SectionTests(unittest.TestCase):
         self.assertEqual(self.store.connection.execute('PRAGMA user_version').fetchone()[0], 13)
         self.assertIsNone(self.store.connection.execute("SELECT name FROM sqlite_master WHERE name='race_import_sections'").fetchone())
         with Store(self.store.data_dir) as upgraded:
-            self.assertEqual(upgraded.connection.execute('PRAGMA user_version').fetchone()[0], 17)
+            self.assertEqual(upgraded.connection.execute('PRAGMA user_version').fetchone()[0], 18)
             self.assertEqual(race.screenshot(upgraded, identity)[1], original)
             old, sections, complete = observations(upgraded, race.load_import(upgraded, identity))
             self.assertTrue(complete)

@@ -524,7 +524,7 @@ class DashboardTests(TestCase):
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],6)
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='annual_mileage_goals'").fetchone())
         with Store(old) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],17)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],18)
             self.assertEqual(migrated.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
 
     def test_annual_goal_migration_waits_for_completed_stream_migration(self):
@@ -534,7 +534,7 @@ class DashboardTests(TestCase):
                 self.assertEqual(stopped.connection.execute('PRAGMA user_version').fetchone()[0],5)
                 self.assertIsNone(stopped.connection.execute("SELECT name FROM sqlite_master WHERE name='annual_mileage_goals'").fetchone())
         with Store(old) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],17)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],18)
 
     def test_no_deferred_metrics_and_pending_banner_on_home(self):
         path=self.root/'synthetic.fit';path.write_bytes(make_fit());self.store.import_fit(path)

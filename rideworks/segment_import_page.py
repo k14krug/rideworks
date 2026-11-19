@@ -1,7 +1,7 @@
 """Import history and preview forms for the Segments screen."""
 from html import escape
 
-from .segment_import import PASTE_LIMIT, api_known, batch_id, candidates, local_ride
+from .segment_import import PASTE_LIMIT, api_saved_counts, batch_id, local_ride, paste_enrichments
 from .web import duration
 
 
@@ -15,19 +15,12 @@ def options(matches):
     )
 
 
-def import_form(watches, nonce, draft, notice, preview):
-    if not watches:
-        return ''
-    choices = ''.join(
-        f'<option value="{escape(key, quote=True)}"{" selected" if key == draft.get("segment_id") else ""}>'
-        f'{escape(name)}</option>' for key, name in watches
-    )
-    return f'''<section class="panel segment-add segment-history" aria-labelledby="history-title">
-<h2 id="history-title">Import history</h2>
+def import_form(segment_id, nonce, draft, notice, preview):
+    return f'''<section class="segment-history" id="segment-import" aria-labelledby="history-title">
+<h3 id="history-title">Import history</h3>
 <form id="history-import-form" action="/segments/history/preview" method="post">
 <input type="hidden" name="nonce" value="{escape(nonce, quote=True)}">
-<label for="history-segment">Watched segment</label>
-<select id="history-segment" name="segment" required>{choices}</select>
+<input type="hidden" name="segment" value="{escape(segment_id, quote=True)}">
 <label for="history-paste">Paste My Results</label>
 <textarea id="history-paste" name="paste" rows="5" maxlength="{PASTE_LIMIT}" aria-describedby="history-instructions">{escape(draft.get('paste', ''))}</textarea>
 <p id="history-instructions">Copy rows from Strava’s My Results table, including the Date and Time columns.</p>
@@ -48,15 +41,19 @@ def preview_panel(store, preview, nonce, watch):
     nonce = escape(nonce, quote=True)
     token = escape(preview['token'], quote=True)
     if preview['method'] == 'api':
-        already = len(api_known(store, rows))
+        already, enriched = api_saved_counts(store, rows)
         summary = f'<p>{len(rows)} validated efforts · {already} already saved · {len(rows)-already} to save.</p>'
+        if enriched:
+            summary += f'<p>New metrics are available for {enriched} saved efforts.</p>'
         summary += f'<p>{preview["requests"]} Strava history requests. History may be incomplete.</p>'
         summary += '<p>Possible matches with saved pasted results can be reviewed after saving.</p>'
-        action = bool(len(rows)-already)
+        action = bool(len(rows)-already or enriched)
         exceptions = ''
     else:
+        identity = batch_id(watch['segment_id'], rows)
         repeated = bool(rows and store.connection.execute('SELECT 1 FROM strava_paste_batches WHERE batch_id=?',
-                                                          (batch_id(watch['segment_id'], rows),)).fetchone())
+                                                          (identity,)).fetchone())
+        enriched = sum(1 for _ in paste_enrichments(store, identity, rows)) if repeated else 0
         invalid = preview['invalid']
         overlap = preview['candidates']
         linked = sum(local_ride(store, row.external_activity_id) is not None for row in rows)
@@ -66,6 +63,8 @@ def preview_panel(store, preview, nonce, watch):
             summary = ('<p><strong>Nothing imported.</strong> Copy complete rows from Strava’s My Results table, '
                        'including Date and Time, then paste them and select Preview paste.</p>' + summary)
         summary += '<p>This batch was already reviewed.</p>' if repeated else ''
+        if enriched:
+            summary += f'<p>New metrics are available for {enriched} saved efforts.</p>'
         exceptions = ''
         if invalid:
             bad = ''.join(f'<li>Line {line} · {escape(text)}</li>' for line, text in invalid)
@@ -79,7 +78,7 @@ def preview_panel(store, preview, nonce, watch):
                               '<option value="skip">Skip this row</option><option value="keep">Keep as a separate attempt</option>'
                               f'{options(choices)}</select>')
             exceptions += f'<fieldset><legend>Possible duplicates</legend>{"".join(fields)}</fieldset>'
-        action = bool(rows and not repeated)
+        action = bool(rows and (not repeated or enriched))
     confirm = (f'<form action="/segments/history/save" method="post"><input type="hidden" name="nonce" value="{nonce}">'
                f'<input type="hidden" name="preview" value="{token}">{exceptions}'
                '<button>Save history</button></form>') if action else exceptions

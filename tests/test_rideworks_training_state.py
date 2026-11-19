@@ -187,7 +187,7 @@ class StoreTests(TestCase):
         with patch('rideworks.training_state.calculate_ride',wraps=__import__('rideworks.training_state',fromlist=['calculate_ride']).calculate_ride) as calc:
             training_state(self.store,'America/Los_Angeles',as_of=when);self.assertEqual(calc.call_count,1)
         with Store(self.root/'store') as reopened:
-            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],17)
+            self.assertEqual(reopened.connection.execute('PRAGMA user_version').fetchone()[0],18)
             self.assertEqual(reopened.connection.execute('PRAGMA integrity_check').fetchone()[0],'ok')
             training_state(reopened,'America/Los_Angeles',as_of=when)
 

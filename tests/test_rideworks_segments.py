@@ -92,7 +92,7 @@ class SegmentTests(unittest.TestCase):
         self.assertEqual(self.count('strava_saved_efforts'), 2)
         html = self.app.get('/segments')[2].decode()
         self.assertIn('RideWorks ride link unavailable', html)
-        self.assertIn('Fastest saved effort · 6:09', html)
+        self.assertIn('Fastest saved effort · <strong>6:09</strong>', html)
         self.assertIn(str(EFFORT), html)
         self.http.responses.extend([Response([self.listing(ACTIVITY)]), Response(self.detail(ACTIVITY, old, other))])
         self.assertEqual(json.loads(self.sync(home=True)[2])['status'], 'complete')

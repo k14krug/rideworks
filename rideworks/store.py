@@ -510,6 +510,34 @@ PRAGMA user_version = 17;
 COMMIT;
 """
 
+MIGRATION_18 = """
+BEGIN IMMEDIATE;
+ALTER TABLE strava_saved_efforts ADD COLUMN avg_power REAL;
+ALTER TABLE strava_saved_efforts ADD COLUMN avg_hr REAL;
+ALTER TABLE strava_saved_efforts ADD COLUMN device_watts INTEGER CHECK(device_watts IN (0, 1));
+ALTER TABLE strava_pasted_efforts ADD COLUMN avg_power REAL;
+ALTER TABLE strava_pasted_efforts ADD COLUMN avg_hr REAL;
+DROP VIEW strava_segment_history;
+CREATE VIEW strava_segment_history AS
+SELECT e.segment_id, e.external_activity_id, e.effort_id, p.paste_id,
+       e.start_time, p.calendar_day, e.elapsed_seconds AS seconds,
+       CASE WHEN p.paste_id IS NULL THEN 'api' ELSE 'both' END AS source,
+       COALESCE(e.avg_power, p.avg_power) AS avg_power, COALESCE(e.avg_hr, p.avg_hr) AS avg_hr,
+       CASE WHEN e.avg_power IS NOT NULL THEN e.device_watts END AS device_watts,
+       CASE WHEN e.avg_power IS NOT NULL THEN 'api' WHEN p.avg_power IS NOT NULL THEN 'paste' END AS power_source,
+       CASE WHEN e.avg_hr IS NOT NULL THEN 'api' WHEN p.avg_hr IS NOT NULL THEN 'paste' END AS hr_source
+FROM strava_saved_efforts e LEFT JOIN strava_pasted_efforts p ON p.confirmed_effort_id=e.effort_id
+UNION ALL
+SELECT b.segment_id, p.external_activity_id, NULL, p.paste_id, NULL,
+       p.calendar_day, p.displayed_seconds, 'paste', p.avg_power, p.avg_hr, NULL,
+       CASE WHEN p.avg_power IS NOT NULL THEN 'paste' END,
+       CASE WHEN p.avg_hr IS NOT NULL THEN 'paste' END
+FROM strava_pasted_efforts p JOIN strava_paste_batches b USING (batch_id)
+WHERE p.confirmed_effort_id IS NULL;
+PRAGMA user_version = 18;
+COMMIT;
+"""
+
 
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
@@ -546,7 +574,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in range(18):
+        if version not in range(19):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -606,6 +634,9 @@ class Store:
                 version = 16
             if version == 16:
                 self.connection.executescript(MIGRATION_17)
+                version = 17
+            if version == 17:
+                self.connection.executescript(MIGRATION_18)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

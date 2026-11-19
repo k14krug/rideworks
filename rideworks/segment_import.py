@@ -1,5 +1,5 @@
 """Bounded watched-segment history previews and explicit confirmation."""
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from hashlib import sha256
@@ -7,7 +7,7 @@ import json
 import re
 from urllib.parse import urlsplit
 
-from .segments import Effort, exact_id, save_effort
+from .segments import Effort, api_metrics, effort_metric, exact_id, merge_metrics, save_effort
 from .strava import ApiError, AuthenticationError, TokenFile, exhausted, refreshed_connection
 from .strava_api import SyncError, absolute
 
@@ -19,8 +19,10 @@ ROW_LIMIT = 200
 MONTHS = {month: i for i, month in enumerate('Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(), 1)}
 DAY = r'(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[A-Z][a-z]{2} [0-9]{1,2}, [0-9]{4})'
 DURATION = r'(?:[0-9]{1,3}:)?[0-9]{1,3}:[0-9]{2}'
-METRIC = r'(?:[0-9]+(?:\.[0-9]+)?\s*(?:mph|km/h|kph|bpm|W(?:svg)?)|[—–-])'
-MULTILINE_START = re.compile(fr'[0-9]+\s+.*?\b({DAY})(?:\s+{METRIC})*')
+METRIC = r'(?:[\w.+?/-]+\s*(?:mph|km/h|kph|bpm|W(?:svg)?)|[—–-]|N/A)'
+MULTILINE_START = re.compile(fr'[0-9]+\s+.*?\b({DAY})((?:\s+{METRIC})*)')
+POWER = re.compile(r'([0-9]+(?:\.[0-9]+)?)\s*W(?:svg)?')
+HEART_RATE = re.compile(r'([0-9]+(?:\.[0-9]+)?)\s*bpm')
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,12 @@ class PastedRow:
     calendar_day: str
     displayed_seconds: int
     external_activity_id: str | None = None
+    avg_power: float | None = None
+    avg_hr: float | None = None
+
+    @property
+    def identity(self):
+        return self.calendar_day, self.displayed_seconds, self.external_activity_id or ''
 
 
 @dataclass(frozen=True)
@@ -70,6 +78,14 @@ def activity_link_id(text):
     return exact_id(int(ride[1]))
 
 
+def pasted_metrics(cells):
+    values = []
+    for pattern, allow_zero in ((POWER, True), (HEART_RATE, False)):
+        found = [match[1] for cell in cells if (match := pattern.fullmatch(cell))]
+        values.append(effort_metric(float(found[0]), allow_zero=allow_zero) if len(found) == 1 else None)
+    return values
+
+
 def parse_pasted_row(line):
     # Rich clipboard text can arrive as Markdown with linked date and athlete
     # cells. Plain copies typically arrive as tab-separated cells.
@@ -83,18 +99,20 @@ def parse_pasted_row(line):
     if not cells or not re.fullmatch(DURATION, cells[-1]):
         raise ValueError('Expected a final Time cell')
     matches, links = [], []
-    for cell in cells[:-1]:
+    for index, cell in enumerate(cells[:-1]):
         matched = re.fullmatch(fr'\[({DAY})\]\(([^\s)]+)\)', cell)
         if matched:
-            matches.append(matched[1])
+            matches.append((index, matched[1]))
             links.append(activity_link_id(matched[2]))
         elif re.fullmatch(DAY, cell):
-            matches.append(cell)
+            matches.append((index, cell))
         elif cell.startswith(('https://www.strava.com/activities/', 'https://strava.com/activities/')):
             links.append(activity_link_id(cell))
     if len(matches) != 1 or len(set(links)) > 1:
         raise ValueError('Expected one date and at most one activity')
-    return PastedRow(day_value(matches[0]).isoformat(), duration_value(cells[-1]), links[0] if links else None)
+    day_index, day = matches[0]
+    return PastedRow(day_value(day).isoformat(), duration_value(cells[-1]),
+                     links[0] if links else None, *pasted_metrics(cells[day_index+1:-1]))
 
 
 def parse_paste(text):
@@ -114,12 +132,13 @@ def parse_paste(text):
                 pending = None
             continue
         if pending:
-            start, first_line, day = pending
+            start, first_line, day, metrics = pending
             if re.fullmatch(fr'{METRIC}(?:\s+{METRIC})*', stripped):
+                metrics.extend(re.findall(METRIC, stripped))
                 continue
             pending = None
             if re.fullmatch(DURATION, stripped):
-                number, line = start, f'{day}\t{stripped}'
+                number, line = start, '\t'.join([day, *metrics, stripped])
                 stripped = f'{first_line} · {stripped}'
             else:
                 invalid.append((start, first_line[:180]))
@@ -128,7 +147,7 @@ def parse_paste(text):
         except (ValueError, KeyError, SyncError):
             start_match = MULTILINE_START.fullmatch(stripped)
             if start_match and len(re.findall(DAY, stripped)) == 1:
-                pending = (number, stripped, start_match[1])
+                pending = (number, stripped, start_match[1], re.findall(METRIC, start_match[2]))
             else:
                 invalid.append((number, stripped[:180]))
         if len(rows) + len(invalid) + bool(pending) > ROW_LIMIT:
@@ -139,7 +158,7 @@ def parse_paste(text):
 
 
 def batch_id(segment_id, rows):
-    evidence = sorted((r.calendar_day, r.displayed_seconds, r.external_activity_id or '') for r in rows)
+    evidence = sorted(row.identity for row in rows)
     return sha256(json.dumps([segment_id, evidence], separators=(',', ':')).encode()).hexdigest()
 
 
@@ -177,12 +196,39 @@ def candidates(store, segment_id, row, *, api_only=False):
     return found
 
 
+def paste_enrichments(store, identity, rows):
+    counts = Counter(row.identity for row in rows)
+    saved = store.connection.execute(
+        'SELECT * FROM strava_pasted_efforts WHERE batch_id=?', (identity,),
+    ).fetchall()
+    by_identity = {(r['calendar_day'], r['displayed_seconds'], r['external_activity_id'] or ''): r for r in saved}
+    for row in rows:
+        existing = by_identity.get(row.identity)
+        if counts[row.identity] == 1 and existing and (
+            (existing['avg_power'] is None and row.avg_power is not None)
+            or (existing['avg_hr'] is None and row.avg_hr is not None)
+        ):
+            yield existing['paste_id'], row
+
+
+def fill_paste_metrics(store, paste_id, row):
+    store.connection.execute(
+        'UPDATE strava_pasted_efforts SET avg_power=COALESCE(avg_power, ?), avg_hr=COALESCE(avg_hr, ?) WHERE paste_id=?',
+        (row.avg_power, row.avg_hr, paste_id),
+    )
+
+
 def save_paste(store, segment_id, rows, decisions, displayed_candidates):
     identity = batch_id(segment_id, rows)
     with store._transaction(write=True):
         watched_segment(store, segment_id)
-        if not rows or store.connection.execute('SELECT 1 FROM strava_paste_batches WHERE batch_id=?', (identity,)).fetchone():
-            return 0, 0, 0, bool(rows)
+        if not rows:
+            return 0, 0, 0, False, 0
+        if store.connection.execute('SELECT 1 FROM strava_paste_batches WHERE batch_id=?', (identity,)).fetchone():
+            updates = list(paste_enrichments(store, identity, rows))
+            for paste_id, row in updates:
+                fill_paste_metrics(store, paste_id, row)
+            return 0, 0, 0, True, len(updates)
         snapshots = [candidates(store, segment_id, row) for row in rows]
         store.connection.execute('INSERT INTO strava_paste_batches VALUES (?,?)', (identity, segment_id))
         saved = linked = skipped = 0
@@ -199,26 +245,28 @@ def save_paste(store, segment_id, rows, decisions, displayed_candidates):
                     if decision.startswith('api:'):
                         match = decision.removeprefix('api:')
                         taken = store.connection.execute(
-                            'SELECT 1 FROM strava_pasted_efforts WHERE confirmed_effort_id=?', (match,)).fetchone()
+                            'SELECT paste_id FROM strava_pasted_efforts WHERE confirmed_effort_id=?', (match,)).fetchone()
                         if taken:
+                            fill_paste_metrics(store, taken[0], row)
                             linked += 1
                             continue
                     else:
+                        fill_paste_metrics(store, int(decision.removeprefix('paste:')), row)
                         linked += 1
                         continue
                 else:
                     skipped += 1
                     continue
             store.connection.execute(
-                'INSERT INTO strava_pasted_efforts (batch_id, external_activity_id, calendar_day, displayed_seconds, confirmed_effort_id) '
-                'VALUES (?,?,?,?,?)',
-                (identity, row.external_activity_id, row.calendar_day, row.displayed_seconds, match),
+                'INSERT INTO strava_pasted_efforts (batch_id, external_activity_id, calendar_day, displayed_seconds, '
+                'confirmed_effort_id, avg_power, avg_hr) VALUES (?,?,?,?,?,?,?)',
+                (identity, row.external_activity_id, row.calendar_day, row.displayed_seconds, match, row.avg_power, row.avg_hr),
             )
             if match:
                 linked += 1
             else:
                 saved += 1
-    return saved, linked, skipped, False
+    return saved, linked, skipped, False, 0
 
 
 def confirm_later_match(store, paste_id, effort_id):
@@ -234,6 +282,7 @@ def confirm_later_match(store, paste_id, effort_id):
         store.connection.execute(
             'UPDATE strava_pasted_efforts SET confirmed_effort_id=? WHERE paste_id=?', (effort_id, paste_id),
         )
+        return entry['segment_id']
 
 
 def api_row(row, segment_id, athlete_id):
@@ -246,7 +295,7 @@ def api_row(row, segment_id, athlete_id):
         if segment != segment_id or owner != athlete_id or type(elapsed) is not int or not 0 < elapsed <= 2**63-1:
             raise ValueError
         start = absolute(row['start_date']).isoformat()
-        return activity_id, Effort(effort_id, segment_id, '', start, elapsed)
+        return activity_id, Effort(effort_id, segment_id, '', start, elapsed, **api_metrics(row))
     except (TypeError, KeyError, ValueError, SyncError):
         raise SyncError('Strava returned an invalid or unverified effort.') from None
 
@@ -322,7 +371,7 @@ def api_preview(store, client, segment_id):
                     conflicts.add(key)
                     warnings.append('Conflicting copies of an effort were excluded.')
                 else:
-                    found[key] = value
+                    found[key] = (activity_id, merge_metrics(found[key][1], effort)) if key in found else value
             if len(page) == PAGE_LIMIT:
                 # Use an overlapping boundary because endpoint inclusivity is
                 # unspecified. Effort IDs deduplicate the shared band.
@@ -340,10 +389,20 @@ def api_preview(store, client, segment_id):
     return list(found.values()), list(dict.fromkeys(warnings)), requests
 
 
-def api_known(store, rows):
-    return {effort.effort_id for _, effort in rows if store.connection.execute(
-        'SELECT 1 FROM strava_saved_efforts WHERE effort_id=?', (effort.effort_id,),
-    ).fetchone()}
+def api_saved_counts(store, rows):
+    known = enriched = 0
+    for _, effort in rows:
+        saved = store.connection.execute(
+            'SELECT avg_power, avg_hr, device_watts FROM strava_saved_efforts WHERE effort_id=?', (effort.effort_id,),
+        ).fetchone()
+        if saved is not None:
+            known += 1
+            if ((saved['avg_power'] is None and effort.avg_power is not None)
+                    or (saved['avg_hr'] is None and effort.avg_hr is not None)
+                    or (saved['device_watts'] is None and effort.device_watts is not None
+                        and saved['avg_power'] == effort.avg_power)):
+                enriched += 1
+    return known, enriched
 
 
 def save_api(store, segment_id, rows):
@@ -353,7 +412,7 @@ def save_api(store, segment_id, rows):
         auth = tokens.read()
         if exact_id(auth.get('athlete_id')) != watch['athlete_id']:
             raise SyncError('Connect the Strava athlete who owns this watched segment.')
-        known = api_known(store, rows)
+        known, enriched = api_saved_counts(store, rows)
         for activity_id, effort in rows:
             save_effort(store, activity_id, effort)
-        return len(rows) - len(known)
+        return len(rows) - known, enriched

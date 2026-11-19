@@ -52,6 +52,7 @@ class Settings:
         self.goal_notice = None
         self.segment_notice = None
         self.segment_history_notice = None
+        self.segment_history_target = None
         self.segment_history_preview = None
         self.segment_history_draft = None
         self.port = 8765
@@ -326,11 +327,13 @@ class Settings:
             if history_action:
                 self.segment_history_notice = (str(error) if isinstance(error, (SyncError, ConfigurationError))
                                                else 'History could not be imported. Try again later.')
-                return self.redirect('/segments')
+                if path.endswith('/match'):
+                    return self.redirect('/segments?history-status=1')
+                return self.redirect('/segments?' + urlencode({'import': self.segment_history_target or ''}) + '#segment-import')
             if segment_action:
                 self.segment_notice = (str(error) if isinstance(error, (SyncError, ConfigurationError))
                                        else 'The effort could not be saved. Try again later.')
-                return self.redirect('/segments')
+                return self.redirect('/segments?add=1#add-segment')
             if goal_action:
                 return 500, {}, b'Annual goal could not be saved. Your previous target is retained; reload Settings and try again.'
             if path == '/settings/performance/rebuild':
@@ -377,6 +380,7 @@ class Settings:
             self.segment_notice = None
             self.segment_history_notice = None
             segment_id = fields['segment']
+            self.segment_history_target = segment_id
             self.segment_history_draft = {'segment_id': segment_id, 'paste': fields['paste'][:PASTE_LIMIT],
                                           'expires': time.monotonic()+600}
             watched_segment(store, segment_id)
@@ -401,9 +405,10 @@ class Settings:
                 return 400, {}, b'Invalid saved-result match.'
             if not fields['effort'].startswith('api:'):
                 return 400, {}, b'Invalid saved-result match.'
-            confirm_later_match(store, int(fields['paste_id']), fields['effort'][4:])
+            self.segment_history_target = None
+            self.segment_history_target = confirm_later_match(store, int(fields['paste_id']), fields['effort'][4:])
             self.segment_history_notice = 'Match confirmed. The effort is shown once.'
-            return self.redirect('/segments')
+            return self.redirect('/segments?' + urlencode({'segment': self.segment_history_target, 'history-status': '1'}))
         preview = self.current_history_preview()
         if not preview or not secrets.compare_digest(fields.pop('preview', '').encode(), preview['token'].encode()):
             return 409, {}, b'Import preview expired or changed. Return to Segments and preview again.'
@@ -411,21 +416,23 @@ class Settings:
         if preview['method'] == 'api':
             if fields:
                 return 400, {}, b'Invalid API confirmation.'
-            count = save_api(store, segment_id, rows)
+            count, enriched = save_api(store, segment_id, rows)
             self.segment_history_notice = f'Saved {count} Strava efforts. {len(rows)-count} already saved.'
         else:
             shown = {i: {match.key for match in found} for i, found in preview['candidates'].items()}
             if set(fields) - {f'r{i}' for i in shown}:
                 return 400, {}, b'Invalid paste confirmation.'
             decisions = {i: fields[f'r{i}'] for i in shown if f'r{i}' in fields}
-            saved, matched, skipped, repeated = save_paste(store, segment_id, rows, decisions, shown)
+            saved, matched, skipped, repeated, enriched = save_paste(store, segment_id, rows, decisions, shown)
             self.segment_history_notice = ('This paste batch was already reviewed.' if repeated else
                                            f'Saved {saved} pasted results. {matched} matched existing results. '
                                            f'{skipped} possible duplicates skipped. {len(preview["invalid"])} unparsed rows skipped.')
+        if enriched:
+            self.segment_history_notice += f' Added metrics to {enriched} saved efforts.'
         self.segment_history_preview = None
         if self.segment_history_draft:
             self.segment_history_draft['paste'] = ''
-        return self.redirect('/segments')
+        return self.redirect('/segments?' + urlencode({'import': segment_id}) + '#segment-import')
 
     def callback(self, query):
         if not self.operation.acquire(blocking=False):

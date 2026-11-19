@@ -622,7 +622,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(connection.execute('PRAGMA user_version').fetchone()[0], 11)
             self.assertIsNone(connection.execute("SELECT name FROM sqlite_master WHERE name='race_imports'").fetchone())
         with Store(self.app.data_dir) as store:
-            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 17)
+            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 18)
 
     def test_removal_migration_rolls_back_without_losing_existing_evidence(self):
         identity = self.stage()
@@ -641,7 +641,7 @@ class RaceTests(unittest.TestCase):
             self.assertEqual(connection.execute('SELECT * FROM race_results').fetchone(), before)
             self.assertEqual(connection.execute('SELECT * FROM race_result_history').fetchall(), history)
         with Store(self.app.data_dir) as store:
-            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 17)
+            self.assertEqual(store.connection.execute('PRAGMA user_version').fetchone()[0], 18)
             self.assertEqual(tuple(store.connection.execute('SELECT * FROM race_results').fetchone()), before)
             self.assertEqual(race.screenshot(store, identity)[1], self.image)
 

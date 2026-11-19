@@ -98,3 +98,55 @@ playwright-cli --session=seg02 close
 
 Restart the disposable server before repeating the check so the saved
 counts and API-preview response reset.
+
+## Standard cards and sortable effort metrics
+
+Segments uses the shared RideWorks panel and page styles. Add segment opens
+on demand. Each watch opens its own Import history form with the segment
+selected. The saved history starts collapsed and shows up to ten efforts
+when opened. View all opens the same history with the selected sort intact.
+Date starts newest first. Time, Avg Power and Avg HR sort numerically, and
+missing values follow known values in both directions. Each effort's details
+hold the source, Strava links and any available match review.
+
+Schema version 18 adds nullable metric fields to existing saved efforts.
+Activity detail, routine Sync and the existing history import retain finite
+effort-level values when supplied. Confirmed matches can show a metric from
+either source with its provenance. API metrics take precedence when both
+sources supply a value. Repeat imports fill missing fields when the effort
+or pasted row is unambiguous. Existing values take precedence within each
+source. The default Strava power status is unknown, including for copied
+My Results power. The API's explicit device flag identifies device-reported
+or estimated power. The documented fields are optional.
+[Strava DetailedSegmentEffort](https://developers.strava.com/docs/reference/#api-models-DetailedSegmentEffort)
+
+One read of the documented Hilly KOM history endpoint through the existing
+Dev connection returned 100 usable rows at the 100-row cap. All 100 supplied
+valid average watts with the device flag set. Ninety-five supplied valid
+average heart rate. These counts describe the returned page. The check
+saved no efforts, used the already-valid connection and wrote no payload to
+disk.
+
+- `env -u DEBUG .venv/bin/python -m unittest discover -s tests` passed all
+  689 tests. The schema 17 upgrade check preserved saved API and pasted
+  efforts, including confirmed matches. Other tests covered repeat imports,
+  malformed metrics, and provenance after a later Sync and match.
+- The disposable Dev browser check used two synthetic watches. The first
+  started with 102 efforts. Its short view showed ten rows, and sorting by
+  power via the keyboard brought the oldest effort into the visible ten.
+  Full-history heart-rate sorting kept missing values last both ways.
+  The check also exercised numeric time sort, per-card import, and links
+  from Home and Activities.
+- Native HTML clipboard copy and paste preserved one canonical ride link
+  and both dates and times. The text-only workflow saved three multiline
+  rows. The zero-row preview preserved the paste and selected watch.
+  The API path saved two efforts, replay added none, and the full history
+  finished with 109 efforts. The browser check verified field containment
+  at both widths. The signed-in Strava clipboard flow remains for Owner
+  review after the Analyst gate.
+
+Synthetic running Dev screenshots
+[Desktop, 1440 px](verification/segments-desktop.png) ·
+[Phone, 390 px](verification/segments-390.png).
+The browser commands above run the expanded check and write the two
+screenshots to `/tmp`.

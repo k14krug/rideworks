@@ -1,109 +1,211 @@
 """Segments screen backed only by the locally saved watchlist and efforts."""
 from collections import defaultdict
+from datetime import datetime
 from html import escape
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 
 from .history import presentation
 from .segment_import import PastedRow, candidates
 from .segment_import_page import import_form, options, preview_panel
 from .web import duration, local_time, shell
 
+COLUMNS = (('date', 'Date'), ('seconds', 'Time'), ('avg_power', 'Avg Power'), ('avg_hr', 'Avg HR'))
+SHORT_HISTORY = 10
+POWER_EVIDENCE = {None: 'Power status unknown', 0: 'Estimated power', 1: 'Device-reported power'}
+METRIC_SOURCES = {'api': 'Strava API', 'paste': 'My Results paste'}
 
-def segments_page(store, settings, query):
+
+def segments_link(*, anchor='', **filters):
+    query = urlencode({key: value for key, value in filters.items() if value})
+    return escape('/segments' + ('?' + query if query else '') + ('#' + anchor if anchor else ''), quote=True)
+
+
+def add_segment(nonce, notice):
+    return f'''<section class="panel segment-add" id="add-segment">
+<h2>Add segment</h2><p>Paste an effort link from one of your Strava Zwift rides.</p>
+<form action="/segments/add" method="post" data-settings-action>
+<input type="hidden" name="nonce" value="{escape(nonce, quote=True)}">
+<label for="segment-link">Strava activity-effort link</label>
+<input id="segment-link" name="link" type="url" maxlength="500" required>
+<button type="submit">Save effort</button></form><p role="status">{escape(notice or '')}</p>
+</section>'''
+
+
+def effort_details(store, effort, nonce):
+    external_id = effort['external_activity_id']
+    source = ''
+    if effort['effort_id']:
+        href = f'https://www.strava.com/activities/{external_id}/segments/{effort["effort_id"]}'
+        source = f'<a href="{escape(href, quote=True)}">Strava effort</a>'
+    elif external_id:
+        href = f'https://www.strava.com/activities/{external_id}'
+        source = f'<a href="{escape(href, quote=True)}">Strava activity</a>'
+    provenance = {'api': 'Strava API', 'both': 'Strava API and My Results paste',
+                  'paste': 'My Results paste · displayed time'}[effort['source']]
+    evidence = ''
+    if effort['power_source']:
+        evidence += f'<p>Avg Power · {METRIC_SOURCES[effort["power_source"]]} · {POWER_EVIDENCE[effort["device_watts"]]}</p>'
+    if effort['hr_source']:
+        evidence += f'<p>Avg HR · {METRIC_SOURCES[effort["hr_source"]]}</p>'
+    review = ''
+    if effort['source'] == 'paste':
+        pasted = PastedRow(effort['calendar_day'], effort['seconds'], external_id)
+        matches = candidates(store, effort['segment_id'], pasted, api_only=True)
+        if matches:
+            pid = effort['paste_id']
+            review = f'''<form class="segment-later-match" action="/segments/history/match" method="post">
+<input type="hidden" name="nonce" value="{escape(nonce, quote=True)}">
+<input type="hidden" name="paste_id" value="{pid}">
+<label for="segment-match-{pid}">Review possible API match</label>
+<select id="segment-match-{pid}" name="effort" required><option value="">Choose a match</option>
+{options(matches)}</select><button>Confirm same effort</button></form>'''
+    return (f'<details class="segment-effort-details"><summary>Effort details</summary><p>{provenance}</p>'
+            f'{evidence}{source}{review}</details>')
+
+
+def metric_cell(value, unit, device=None):
+    if value is None:
+        return '<span aria-label="Unavailable">—</span>'
+    suffix = ' <small>est.</small>' if unit == 'W' and device == 0 else ''
+    return f'<span>{value:.10g} {unit}</span>{suffix}'
+
+
+def history_table(store, nonce, efforts, name, sort, direction, links):
+    headers = []
+    for key, label in COLUMNS:
+        active = key == sort
+        next_direction = 'asc' if active and direction == 'desc' else 'desc'
+        indicator = (' ↑' if direction == 'asc' else ' ↓') if active else ' ↕'
+        aria_sort = f' aria-sort="{"ascending" if direction == "asc" else "descending"}"' if active else ''
+        href = segments_link(**(links | {'sort': key, 'direction': next_direction}))
+        headers.append(f'<th scope="col" role="columnheader"{aria_sort}><a href="{href}">{label}'
+                       f'<span aria-hidden="true">{indicator}</span></a></th>')
+    headers.append('<th scope="col" role="columnheader">Ride</th>')
+    attempts = []
+    for effort in efforts:
+        linked = (f'<a href="/activities/{escape(effort["activity_id"], quote=True)}">RideWorks ride</a>'
+                  if effort['activity_id'] else '<span>RideWorks ride link unavailable</span>')
+        when = (local_time(effort['start_time'], compact=True) if effort['start_time']
+                else escape(effort['calendar_day']))
+        cells = (when, f'<strong>{duration(effort["seconds"])}</strong>',
+                 metric_cell(effort['avg_power'], 'W', effort['device_watts']),
+                 metric_cell(effort['avg_hr'], 'bpm'),
+                 linked + effort_details(store, effort, nonce))
+        attempts.append('<tr role="row">' + ''.join(
+            f'<td role="cell"><span class="segment-cell-label" aria-hidden="true">{label}</span>'
+            f'<div>{value}</div></td>'
+            for label, value in zip([label for _, label in COLUMNS] + ['Ride'], cells)
+        ) + '</tr>')
+    return (f'<table class="segment-attempts" role="table" aria-label="{escape(name, quote=True)} saved efforts">'
+            f'<thead role="rowgroup"><tr role="row">{"".join(headers)}</tr></thead>'
+            f'<tbody role="rowgroup">{"".join(attempts)}</tbody></table>')
+
+
+def date_key(row, zone):
+    start = row['start_time']
+    day = datetime.fromisoformat(start).astimezone(zone).date().isoformat() if start else row['calendar_day']
+    return day, start or ''
+
+
+def sorted_efforts(efforts, sort, direction, zone):
+    by_date = sorted(efforts, key=lambda row: date_key(row, zone), reverse=sort != 'date' or direction == 'desc')
+    if sort == 'date':
+        return by_date
+    known = sorted((row for row in by_date if row[sort] is not None), key=lambda row: row[sort],
+                   reverse=direction == 'desc')
+    return known + [row for row in by_date if row[sort] is None]
+
+
+def segments_page(store, settings, query, zone):
     try:
-        filters = parse_qs(query, max_num_fields=4)
+        filters = {key: values[0] for key, values in parse_qs(query, max_num_fields=8).items()}
     except ValueError:
         filters = {}
-    ride = filters.get('ride', [''])[0]
+    ride = filters.get('ride')
+    selected = filters.get('segment')
+    sort = filters.get('sort')
+    if sort not in dict(COLUMNS):
+        sort = 'date'
+    direction = 'asc' if filters.get('direction') == 'asc' else 'desc'
+    heading = ''
     if ride:
         snapshots = store.activity_history(ride)
         title = presentation(snapshots[0])['title'] if snapshots else 'Ride unavailable'
         heading = f'<p>{escape(title)} · <a href="/segments">All watched segments</a></p>'
-    else:
-        heading = ''
-    sql = """SELECT w.segment_id, w.name, e.effort_id, e.external_activity_id,
-                    e.start_time, e.calendar_day, e.seconds, e.source, e.paste_id, l.activity_id
-             FROM strava_watched_segments w
-             LEFT JOIN strava_segment_history e USING (segment_id)
-             LEFT JOIN strava_saved_effort_ride_links l USING (external_activity_id)"""
     rows = store.connection.execute(
-        sql + (' WHERE l.activity_id=?' if ride else '') +
-        ' ORDER BY w.name COLLATE NOCASE, w.segment_id, COALESCE(e.start_time,e.calendar_day) DESC, e.effort_id, e.paste_id',
+        """SELECT w.segment_id, w.name, e.*, l.activity_id
+           FROM strava_watched_segments w
+           LEFT JOIN strava_segment_history e USING (segment_id)
+           LEFT JOIN strava_saved_effort_ride_links l USING (external_activity_id)"""
+        + (' WHERE l.activity_id=?' if ride else '')
+        + ' ORDER BY w.name COLLATE NOCASE, w.segment_id, COALESCE(e.start_time,e.calendar_day) DESC, e.effort_id, e.paste_id',
         (ride,) if ride else (),
     )
     groups = defaultdict(list)
     for row in rows:
         groups[(row['segment_id'], row['name'])].append(row)
+
+    draft = settings.current_history_draft()
+    preview = settings.current_history_preview() if filters.get('preview') == '1' else None
+    notice = settings.segment_history_notice
+    import_target = filters.get('import') or (preview['segment_id'] if preview else None)
+
     sections = []
     for (segment_id, name), rows in groups.items():
-        efforts = [row for row in rows if row['source'] is not None]
-        attempts = []
-        for effort in efforts:
-            source = ''
-            if effort['effort_id']:
-                href = f'https://www.strava.com/activities/{effort["external_activity_id"]}/segments/{effort["effort_id"]}'
-                source = f'<a href="{escape(href, quote=True)}">Strava effort</a>'
-            elif effort['external_activity_id']:
-                href = f'https://www.strava.com/activities/{effort["external_activity_id"]}'
-                source = f'<a href="{escape(href, quote=True)}">Strava activity</a>'
-            provenance = {'api':'Strava API', 'both':'Strava API and My Results paste',
-                          'paste':'My Results paste · displayed time'}[effort['source']]
-            linked = (f'<a href="/activities/{escape(effort["activity_id"], quote=True)}">RideWorks ride</a>'
-                      if effort['activity_id'] else '<span>RideWorks ride link unavailable</span>')
-            when = (local_time(effort['start_time'], compact=True) if effort['start_time']
-                    else escape(effort['calendar_day']))
-            review = ''
-            if effort['source'] == 'paste':
-                pasted = PastedRow(effort['calendar_day'], effort['seconds'], effort['external_activity_id'])
-                matches = candidates(store, segment_id, pasted, api_only=True)
-                if matches:
-                    pid = effort['paste_id']
-                    review = f'''<details class="segment-later-match"><summary>Review possible API match</summary>
-<form action="/segments/history/match" method="post">
-<input type="hidden" name="nonce" value="{escape(settings.nonce, quote=True)}">
-<input type="hidden" name="paste_id" value="{pid}">
-<label for="segment-match-{pid}">Saved API effort</label>
-<select id="segment-match-{pid}" name="effort" required><option value="">Choose a match</option>
-{options(matches)}</select><button>Confirm same effort</button></form></details>'''
-            cells = [('Date', when), ('Time', f'<strong>{duration(effort["seconds"])}</strong>'),
-                     ('Source', f'<span>{provenance}</span>{source}{review}'), ('Ride', linked)]
-            attempts.append('<tr role="row">' + ''.join(
-                f'<td role="cell"><span class="segment-cell-label" aria-hidden="true">{label}</span>'
-                f'<div>{value}</div></td>' for label, value in cells
-            ) + '</tr>')
+        anchor = f'segment-{segment_id}'
+        active = segment_id == selected
+        full = active and filters.get('view') == 'all'
+        attempts = [row for row in rows if row['source'] is not None]
+        total = len(attempts)
         best = (f'<p>{"Fastest saved on this ride" if ride else "Fastest saved effort"} · '
-                f'{duration(min(row["seconds"] for row in efforts))} · {len(efforts)} saved</p>') if efforts else ''
+                f'<strong>{duration(min(row["seconds"] for row in attempts))}</strong> · {total} saved</p>'
+                if total else '<p>0 saved</p>')
+        imports = ''
+        if not ride:
+            if import_target == segment_id:
+                current = preview if preview and preview['segment_id'] == segment_id else None
+                result = preview_panel(store, current, settings.nonce, {'name': name, 'segment_id': segment_id})
+                imports = import_form(segment_id, settings.nonce, draft if draft.get('segment_id') == segment_id else {},
+                                      notice if settings.segment_history_target == segment_id else None, result)
+                action_href = segments_link(segment=segment_id, anchor=anchor)
+                action = f'<a class="segment-secondary" href="{action_href}">Close import</a>'
+            else:
+                action_href = segments_link(**{'import': segment_id}, anchor='segment-import')
+                action = f'<a class="segment-secondary" href="{action_href}" aria-label="Import history for {escape(name, quote=True)}">Import history</a>'
+        else:
+            action = ''
         history = ''
-        if attempts:
-            labels = ''.join(f'<th scope="col" role="columnheader">{label}</th>' for label in ('Date', 'Time', 'Source', 'Ride'))
-            history = (f'<table class="segment-attempts" role="table" aria-label="{escape(name, quote=True)} saved efforts">'
-                       f'<thead role="rowgroup"><tr role="row">{labels}</tr></thead>'
-                       f'<tbody role="rowgroup">{"".join(attempts)}</tbody></table>')
-            if len(attempts) > 8:
-                history = f'<details class="segment-saved-list"><summary>View {len(attempts)} saved efforts</summary>{history}</details>'
-        sections.append(f'<section class="panel segment-card"><h2>{escape(name)}</h2>{best}{history}</section>')
+        if total:
+            card_sort, card_direction = (sort, direction) if active else ('date', 'desc')
+            ordered = sorted_efforts(attempts, card_sort, card_direction, zone)
+            visible = ordered if full else ordered[:SHORT_HISTORY]
+            links = dict(ride=ride, segment=segment_id, view='all' if full else '',
+                         tz=filters.get('tz'), anchor=f'{anchor}-history')
+            table = history_table(store, settings.nonce, visible, name, card_sort, card_direction, links)
+            more = ''
+            if total > SHORT_HISTORY:
+                href = segments_link(**(links | {'view': '' if full else 'all', 'sort': card_sort, 'direction': card_direction}))
+                label = 'Show short history' if full else f'View all {total} efforts'
+                more = f'<p><a href="{href}">{label}</a></p>'
+            expanded = ' open' if active or ride else ''
+            history = (f'<details class="segment-saved-list" id="{anchor}-history"{expanded}><summary>Saved history</summary>'
+                       f'<p>Showing {len(visible)} of {total} saved efforts</p>{table}{more}</details>')
+        sections.append(f'<section class="panel segment-card" id="{anchor}"><div class="segment-heading">'
+                        f'<div><h2>{escape(name)}</h2>{best}</div>{action}</div>{imports}{history}</section>')
     if not sections:
         sections.append('<p>No saved efforts for this ride.</p>' if ride else '<p>No watched segments yet.</p>')
+    show_add = not ride and filters.get('add') == '1'
+    add_link = ''
     form = ''
+    if filters.get('history-status') == '1' and notice:
+        form = f'<p role="status">{escape(notice)}</p>'
     if not ride:
-        notice = escape(settings.segment_notice or '')
-        form = f'''<section class="panel segment-add"><h2>Add segment</h2>
-<p>Paste an effort link from one of your Strava Zwift rides. Standalone segment links are unsupported.</p>
-<form action="/segments/add" method="post" data-settings-action>
-<input type="hidden" name="nonce" value="{escape(settings.nonce, quote=True)}">
-<label for="segment-link">Strava activity-effort link</label>
-<input id="segment-link" name="link" type="url" maxlength="500" required>
-<button type="submit">Save effort</button></form><p role="status">{notice}</p></section>'''
-    imports = ''
-    if not ride:
-        result = ''
-        preview = settings.current_history_preview()
-        if preview and filters.get('preview') == ['1']:
-            watch = store.connection.execute('SELECT * FROM strava_watched_segments WHERE segment_id=?',
-                                             (preview['segment_id'],)).fetchone()
-            result = preview_panel(store, preview, settings.nonce, watch)
-        imports = import_form(groups, settings.nonce, settings.current_history_draft(),
-                              settings.segment_history_notice, result)
-    return shell('Segments', f'''<header><h1>Segments</h1>{heading}
+        add_link = ('<a class="segment-secondary" href="/segments">Cancel add</a>' if show_add
+                    else '<a class="segment-secondary" href="/segments?add=1#add-segment">Add segment</a>')
+        if show_add:
+            form = add_segment(settings.nonce, settings.segment_notice)
+        elif settings.segment_notice and not form:
+            form = f'<p role="status">{escape(settings.segment_notice)}</p>'
+    return shell('Segments', f'''<header><div class="segment-heading"><h1>Segments</h1>{add_link}</div>{heading}
 <p>Only saved efforts are shown. Strava history may be incomplete.</p></header>
-<div class="segments-content">{form}{imports}{"".join(sections)}</div>''', active='segments')
+<div class="segments-content">{form}{"".join(sections)}</div>''', active='segments', page_class='segments-page')

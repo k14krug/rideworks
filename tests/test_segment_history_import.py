@@ -3,11 +3,15 @@ from datetime import timedelta
 import io
 import json
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlencode, urlsplit
+from zoneinfo import ZoneInfo
 
 from rideworks.segment_import import parse_paste
 from rideworks.segments import tracked_counts
+from rideworks.segments_page import sorted_efforts
+from rideworks import store as store_module
 from test_rideworks_segments import ACTIVITY, EFFORT, ORIGIN, Response, SEGMENT
 import test_rideworks_segments as fixtures
 
@@ -143,16 +147,16 @@ class SegmentHistoryTests(unittest.TestCase):
         self.watch()
         html = self.preview('paste', '</textarea><script>unsafe</script>')
         self.assertIn('Nothing imported.', html)
-        self.assertIn(f'value="{SEGMENT}" selected', html)
+        self.assertIn(f'name="segment" value="{SEGMENT}"', html)
         self.assertIn('&lt;/textarea&gt;&lt;script&gt;unsafe&lt;/script&gt;</textarea>', html)
         self.assertNotIn('<button>Save history</button>', html)
         self.assertEqual(self.count('strava_pasted_efforts'), 0)
         self.settings.configured = lambda: None
         result = self.import_post('preview', {'segment': str(SEGMENT), 'method': 'api', 'paste': 'Draft text'})
-        self.assertEqual(result[:2], (303, {'Location': '/segments'}))
-        html = self.app.get('/segments')[2].decode()
+        self.assertEqual(result[:2], (303, {'Location': f'/segments?import={SEGMENT}#segment-import'}))
+        html = self.app.get(result[1]['Location'])[2].decode()
         self.assertIn('Connect Strava in Settings or try Paste My Results.', html)
-        self.assertIn(f'value="{SEGMENT}" selected', html)
+        self.assertIn(f'name="segment" value="{SEGMENT}"', html)
         self.assertIn('>Draft text</textarea>', html)
 
     def test_paste_overlap_defaults_and_explicit_same_ride_multiplicity(self):
@@ -171,9 +175,10 @@ class SegmentHistoryTests(unittest.TestCase):
         self.watch()
         source = self.listing(100)
         day = (self.start+timedelta(seconds=5)).date().isoformat()
-        self.preview('paste', f'| [{day}](https://www.strava.com/activities/100) | 6:15 |')
+        self.preview('paste', f'| [{day}](https://www.strava.com/activities/100) | 235 W | 151 bpm | 6:15 |')
         self.assertIn('Saved 1', self.save())
-        self.http.responses.extend([Response([source]), Response(self.detail(100, self.attempt(activity=100,effort=11)))])
+        self.http.responses.extend([Response([source]), Response(self.detail(
+            100, self.attempt(activity=100, effort=11, average_watts=237, device_watts=True)))])
         self.assertEqual(json.loads(self.sync(home=True)[2])['status'],'complete')
         ride = self.store.connection.execute("SELECT activity_id FROM strava_api_activities WHERE external_id='100'").fetchone()[0]
         self.assertEqual(tracked_counts(self.store,[ride]), {ride:1})
@@ -185,5 +190,66 @@ class SegmentHistoryTests(unittest.TestCase):
         html = self.app.get(f'/segments?ride={ride}')[2].decode()
         self.assertIn('1 saved', html)
         self.assertIn('Strava API and My Results paste', html)
+        metric = self.store.connection.execute(
+            "SELECT avg_power, avg_hr, device_watts, power_source, hr_source FROM strava_segment_history WHERE effort_id='11'"
+        ).fetchone()
+        self.assertEqual(tuple(metric), (237, 151, 1, 'api', 'paste'))
         self.assertEqual(self.count('strava_pasted_efforts'),1)
         self.assertEqual(self.count('strava_saved_efforts'),2)
+
+    def test_effort_metrics_add_detail_and_replay_fills_missing_only(self):
+        row = self.attempt(average_watts=215.5, average_heartrate='broken', device_watts=False)
+        self.http.responses.append(Response(self.detail(ACTIVITY, row)))
+        self.assertEqual(self.add()[0], 303)
+        replay = self.attempt(average_watts=999, average_heartrate=145.2, device_watts=True)
+        self.http.responses.append(Response([replay]))
+        self.assertIn('New metrics are available for 1 saved efforts.', self.preview('api'))
+        self.assertIn('Added metrics to 1 saved efforts.', self.save())
+        self.http.responses.append(Response([self.attempt(average_watts=-1, average_heartrate=False)]))
+        self.assertNotIn('<button>Save history</button>', self.preview('api'))
+        self.assertEqual(tuple(self.store.connection.execute(
+            'SELECT avg_power, avg_hr, device_watts FROM strava_saved_efforts').fetchone()), (215.5, 145.2, 0))
+
+    def test_paste_metrics_replay_enriches_unique_rows_preserves_known_and_ignores_bad_optional(self):
+        self.watch()
+        self.preview('paste', '2024-03-09\t210 W\t5:02\n2024-03-10\t5:03\n2024-03-10\t5:03')
+        self.save()
+        replay = ('1 Rider Mar 9, 2024\n150 bpm\n275 Wsvg\n5:02\n'
+                  '2 Rider Mar 10, 2024\ninvalid W\n—\n5:03\n'
+                  '3 Rider Mar 10, 2024\n225 W\n5:03')
+        html = self.preview('paste', replay)
+        self.assertIn('3 readable rows', html)
+        self.assertIn('New metrics are available for 1 saved efforts.', html)
+        self.assertIn('Added metrics to 1 saved efforts.', self.save())
+        saved = self.store.connection.execute(
+            'SELECT avg_power, avg_hr FROM strava_pasted_efforts ORDER BY paste_id').fetchall()
+        self.assertEqual([tuple(row) for row in saved], [(210, 150), (None, None), (None, None)])
+
+    def test_v17_upgrade_preserves_saved_api_and_confirmed_and_unmatched_paste(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(store_module, 'MIGRATION_18', ''):
+                with store_module.Store(folder) as old:
+                    self.assertEqual(old.connection.execute('PRAGMA user_version').fetchone()[0], 17)
+                    old.connection.executescript("""
+                        INSERT INTO strava_watched_segments VALUES ('1','2','Watch');
+                        INSERT INTO strava_saved_efforts VALUES ('3','1','4','2024-01-01T12:00:00+00:00',60);
+                        INSERT INTO strava_paste_batches VALUES ('batch','1');
+                        INSERT INTO strava_pasted_efforts VALUES (1,'batch','4','2024-01-01',60,'3');
+                        INSERT INTO strava_pasted_efforts VALUES (2,'batch',NULL,'2024-02-01',90,NULL);
+                    """)
+            with store_module.Store(folder) as upgraded:
+                self.assertEqual(upgraded.connection.execute('PRAGMA user_version').fetchone()[0], 18)
+                rows = upgraded.connection.execute(
+                    'SELECT effort_id, paste_id, seconds, source, avg_power, avg_hr FROM strava_segment_history ORDER BY paste_id'
+                ).fetchall()
+                self.assertEqual([tuple(row) for row in rows], [('3', 1, 60, 'both', None, None),
+                                                               (None, 2, 90, 'paste', None, None)])
+                self.assertEqual(upgraded.connection.execute('PRAGMA foreign_key_check').fetchall(), [])
+
+    def test_date_sort_uses_the_displayed_day_for_timestamps_and_pasted_dates(self):
+        api = {'start_time': '2024-03-10T01:00:00+00:00', 'calendar_day': None}
+        paste = {'start_time': None, 'calendar_day': '2024-03-10'}
+        efforts = [api, paste]
+        self.assertEqual(sorted_efforts(efforts, 'date', 'desc', ZoneInfo('America/Los_Angeles')), [paste, api])
+        self.assertEqual(sorted_efforts(efforts, 'date', 'desc', ZoneInfo('UTC')), [api, paste])

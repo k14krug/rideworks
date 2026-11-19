@@ -1,38 +1,79 @@
 async page => {
   const base = 'http://127.0.0.1:18774';
-  const ctx = page.context();
-  await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], {origin: base});
+  const context = page.context();
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], {origin: base});
   await page.setViewportSize({width: 1440, height: 900});
   await page.goto(base + '/segments');
-  const panel = page.getByRole('region', {name: 'Import history'});
-  const paste = page.getByLabel('Paste My Results');
-  const select = page.getByLabel('Watched segment');
   const watched = '9007199254740995';
-  await select.selectOption(watched);
+  const name = 'Synthetic Watched Loop';
+  const card = page.locator('.segment-card').filter({has: page.getByRole('heading', {name})});
+  const table = card.getByRole('table');
+  const displayed = () => table.locator('tbody tr').count();
+  const first = index => table.locator(`tbody tr:first-child td:nth-child(${index}) > div`);
+  const last = index => table.locator(`tbody tr:last-child td:nth-child(${index}) > div`);
+  const panel = card.getByRole('region', {name: 'Import history'});
+  const paste = panel.getByLabel('Paste My Results');
+  const previewButton = panel.getByRole('button', {name: 'Preview paste'});
+  const save = panel.getByRole('button', {name: 'Save history'});
+  const api = panel.getByRole('button', {name: 'From Strava'});
   const assert = (condition, label) => { if (!condition) throw Error(label); };
-  const noOverflow = async () => assert(await panel.evaluate(card => {
-    const x = card.getBoundingClientRect();
-    return document.documentElement.scrollWidth <= innerWidth &&
-      [...card.querySelectorAll('select,textarea')].every(el => {
-        const field = el.getBoundingClientRect();
-        return field.width > 0 && field.right <= x.right && field.left >= x.left;
+  const checkNoOverflow = async () => assert(await page.evaluate(() => {
+    if (document.documentElement.scrollWidth > innerWidth) return false;
+    return Array.from(document.querySelectorAll('.segments-page textarea, .segments-page input[type=url], .segments-page select'))
+      .filter(field => field.offsetWidth).every(field => {
+        const bounds = field.closest('.panel').getBoundingClientRect();
+        const rect = field.getBoundingClientRect();
+        return rect.left >= bounds.left && rect.right <= bounds.right;
       });
-  }), 'card field overflow');
+  }), 'page or form overflow');
 
-  const saved = page.locator('.segment-card').filter({has: page.getByRole('heading', {name: 'Synthetic Watched Loop'})});
-  const summary = saved.getByText('View 102 saved efforts');
-  await summary.waitFor();
-  assert(!(await saved.locator('details').evaluate(e => e.open)), 'long history should start closed');
-  await summary.click();
-  assert(await saved.getByRole('row').count() === 103, 'date/time/source/ride columns and 102 effort rows');
-  assert(await saved.getByRole('columnheader').allTextContents().then(a => a.join('/') === 'Date/Time/Source/Ride'), 'column headings');
-  await summary.click();
+  const sort = (label, keyboard = false) => {
+    const header = table.getByRole('link', {name: label, exact: true});
+    return keyboard ? header.press('Enter') : header.click();
+  };
+  const direction = label => table.getByRole('columnheader', {name: label, exact: true}).getAttribute('aria-sort');
+  const openImporter = () => card.getByRole('link', {name: 'Import history for ' + name}).click();
+  const openHistory = () => card.locator('.segment-saved-list > summary').click();
+  const screenshot = async path => {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({path: `/tmp/${path}`, fullPage: true, animations: 'disabled'});
+  };
 
-  const source = await ctx.newPage();
+  assert(await page.locator('#history-import-form, #segment-link').count() === 0, 'forms initially closed');
+  await page.getByRole('link', {name: 'Add segment', exact: true}).click();
+  await page.getByLabel('Strava activity-effort link').waitFor();
+  await checkNoOverflow();
+  await page.getByRole('link', {name: 'Cancel add'}).click();
+  assert(!(await card.locator('.segment-saved-list').evaluate(el => el.open)), 'history initially closed');
+  await openHistory();
+  assert(await displayed() === 10 && await direction('Date') === 'descending', 'newest first, ten rows');
+  assert(!(await first(3).innerText()).includes('510.5'), 'oldest high power starts offscreen');
+  assert(await table.getByRole('columnheader').count() === 5, 'five columns');
+  assert(await table.getByRole('columnheader', {name: 'Ride'}).getByRole('link').count() === 0, 'Ride does not sort');
+  await sort('Avg Power', true);
+  assert(await direction('Avg Power') === 'descending' && (await first(3).innerText()).includes('510.5 W'), 'keyboard sort across all 102 rows');
+  await screenshot('seg02-history-desktop.png');
+  await sort('Avg Power');
+  assert(await direction('Avg Power') === 'ascending' && (await first(3).innerText()).includes('92 W'), 'numeric ascending');
+  await sort('Time');
+  await sort('Time');
+  assert(await direction('Time') === 'ascending' && (await first(2).innerText()) === '2:00', 'numeric durations');
+  await table.getByRole('columnheader', {name: 'Avg HR', exact: true}).getByRole('link').click();
+  assert(await direction('Avg HR') === 'descending' && (await first(4).innerText()) === '191 bpm', 'whole-history HR sort');
+  await card.getByRole('link', {name: 'View all 102 efforts'}).click();
+  assert(await displayed() === 102 && (await last(4).innerText()) === '—', 'full view, missing last on descending');
+  await sort('Avg HR');
+  assert(await direction('Avg HR') === 'ascending' && (await last(4).innerText()) === '—', 'missing last on ascending');
+  await card.getByRole('link', {name: 'Show short history'}).click();
+  assert(await displayed() === 10, 'return to short history');
+
+  await openImporter();
+  assert(await panel.locator('input[name=segment]').inputValue() === watched, 'per-card segment preselected');
+  const source = await context.newPage();
   await source.goto(base + '/segments');
   await source.setContent('<table><tr><th>Rank</th><th>Name</th><th>Date</th><th>Speed</th><th>HR</th><th>Power</th><th>Time</th></tr>'
     + '<tr><td>1</td><td>Rider</td><td><a href="https://www.strava.com/activities/9007199254740993">Mar 9, 2024</a></td><td>21.5 mph</td><td>146 bpm</td><td>191 W</td><td>34:24</td></tr>'
-    + '<tr><td>2</td><td>Rider</td><td><a href="https://example.invalid/activities/12">Mar 10, 2024</a></td><td></td><td></td><td></td><td>35:05</td></tr></table>');
+    + '<tr><td>2</td><td>Rider</td><td><a href="https://example.invalid/activities/12">Mar 10, 2024</a></td><td></td><td>—</td><td>invalid W</td><td>35:05</td></tr></table>');
   await source.bringToFront();
   await source.evaluate(() => {
     const range = document.createRange();
@@ -42,13 +83,18 @@ async page => {
   });
   await source.keyboard.press('Control+c');
   await page.bringToFront();
-  const types = await page.evaluate(async () => (await navigator.clipboard.read()).flatMap(item => item.types));
+  const clipboardTypes = async () => page.evaluate(async () => (await navigator.clipboard.read()).flatMap(item => item.types));
+  const types = await clipboardTypes();
   assert(types.includes('text/html') && types.includes('text/plain'), 'native rich clipboard types');
-  await paste.focus();
-  await page.keyboard.press('Control+v');
-  assert(await paste.inputValue() === 'Mar 9, 2024\thttps://www.strava.com/activities/9007199254740993\t34:24\nMar 10, 2024\t35:05', 'canonical link extraction');
-  await noOverflow();
-
+  const nativePaste = async () => {
+    await paste.focus();
+    await page.keyboard.press('Control+a');
+    await page.keyboard.press('Control+v');
+  };
+  await nativePaste();
+  assert(await paste.inputValue() === 'Mar 9, 2024\thttps://www.strava.com/activities/9007199254740993\t146 bpm\t191 W\t34:24\nMar 10, 2024\t35:05',
+    'HTML extraction retains canonical link and valid metrics');
+  await checkNoOverflow();
   await page.evaluate(() => {
     document.addEventListener('submit', event => {
       const status = document.querySelector('#history-progress');
@@ -57,51 +103,69 @@ async page => {
       }
     }, {once: true});
   });
-  const statusEvent = page.waitForEvent('console', {predicate: event => event.text() === 'Reading pasted results…'});
-  await page.getByRole('button', {name: 'Preview paste'}).click();
-  await statusEvent;
+  const progress = page.waitForEvent('console', {predicate: event => event.text() === 'Reading pasted results…'});
+  await previewButton.click();
+  await progress;
   await panel.getByText(/2 readable rows · 1 unique ride links · 0 unparsed/).waitFor();
-  await panel.getByRole('button', {name: 'Save history'}).click();
+  await save.click();
   await panel.getByText(/Saved 2 pasted results/).waitFor();
-  await saved.getByText('View 104 saved efforts').click();
-  assert(await saved.getByRole('link', {name: 'Strava activity', exact: true}).count() === 1, 'one canonical pasted link saved');
-  await saved.getByText('View 104 saved efforts').click();
 
   await page.setViewportSize({width: 390, height: 900});
   const bad = 'copied unrelated sentence';
-  await page.evaluate(async value => navigator.clipboard.writeText(value), bad);
-  await paste.focus();
-  await page.keyboard.press('Control+v');
-  await page.getByRole('button', {name: 'Preview paste'}).click();
+  await page.evaluate(value => navigator.clipboard.writeText(value), bad);
+  await nativePaste();
+  await previewButton.click();
   await panel.getByText('Nothing imported.').waitFor();
   assert(await paste.inputValue() === bad, 'failed paste retained');
-  assert(await select.inputValue() === watched, 'selected watch retained');
-  assert(await panel.getByRole('button', {name: 'Save history'}).count() === 0, 'zero results cannot be saved');
-  await noOverflow();
+  assert(await panel.locator('input[name=segment]').inputValue() === watched, 'segment retained after error');
+  assert(await save.count() === 0, 'zero results cannot be saved');
+  await checkNoOverflow();
 
-  const plain = '1 Rider Apr 11, 2024 21.5 mph 146 bpm\n191 Wsvg\n34:42\n2 Rider Apr 12, 2024\n35:20\n3 Rider Apr 13, 2024\n—\n36:31';
-  await page.evaluate(async value => navigator.clipboard.writeText(value), plain);
-  const plainTypes = await page.evaluate(async () => (await navigator.clipboard.read()).flatMap(item => item.types));
-  assert(plainTypes.length === 1 && plainTypes[0] === 'text/plain', 'text-only clipboard');
-  await paste.focus();
-  await page.keyboard.press('Control+a');
-  await page.keyboard.press('Control+v');
-  await page.getByRole('button', {name: 'Preview paste'}).click();
+  const plain = '1 Rider Apr 11, 2024 21.5 mph 143 bpm\n193 Wsvg\n34:42\n2 Rider Apr 12, 2024\n35:20\n3 Rider Apr 13, 2024\n—\n36:31';
+  await page.evaluate(value => navigator.clipboard.writeText(value), plain);
+  assert((await clipboardTypes()).join() === 'text/plain', 'text-only clipboard');
+  await nativePaste();
+  await previewButton.click();
   await panel.getByText(/3 readable rows · 0 unique ride links · 0 unparsed/).waitFor();
-  await panel.getByRole('button', {name: 'Save history'}).click();
+  await save.click();
   await panel.getByText(/Saved 3 pasted results/).waitFor();
 
-  await page.getByRole('button', {name: 'From Strava'}).click();
+  await api.click();
   await panel.getByText(/2 validated efforts · 0 already saved · 2 to save/).waitFor();
-  await panel.getByRole('button', {name: 'Save history'}).click();
+  await save.click();
   await panel.getByText('Saved 2 Strava efforts. 0 already saved.').waitFor();
-  await saved.getByText('View 109 saved efforts').click();
-  assert(await saved.getByRole('row').count() === 110, 'both sources and prior efforts preserved');
-  assert(await saved.locator('tbody .segment-cell-label').first().isVisible(), 'narrow labels visible');
-  await noOverflow();
-  await saved.getByText('View 109 saved efforts').click();
-  await page.getByRole('heading', {name: 'Synthetic Second Loop'}).waitFor();
+  await api.click();
+  await panel.getByText(/2 validated efforts · 2 already saved · 0 to save/).waitFor();
+  assert(await save.count() === 0, 'API replay adds no effort');
+  await card.getByRole('link', {name: 'Close import'}).click();
+  assert(await displayed() === 10, 'history opens without expanded import');
+  assert(await table.locator('tbody .segment-cell-label').first().isVisible(), 'narrow row labels');
+  assert((await first(3).innerText()).includes('—'), 'malformed API power is unavailable');
+  await table.getByRole('link', {name: 'Avg Power', exact: true}).click();
+  assert((await first(3).innerText()).includes('510.5 W'), 'sorting available at 390 px');
+  await checkNoOverflow();
+  await screenshot('seg02-history-390.png');
+
+  await card.getByRole('link', {name: 'View all 109 efforts'}).click();
+  assert(await displayed() === 109, 'all prior, clipboard, and API efforts preserved');
+  const rich = table.getByRole('row').filter({has: page.getByText('34:24', {exact: true})});
+  await rich.getByText('Effort details', {exact: true}).click();
+  await rich.getByRole('link', {name: 'Strava activity', exact: true}).waitFor();
+  await rich.getByRole('link', {name: 'RideWorks ride', exact: true}).waitFor();
+  await rich.getByText('Avg Power · My Results paste · Power status unknown', {exact: true}).waitFor();
+  await rich.getByText('191 W', {exact: true}).waitFor();
+  await table.getByText('193 W', {exact: true}).waitFor();
+  await table.getByText('251.5 W', {exact: true}).waitFor();
+  await checkNoOverflow();
+  for (const path of ['/', '/activities']) {
+    await page.goto(base + path);
+    await page.getByRole('link', {name: '2 tracked segments', exact: true}).click();
+    await page.getByRole('link', {name: 'All watched segments'}).waitFor();
+    await page.getByRole('heading', {name: 'Synthetic West Loop'}).waitFor();
+    await checkNoOverflow();
+  }
   await source.close();
-  return {richClipboardTypes: types, nativeCopyPaste: true, richRows: 2, linked: 1, textOnlyRows: 3,
-    progress: true, zeroRetained: true, apiRows: 2, finalSaved: 109, viewports: [1440, 390]};
+  return {richClipboard: types, richRows: 2, localLink: 1, plainRows: 3, apiRows: 2,
+    replay: true, fullHistory: 109, shortView: 10, numericSort: true, missingLast: true,
+    progressAndRecovery: true, viewports: [1440, 390], screenshots: 2};
 }

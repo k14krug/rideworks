@@ -33,7 +33,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-02 — Import watched-segment history in batches
 
-**Status:** in_progress — research accepted; implement from the revised brief.
+**Status:** done — Analyst and Owner gates cleared; PR #70 merged as `38a16be`. Production cutover not yet verified.
 
 **Execution:** [JIT](docs/tasks/SEG-02.md); `/TASK SEG-02` only; HARD Analyst review then HARD Owner Dev review.
 

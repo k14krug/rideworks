@@ -401,7 +401,7 @@ class SectionTests(unittest.TestCase):
     def test_schema14_rollback_preserves_legacy_import(self):
         identity = self.staged([[result()]], image(height=400))
         original = race.screenshot(self.store, identity)[1]
-        self.store.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; DROP TABLE elapsed_power_curve_profiles; DROP TABLE race_import_reconciliations; DROP TABLE race_import_sections; PRAGMA user_version=13;')
+        self.store.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP VIEW strava_segment_history; DROP TABLE strava_pasted_efforts; DROP TABLE strava_paste_batches; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; DROP TABLE elapsed_power_curve_profiles; DROP TABLE race_import_reconciliations; DROP TABLE race_import_sections; PRAGMA user_version=13;')
         from rideworks import store as module
         broken = module.MIGRATION_14.replace('PRAGMA user_version = 14;', 'INSERT INTO missing VALUES(1);')
         with patch.object(module, 'MIGRATION_14', broken), self.assertRaises(sqlite3.Error):
@@ -409,7 +409,7 @@ class SectionTests(unittest.TestCase):
         self.assertEqual(self.store.connection.execute('PRAGMA user_version').fetchone()[0], 13)
         self.assertIsNone(self.store.connection.execute("SELECT name FROM sqlite_master WHERE name='race_import_sections'").fetchone())
         with Store(self.store.data_dir) as upgraded:
-            self.assertEqual(upgraded.connection.execute('PRAGMA user_version').fetchone()[0], 16)
+            self.assertEqual(upgraded.connection.execute('PRAGMA user_version').fetchone()[0], 17)
             self.assertEqual(race.screenshot(upgraded, identity)[1], original)
             old, sections, complete = observations(upgraded, race.load_import(upgraded, identity))
             self.assertTrue(complete)

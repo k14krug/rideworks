@@ -1100,3 +1100,12 @@ pre { overflow-x: auto; font-size: 13px; background: var(--background); padding:
 .segment-attempts li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; border-top: 1px solid var(--border); padding: 8px 0; }
 .tracked-segment-link { display: block; width: fit-content; font-size: 12px; }
 .activity-list .tracked-segment-link { margin: 0 0 8px; }
+.segment-history form, .segment-preview form { display: grid; gap: 8px; max-width: 680px; }
+.segment-history textarea, .segment-history select, .segment-preview select, .segment-later-match select {
+  max-width: 100%; width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 5px; font: inherit;
+}
+.segment-import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.segment-preview fieldset { display: grid; gap: 8px; min-width: 0; border: 1px solid var(--border); border-radius: 5px; }
+.segment-preview form > button { justify-self: start; }
+.segment-later-match { flex-basis: 100%; min-width: 0; }
+.segment-later-match form { display: grid; gap: 6px; max-width: 620px; }

@@ -468,6 +468,48 @@ PRAGMA user_version = 16;
 COMMIT;
 """
 
+MIGRATION_17 = """
+BEGIN IMMEDIATE;
+CREATE TABLE strava_paste_batches (
+    batch_id TEXT PRIMARY KEY,
+    segment_id TEXT NOT NULL REFERENCES strava_watched_segments(segment_id)
+);
+CREATE TABLE strava_pasted_efforts (
+    paste_id INTEGER PRIMARY KEY,
+    batch_id TEXT NOT NULL REFERENCES strava_paste_batches(batch_id),
+    external_activity_id TEXT,
+    calendar_day TEXT NOT NULL,
+    displayed_seconds INTEGER NOT NULL CHECK(displayed_seconds > 0),
+    confirmed_effort_id TEXT UNIQUE REFERENCES strava_saved_efforts(effort_id)
+);
+CREATE INDEX pasted_effort_batch ON strava_pasted_efforts(batch_id);
+CREATE VIEW strava_segment_history AS
+SELECT e.segment_id, e.external_activity_id, e.effort_id, p.paste_id,
+       e.start_time, p.calendar_day, e.elapsed_seconds AS seconds,
+       CASE WHEN p.paste_id IS NULL THEN 'api' ELSE 'both' END AS source
+FROM strava_saved_efforts e LEFT JOIN strava_pasted_efforts p ON p.confirmed_effort_id=e.effort_id
+UNION ALL
+SELECT b.segment_id, p.external_activity_id, NULL, p.paste_id, NULL,
+       p.calendar_day, p.displayed_seconds, 'paste'
+FROM strava_pasted_efforts p JOIN strava_paste_batches b USING (batch_id)
+WHERE p.confirmed_effort_id IS NULL;
+DROP VIEW strava_saved_effort_ride_links;
+CREATE VIEW strava_saved_effort_ride_links AS
+WITH saved_ids AS (SELECT DISTINCT external_activity_id FROM strava_segment_history
+                   WHERE external_activity_id IS NOT NULL),
+candidates AS (
+    SELECT s.external_activity_id, a.activity_id FROM saved_ids s
+    JOIN strava_api_activities a ON a.external_id = s.external_activity_id
+    UNION
+    SELECT s.external_activity_id, a.activity_id FROM saved_ids s
+    JOIN strava_export_sources a ON a.external_id = s.external_activity_id
+)
+SELECT external_activity_id, MIN(activity_id) AS activity_id
+FROM candidates GROUP BY external_activity_id HAVING COUNT(*) = 1;
+PRAGMA user_version = 17;
+COMMIT;
+"""
+
 
 def artifact_integrity(path: Path) -> tuple[str, int]:
     digest, size = hashlib.sha256(), 0
@@ -504,7 +546,7 @@ class Store:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA synchronous = FULL")
         version = self.connection.execute("PRAGMA user_version").fetchone()[0]
-        if version not in range(17):
+        if version not in range(18):
             self.close()
             raise RideWorksError(f"Unsupported RideWorks schema version: {version}")
         try:
@@ -561,6 +603,9 @@ class Store:
                 version = 15
             if version == 15:
                 self.connection.executescript(MIGRATION_16)
+                version = 16
+            if version == 16:
+                self.connection.executescript(MIGRATION_17)
             _sync_directory(self.data_dir)
         except BaseException:
             self.connection.rollback()

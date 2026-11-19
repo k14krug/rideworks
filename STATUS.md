@@ -2,7 +2,7 @@
 
 **Product:** RideWorks.
 **Current task:** SEG-02 — Validate bulk sources for watched-segment history.
-**State:** `in_progress` — Analyst research gate cleared; implementation authorized on explicit invocation.
+**State:** `ready_for_review` — HARD Analyst implementation gate.
 **Branch:** `seg-02-history-sources`.
-**Verification:** Hilly KOM hit its 100-row limit. Two pasted Tempus rows preserved calendar dates, durations, and uniquely matched activity links. See the [sanitized report](reports/SEG-02/bulk-sources.md).
-**Next action:** `/TASK SEG-02` on this branch: implement the bulk history import specified in the revised JIT, then stop for HARD Analyst review. No more samples or standalone probes required.
+**Verification:** 683 Python tests, controlled Dev Chromium at 1440 and 390 px, and a bounded live Hilly KOM preview. See the [implementation report](reports/SEG-02/implementation.md).
+**Next action:** HARD Analyst review, then HARD Owner review in running Dev.

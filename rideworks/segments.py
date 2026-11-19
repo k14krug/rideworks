@@ -175,7 +175,7 @@ def tracked_counts(store, activity_ids):
         return {}
     marks = ','.join('?' for _ in activity_ids)
     return dict(store.connection.execute(
-        'SELECT l.activity_id, COUNT(DISTINCT e.segment_id) FROM strava_saved_efforts e '
+        'SELECT l.activity_id, COUNT(DISTINCT e.segment_id) FROM strava_segment_history e '
         'JOIN strava_saved_effort_ride_links l USING (external_activity_id) '
         f'WHERE l.activity_id IN ({marks}) GROUP BY l.activity_id',
         activity_ids,

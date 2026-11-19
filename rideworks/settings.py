@@ -51,6 +51,7 @@ class Settings:
         self.notice = None
         self.goal_notice = None
         self.segment_notice = None
+        self.segment_history_preview = None
         self.port = 8765
         self.access = HTTPAccess()
 
@@ -207,9 +208,13 @@ class Settings:
     def post(self, path, body, origin):
         goal_action = path == '/settings/annual-goal'
         segment_action = path == '/segments/add'
+        history_actions = ('/segments/history/preview', '/segments/history/save', '/segments/history/match')
+        history_action = path in history_actions
         try:
-            values = parse_qs(body.decode('ascii'), max_num_fields=3 if goal_action else 2,
-                              strict_parsing=True, keep_blank_values=goal_action)
+            if history_action and len(body) > 256_000:
+                return 413, {}, b'History import exceeds the allowed size.'
+            values = parse_qs(body.decode('ascii'), max_num_fields=202 if history_action else 3 if goal_action else 2,
+                              strict_parsing=True, keep_blank_values=goal_action or history_action)
             supplied = values.get('nonce', [])
             valid = len(supplied) == 1 and secrets.compare_digest(supplied[0].encode(), self.nonce.encode())
         except (ValueError, UnicodeError):
@@ -228,7 +233,7 @@ class Settings:
             return 400, {}, b'Paste a Strava activity-effort link.'
         if goal_action and (set(values) not in ({'nonce','tz','target_miles'},{'nonce','tz','clear'}) or any(len(v)!=1 for v in values.values())):
             return 400, {}, b'Invalid annual goal form. Reload Settings and try again.'
-        if path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/power-curves/rebuild', '/settings/annual-goal', '/segments/add'):
+        if not history_action and path not in ('/settings/strava/connect', '/settings/strava/sync', '/settings/strava/disconnect', '/settings/performance/rebuild', '/settings/power-curves/rebuild', '/settings/annual-goal', '/segments/add'):
             return 404, {}, b'Unknown Settings action.'
         if not self.operation.acquire(blocking=False):
             return 409, {}, NOTICES['busy'].encode()
@@ -245,6 +250,8 @@ class Settings:
             self.home_sync_notice = None
         try:
             with Store(self.data_dir) as store:
+                if history_action:
+                    return self.segment_history_action(store, path, values)
                 if segment_action:
                     from .segments import add_selected_effort
                     credentials = self.configured()
@@ -314,7 +321,7 @@ class Settings:
                         self.home_sync_notice = ' '.join(notes)
                         return self.json_response(status='complete')
         except (RideWorksError, OSError, sqlite3.Error) as error:
-            if segment_action:
+            if segment_action or history_action:
                 self.segment_notice = (str(error) if isinstance(error, (SyncError, ConfigurationError))
                                        else 'The effort could not be saved. Try again later.')
                 return self.redirect('/segments')
@@ -340,6 +347,70 @@ class Settings:
                 self.recent_rides.invalidate()
             self.operation.release()
         return self.redirect()
+
+    def current_history_preview(self):
+        preview = self.segment_history_preview
+        if preview and preview['expires'] > time.monotonic():
+            return preview
+        return None
+
+    def segment_history_action(self, store, path, values):
+        from .segment_import import (api_preview, candidates, confirm_later_match, parse_paste,
+                                     save_api, save_paste, watched_segment)
+        if any(len(items) != 1 for items in values.values()):
+            return 400, {}, b'Invalid history form.'
+        fields = {key: items[0] for key, items in values.items() if key != 'nonce'}
+        if path.endswith('/preview'):
+            if set(fields) != {'segment', 'method', 'paste'} or fields['method'] not in ('api', 'paste'):
+                return 400, {}, b'Invalid history preview request.'
+            self.segment_history_preview = None
+            self.segment_notice = None
+            segment_id = fields['segment']
+            watched_segment(store, segment_id)
+            preview = {'segment_id': segment_id, 'method': fields['method'],
+                       'token': secrets.token_urlsafe(24), 'expires': time.monotonic()+600}
+            if fields['method'] == 'api':
+                credentials = self.configured()
+                if not credentials:
+                    raise ConfigurationError('Connect Strava in Settings or try Paste My Results.')
+                self.recent_rides.wait_for_renewal()
+                rows, warnings, requests = api_preview(store, self.client_factory(credentials), segment_id)
+                preview.update(rows=rows, warnings=warnings, requests=requests)
+            else:
+                rows, invalid = parse_paste(fields['paste'])
+                overlaps = {i: found for i, row in enumerate(rows)
+                            if (found := candidates(store, segment_id, row))}
+                preview.update(rows=rows, invalid=invalid, candidates=overlaps)
+            self.segment_history_preview = preview
+            return self.redirect('/segments?preview=1')
+        if path.endswith('/match'):
+            if set(fields) != {'paste_id', 'effort'} or not fields['paste_id'].isascii() or not fields['paste_id'].isdecimal() or len(fields['paste_id']) > 18:
+                return 400, {}, b'Invalid saved-result match.'
+            if not fields['effort'].startswith('api:'):
+                return 400, {}, b'Invalid saved-result match.'
+            confirm_later_match(store, int(fields['paste_id']), fields['effort'][4:])
+            self.segment_notice = 'Match confirmed. The effort is shown once.'
+            return self.redirect('/segments')
+        preview = self.current_history_preview()
+        if not preview or not secrets.compare_digest(fields.pop('preview', '').encode(), preview['token'].encode()):
+            return 409, {}, b'Import preview expired or changed. Return to Segments and preview again.'
+        rows, segment_id = preview['rows'], preview['segment_id']
+        if preview['method'] == 'api':
+            if fields:
+                return 400, {}, b'Invalid API confirmation.'
+            count = save_api(store, segment_id, rows)
+            self.segment_notice = f'Saved {count} Strava efforts. {len(rows)-count} already saved.'
+        else:
+            shown = {i: {match.key for match in found} for i, found in preview['candidates'].items()}
+            if set(fields) - {f'r{i}' for i in shown}:
+                return 400, {}, b'Invalid paste confirmation.'
+            decisions = {i: fields[f'r{i}'] for i in shown if f'r{i}' in fields}
+            saved, matched, skipped, repeated = save_paste(store, segment_id, rows, decisions, shown)
+            self.segment_notice = ('This paste batch was already reviewed.' if repeated else
+                                   f'Saved {saved} pasted results. {matched} matched existing results. '
+                                   f'{skipped} possible duplicates skipped. {len(preview["invalid"])} unparsed rows skipped.')
+        self.segment_history_preview = None
+        return self.redirect('/segments')
 
     def callback(self, query):
         if not self.operation.acquire(blocking=False):

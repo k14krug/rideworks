@@ -1033,7 +1033,7 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
                             limit = 0
                             status, content_type, body = 400, 'text/plain', str(exc).encode()
                     else:
-                        limit = 1_000_000 if is_review else 1024
+                        limit = 1_000_000 if is_review else 256_000 if path.startswith('/segments/history/') else 1024
                     if not limit:
                         pass
                     elif not size.isascii() or not size.isdecimal() or not 0 < int(size) <= limit:

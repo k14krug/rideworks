@@ -31,11 +31,11 @@ Only one implementation/research task should normally be `in_progress`.
 
 ---
 
-### SEG-02 — Validate bulk sources for watched-segment history
+### SEG-02 — Import watched-segment history in batches
 
-**Status:** in_progress — API and clipboard research complete; ready for HARD Analyst review.
+**Status:** in_progress — research accepted; implement from the revised brief.
 
-**Execution:** [JIT](docs/tasks/SEG-02.md); `/TASK SEG-02` only; stop at HARD Analyst.
+**Execution:** [JIT](docs/tasks/SEG-02.md); `/TASK SEG-02` only; HARD Analyst review then HARD Owner Dev review.
 
 ---
 

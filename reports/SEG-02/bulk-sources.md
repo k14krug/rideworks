@@ -26,11 +26,17 @@ The response was examined in memory and discarded. No further requests ran.
 
 ## Tempus My Results paste
 
-Waiting for a small sample copied by the Owner from the web My Results view.
-Strava help describes the dates and times visible in the view. It does not
-establish what survives copying or how many rows can be copied at once. Until
-the sample arrives, paste format, date interpretation, elapsed-time semantics,
-links, visible batch size, and overlap with saved efforts remain unverified.
+The Owner supplied two activity-effort links. Both yielded exact activity and
+effort IDs. A read-only Dev lookup found one exact saved effort match and a
+unique local ride for each link, with no additional Strava request. This
+demonstrates repeat detection for a saved ID and exact ride resolution when
+those URLs are available. The links alone contain no date or elapsed time.
+
+Strava help describes dates and times in My Results. The supplied links do
+not establish which fields survive an ordinary clipboard copy of the visible
+rows or how many rows can be copied together. A plain paste of a few full rows
+is still needed to assess date and duration parsing, preserved link targets,
+and visible batch size.
 
 ## Candidate handling for a subsequent brief
 

@@ -83,7 +83,7 @@ class HistoryTests(unittest.TestCase):
         headings = re.search(r'<div class="activity-columns".*?</div>', html).group()
         self.assertEqual(re.findall(r'<span>(.*?)</span>', headings),
                          ['Date', 'Effort', 'Ride', 'Distance', 'Duration', 'Activity avg Pwr',
-                          'Racing Score', 'Race avg W'])
+                          'Racing Score', 'Race avg W', 'Segments'])
         self.assertIn('class="row-power" title="FIT session">123 W', html)
         self.assertIn('Strava Relative Effort unavailable', html)
         self.assertLess(html.index('class="row-effort"'), html.index('class="row-identity"'))

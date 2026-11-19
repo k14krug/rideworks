@@ -1,6 +1,7 @@
 """Owner-selected Strava segment efforts and bounded checks of newly synced rides."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from html import escape
+from math import isfinite
 import re
 import sqlite3
 from urllib.parse import urlencode, urlsplit
@@ -20,6 +21,32 @@ class Effort:
     name: str
     start_time: str
     elapsed_seconds: int
+    avg_power: float | None = field(default=None, compare=False)
+    avg_hr: float | None = field(default=None, compare=False)
+    device_watts: bool | None = field(default=None, compare=False)
+
+
+def effort_metric(value, *, allow_zero=False):
+    if type(value) in (int, float) and 0 <= value <= MAX_ID and isfinite(value):
+        if allow_zero or value > 0:
+            return float(value)
+    return None
+
+
+def api_metrics(row):
+    power = effort_metric(row.get('average_watts'), allow_zero=True)
+    device = row.get('device_watts')
+    return dict(avg_power=power, avg_hr=effort_metric(row.get('average_heartrate')),
+                device_watts=device if power is not None and type(device) is bool else None)
+
+
+def merge_metrics(saved, incoming):
+    power = incoming.avg_power if saved.avg_power is None else saved.avg_power
+    device = saved.device_watts
+    if device is None and power == incoming.avg_power:
+        device = incoming.device_watts
+    return replace(saved, avg_power=power, device_watts=device,
+                   avg_hr=incoming.avg_hr if saved.avg_hr is None else saved.avg_hr)
 
 
 def exact_id(value):
@@ -74,7 +101,7 @@ def read_efforts(detail, activity_id, athlete_id):
                 or len(name) > 500 or type(elapsed) is not int or not 0 < elapsed <= MAX_ID):
             raise SyncError('Strava returned an incomplete or duplicate segment effort.')
         attempts[effort_id] = Effort(effort_id, segment_id, name.strip(),
-                                     absolute(row.get('start_date')).isoformat(), elapsed)
+                                     absolute(row.get('start_date')).isoformat(), elapsed, **api_metrics(row))
     return attempts
 
 
@@ -87,8 +114,16 @@ def save_effort(store, activity_id, effort):
     if previous and tuple(previous) != fields[:2]:
         raise SyncError('This Strava effort conflicts with its saved segment or ride.')
     store.connection.execute(
-        'INSERT INTO strava_saved_efforts VALUES (?, ?, ?, ?, ?) ON CONFLICT(effort_id) DO NOTHING',
-        (effort.effort_id, *fields),
+        """INSERT INTO strava_saved_efforts
+           (effort_id, segment_id, external_activity_id, start_time, elapsed_seconds, avg_power, avg_hr, device_watts)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(effort_id) DO UPDATE SET
+           device_watts=CASE WHEN strava_saved_efforts.avg_power IS NULL OR
+                                  strava_saved_efforts.avg_power=excluded.avg_power
+                             THEN COALESCE(strava_saved_efforts.device_watts, excluded.device_watts)
+                             ELSE strava_saved_efforts.device_watts END,
+           avg_power=COALESCE(strava_saved_efforts.avg_power, excluded.avg_power),
+           avg_hr=COALESCE(strava_saved_efforts.avg_hr, excluded.avg_hr)""",
+        (effort.effort_id, *fields, effort.avg_power, effort.avg_hr, effort.device_watts),
     )
 
 
@@ -175,7 +210,7 @@ def tracked_counts(store, activity_ids):
         return {}
     marks = ','.join('?' for _ in activity_ids)
     return dict(store.connection.execute(
-        'SELECT l.activity_id, COUNT(DISTINCT e.segment_id) FROM strava_saved_efforts e '
+        'SELECT l.activity_id, COUNT(DISTINCT e.segment_id) FROM strava_segment_history e '
         'JOIN strava_saved_effort_ride_links l USING (external_activity_id) '
         f'WHERE l.activity_id IN ({marks}) GROUP BY l.activity_id',
         activity_ids,
@@ -184,6 +219,7 @@ def tracked_counts(store, activity_ids):
 
 def tracked_link(activity_id, count):
     if not count:
-        return ''
+        return '—'
     href = escape('/segments?' + urlencode({'ride': activity_id}), quote=True)
-    return f'<a class="tracked-segment-link" href="{href}">{count} tracked {"segment" if count == 1 else "segments"}</a>'
+    label = f'{count} tracked {"segment" if count == 1 else "segments"}'
+    return f'<a class="tracked-segment-link" href="{href}" aria-label="{label}">{count}</a>'

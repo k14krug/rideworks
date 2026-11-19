@@ -23,13 +23,13 @@ from .settings import Settings
 from .performance import POLICY, performance_history
 
 STATIC = Path(__file__).with_name('static')
-ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'elapsed_power_curve.js': 'text/javascript', 'strict_power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'race_review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript'}
+ASSETS = {'ftp.js': 'text/javascript', 'power_curve.js': 'text/javascript', 'elapsed_power_curve.js': 'text/javascript', 'strict_power_curve.js': 'text/javascript', 'planning.js': 'text/javascript', 'training_state.js': 'text/javascript', 'home.js': 'text/javascript', 'nav.js': 'text/javascript', 'style.css': 'text/css', 'review.js': 'text/javascript', 'race_review.js': 'text/javascript', 'performance.js': 'text/javascript', 'mark.svg': 'image/svg+xml', 'settings.js': 'text/javascript', 'segment_history.js': 'text/javascript'}
 
 
 def duration(seconds):
     if seconds is None:
         return 'Unavailable'
-    total = int(float(seconds) + 0.5)
+    total = seconds if type(seconds) is int else int(float(seconds) + 0.5)
     hours, rest = divmod(total, 3600)
     minutes, secs = divmod(rest, 60)
     return f'{hours}:{minutes:02}:{secs:02}' if hours else f'{minutes}:{secs:02}'
@@ -168,8 +168,8 @@ def activities_page(store, query_string=''):
             score_text = '—' if score is None else str(score)
             race_power_text = '—' if race_watts is None else f'{race_watts} W'
             tracked = tracked_link(row['activity_id'], segment_counts.get(row['activity_id'], 0))
-            items.append(f'''<li><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span><span class="row-race-score">{escape(score_text)}</span><span class="row-race-power" title="Zwift screenshot race average">{escape(race_power_text)}</span></a>{tracked}</li>''')
-        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Activity avg Pwr</span><span>Racing Score</span><span>Race avg W</span></div>'
+            items.append(f'''<li class="activity-result-row"><a class="activity-row" href="/activities/{escape(row['activity_id'], quote=True)}"><div class="row-date">{browser_time(row, compact=True)}</div><span class="row-effort">{effort_chip(ratings.get(row['activity_id']))}</span><div class="row-identity"><h2>{escape(row['title'])}</h2>{origin}<span class="row-type">{escape(types)}</span></div><span class="row-distance" title="{escape(distance_context, quote=True)}">{distance(row['distance'])}</span><span class="row-duration" title="{escape(duration_context, quote=True)}">{duration(row['duration'])}</span><span class="row-power" title="{escape(power_context, quote=True)}">{power_text}</span><span class="row-race-score">{escape(score_text)}</span><span class="row-race-power" title="Zwift screenshot race average">{escape(race_power_text)}</span></a><span class="row-segments"><span class="row-segments-label">Segments</span>{tracked}</span></li>''')
+        columns = '<div class="activity-columns" aria-hidden="true"><span>Date</span><span>Effort</span><span>Ride</span><span>Distance</span><span>Duration</span><span>Activity avg Pwr</span><span>Racing Score</span><span>Race avg W</span><span>Segments</span></div>'
         body = '<section class="panel activity-results">' + columns + '<ul class="activity-list panel">' + ''.join(items) + '</ul></section>'
     count = result['count']
     first = result['start'] + 1 if count else 0
@@ -694,7 +694,7 @@ class Application:
                     return self.not_found()
             if path == '/segments':
                 from .segments_page import segments_page
-                return 200, 'text/html', self.page(store, segments_page(store, self.settings, url.query), display_zone=zone.key)
+                return 200, 'text/html', self.page(store, segments_page(store, self.settings, url.query, zone), display_zone=zone.key)
             if path == '/settings':
                 return 200, 'text/html', self.page(store, shell('Settings', self.settings.content(local_time,url.query), active='settings', page_class='settings-redesign'), display_zone=zone.key)
             if path == '/':
@@ -1033,7 +1033,7 @@ def create_server(data_dir=None, port=8765, *, debug=False, settings_factory=Set
                             limit = 0
                             status, content_type, body = 400, 'text/plain', str(exc).encode()
                     else:
-                        limit = 1_000_000 if is_review else 1024
+                        limit = 1_000_000 if is_review else 256_000 if path.startswith('/segments/history/') else 1024
                     if not limit:
                         pass
                     elif not size.isascii() or not size.isdecimal() or not 0 < int(size) <= limit:

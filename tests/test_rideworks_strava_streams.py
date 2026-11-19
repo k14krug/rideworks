@@ -362,12 +362,12 @@ class PersistenceTests(unittest.TestCase):
             for table in ('elapsed_power_curve_profiles','power_curve_profiles','planning_feedback','planning_classifications','planning_classification_cache','planning_intents'):
                 old.connection.execute('DROP TABLE '+table)
             old.connection.execute('DROP TABLE training_stress_cache');old.connection.execute('DROP TABLE annual_mileage_goals')
-            old.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; PRAGMA user_version=5')
+            old.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP VIEW strava_segment_history; DROP TABLE strava_pasted_efforts; DROP TABLE strava_paste_batches; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; PRAGMA user_version=5')
         broken=module.MIGRATION_6.replace('PRAGMA user_version = 6;','INSERT INTO nonexistent VALUES(1);')
         with patch.object(module,'MIGRATION_6',broken),self.assertRaises(sqlite3.OperationalError):Store(root)
         with sqlite3.connect(root/'rideworks.sqlite3') as check:
             self.assertEqual(check.execute('PRAGMA user_version').fetchone()[0],5)
             self.assertEqual(check.execute("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'strava_stream_%'").fetchone()[0],0)
         with Store(root) as migrated:
-            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],16)
+            self.assertEqual(migrated.connection.execute('PRAGMA user_version').fetchone()[0],18)
             self.assertEqual(tuple(migrated.connection.execute('SELECT * FROM activities').fetchone()),('synthetic-activity','synthetic-created'))

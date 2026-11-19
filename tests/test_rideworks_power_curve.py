@@ -324,12 +324,12 @@ class CurveSourceTests(unittest.TestCase):
             self.store.connection.execute('DROP TABLE '+table)
         self.store.connection.execute('DROP TABLE power_curve_profiles')
         self.store.connection.execute('DROP TABLE elapsed_power_curve_profiles')
-        self.store.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; PRAGMA user_version=9')
+        self.store.connection.executescript('DROP VIEW strava_saved_effort_ride_links; DROP VIEW strava_segment_history; DROP TABLE strava_pasted_efforts; DROP TABLE strava_paste_batches; DROP TABLE strava_pending_segment_rides; DROP TABLE strava_saved_efforts; DROP TABLE strava_watched_segments; PRAGMA user_version=9')
         import rideworks.store as module
         with patch.object(module,'MIGRATION_10',module.MIGRATION_10.replace('PRAGMA user_version = 10;','INSERT INTO nonexistent VALUES(1);')):
             with self.assertRaises(sqlite3.Error):Store(self.store.data_dir)
         self.assertEqual(self.store.connection.execute('PRAGMA user_version').fetchone()[0],9)
-        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],16)
+        with Store(self.store.data_dir) as restarted:self.assertEqual(restarted.connection.execute('PRAGMA user_version').fetchone()[0],18)
 
     def test_curve_migration_waits_for_completed_planning_migration(self):
         import rideworks.store as module
@@ -338,7 +338,7 @@ class CurveSourceTests(unittest.TestCase):
                 self.assertEqual(paused.connection.execute('PRAGMA user_version').fetchone()[0],8)
                 self.assertIsNone(paused.connection.execute("SELECT name FROM sqlite_master WHERE name='power_curve_profiles'").fetchone())
         with Store(self.root/'paused') as recovered:
-            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],16)
+            self.assertEqual(recovered.connection.execute('PRAGMA user_version').fetchone()[0],18)
 
     def test_changed_input_during_build_is_not_published(self):
         identity=self.api(1,[100]*20)

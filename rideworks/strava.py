@@ -83,7 +83,8 @@ class ApiClient:
         endpoint=url.split('?',1)[0]
         stream_endpoint=re.fullmatch(r'https://www\.strava\.com/api/v3/activities/[1-9][0-9]*/streams',endpoint)
         summary_endpoint=re.fullmatch(r'https://www\.strava\.com/api/v3/activities/[1-9][0-9]{0,19}',endpoint)
-        if endpoint not in allowed and not (method=='GET' and (stream_endpoint or summary_endpoint)):
+        effort_list = endpoint == 'https://www.strava.com/api/v3/segment_efforts'
+        if endpoint not in allowed and not (method=='GET' and (stream_endpoint or summary_endpoint or effort_list)):
             raise SyncError('Unsupported Strava endpoint')
         if exhausted(self.rate):
             raise ApiError('Strava rate limit exhausted; sync stopped without retry',429,self.rate)
@@ -153,6 +154,13 @@ class ApiClient:
             raise SyncError('Invalid Strava activity identity')
         return self.request('GET', f'https://www.strava.com/api/v3/activities/{identity}?include_all_efforts=true',
                             token=access_token)
+
+    def segment_efforts(self, access_token, segment_id, **bounds):
+        identity = str(segment_id)
+        if not re.fullmatch(r'[1-9][0-9]{0,18}', identity) or int(identity) > 2**63-1:
+            raise SyncError('Invalid Strava segment identity')
+        query = urlencode(dict(segment_id=identity, per_page=100, **bounds))
+        return self.request('GET', f'https://www.strava.com/api/v3/segment_efforts?{query}', token=access_token)
 
     def revoke(self,refresh_token):
         return self.request('POST','https://www.strava.com/oauth/revoke',

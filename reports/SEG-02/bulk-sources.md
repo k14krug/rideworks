@@ -39,11 +39,21 @@ shows no time of day or time zone. Dates appear as links, but their targets
 are unavailable in the image. The view shows 25 rows at once in this example.
 Total history and the number of rows that can be copied at once are unknown.
 
-The screenshot supports a date-and-displayed-duration preview. A plain paste
-of a few full rows is still needed to verify clipboard row structure and
-whether it supplies any link targets. Retain the distinction between the
-displayed Time value and an API-verified elapsed time until they can be
-compared on a confirmed matching effort.
+The Owner then provided two copied rows. Both preserve the calendar date and
+displayed Time to the second without a time of day or time zone. Both date
+links point to canonical activity URLs containing exact activity IDs. Neither
+row carries a canonical effort URL, effort ID, or segment ID. Both activity IDs
+mapped uniquely to local RideWorks rides through established Strava source
+IDs. Neither had a saved effort for this segment in Dev, so equivalence of
+the displayed Time and API elapsed time remains unverified. The earlier
+exact saved-effort match involved the separate effort-link sample.
+
+The copied representation contains Markdown table separators and a stray
+icon marker in the Power field. Date, activity link, and Time remain
+unambiguous in this sample. Treat the surrounding fields as optional and
+ignore the athlete link for ride matching. Two rows were supplied as separate
+table fragments. The 25 visible rows are evidence of what the page displays,
+while how many rows survive one clipboard copy remains unknown.
 
 ## Candidate handling for a subsequent brief
 
@@ -54,20 +64,26 @@ compared on a confirmed matching effort.
   ambiguous local match for later linkage.
 - Keep a pasted row's provenance as Owner-supplied My Results. Preserve the
   original date meaning as a calendar date when the paste has no time zone.
-  Only exact verified identities should drive automatic merges or ride links.
+  Record the displayed duration separately from API-verified elapsed seconds.
+  Require the Owner to select the watched segment for the batch because the
+  pasted rows do not identify it. Link a ride automatically only when its
+  canonical activity ID maps uniquely through local established Strava IDs.
+  An activity ID alone cannot authorize an effort merge.
 - For a paste with only a date and duration, preview possible overlap with
   saved API efforts and past paste batches. Equal date and duration can also
-  describe distinct attempts. Show ambiguous candidates and let the Owner
-  confirm a duplicate, keep a separate attempt, or skip the row. Protect
-  against replay of the same reviewed batch while preserving repeated rows
-  within it. Do not silently deduplicate overlapping batches on date and time.
+  describe distinct attempts, even on the same ride. Where an activity ID is
+  available, narrow possible duplicates to the same watched segment and ride.
+  Show candidates and let the Owner confirm a duplicate, keep a separate
+  attempt, or skip the row. Protect against replay of the same reviewed batch
+  while preserving repeated rows within it.
 - A subsequent brief can evaluate a bounded API route for segments that return
-  results, with explicit coverage limits and retention terms. Finalize a
-  paste importer brief only after checking the clipboard evidence. Keep
-  the two paths distinguishable by provenance.
+  results, with explicit coverage limits and retention terms. For Tempus,
+  recommend an Owner-reviewed paste importer starting with dates, displayed
+  durations, and optional exact ride links. Keep the two paths
+  distinguishable by provenance.
 
-No app data or application code changed. Stop at HARD Analyst review after
-the remaining sample is evaluated.
+The bounded API probe and sample assessment are complete. No app data or
+application code changed. Stop at HARD Analyst review before importer work.
 
 - [Strava List Segment Efforts](https://developers.strava.com/docs/reference/#api-SegmentEfforts)
 - [Strava My Results help](https://support.strava.com/en-us/articles/15401900-how-do-i-view-my-segment-results-on-strava)

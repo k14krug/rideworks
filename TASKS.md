@@ -33,7 +33,7 @@ Only one implementation/research task should normally be `in_progress`.
 
 ### SEG-02 — Validate bulk sources for watched-segment history
 
-**Status:** blocked — Hilly KOM API probe complete; awaiting the Owner-supplied Tempus My Results sample.
+**Status:** in_progress — API and clipboard research complete; ready for HARD Analyst review.
 
 **Execution:** [JIT](docs/tasks/SEG-02.md); `/TASK SEG-02` only; stop at HARD Analyst.
 
